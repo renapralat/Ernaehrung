@@ -76,7 +76,7 @@ button{border:none;border-radius:8px;padding:0.6rem 1rem;font-family:inherit;fon
     <input type="date" id="datum"/>
     <label>Lebensmittel</label>
     <div class="row">
-      <input type="text" id="lebensmittel-input" placeholder="z.B. Haferflocken 50g, Kaffee" onkeydown="if(event.key==='Enter')addFood()"/>
+      <input type="text" id="lebensmittel-input" placeholder="z.B. Joghurt, 150g Lachs, Haferflocken 50g" onkeydown="if(event.key==='Enter')addFood()"/>
       <button class="btn-ghost" onclick="addFood()">➕</button>
     </div>
     <ul class="food-list" id="food-list"></ul>
@@ -141,12 +141,20 @@ async function laden(){
 
 function setModus(m){modus=m;document.getElementById('btn-erfassen').classList.toggle('active',m==='erfassen');document.getElementById('btn-loeschen').classList.toggle('active',m==='loeschen');}
 
+function teileEingabe(val){
+  // Trenne bei "und", "&" oder Komma, aber nicht innerhalb von Zahlen
+  return val.split(/\s+und\s+|,\s*|&\s*/i).map(s=>s.trim()).filter(Boolean);
+}
+
 function addFood(){
   const inp=document.getElementById('lebensmittel-input');
   const val=inp.value.trim();if(!val)return;
-  const m=val.match(/^statt\s+(.+?)\s+bitte\s+(.+)$/i);
-  if(m){foods=foods.filter(f=>f.toLowerCase()!==m[1].trim().toLowerCase());foods.push(m[2].trim());}
-  else foods.push(val);
+  const teile=teileEingabe(val);
+  teile.forEach(t=>{
+    const m=t.match(/^statt\s+(.+?)\s+bitte\s+(.+)$/i);
+    if(m){foods=foods.filter(f=>f.toLowerCase()!==m[1].trim().toLowerCase());foods.push(m[2].trim());}
+    else foods.push(t);
+  });
   inp.value='';renderFoodList();
   document.getElementById('result-box').classList.remove('show');pendingResult=null;
 }
@@ -154,15 +162,23 @@ function removeFood(i){foods.splice(i,1);renderFoodList();}
 function renderFoodList(){document.getElementById('food-list').innerHTML=foods.map((f,i)=>`<li class="food-item"><span>${f}</span><button class="btn-icon" onclick="removeFood(${i})">✕</button></li>`).join('');}
 
 function parseFood(text){
-  const m=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|st[uü]ck|stk\.?)?$/i);
-  if(m){
-    const name=m[1].trim();
-    let grams=parseFloat(m[2].replace(',','.'));
-    const unit=(m[3]||'g').toLowerCase();
-    if(unit==='kg')grams*=1000;
-    if(unit==='l')grams*=1000;
-    return{name,grams};
+  // "150g Joghurt" oder "150 Gramm Joghurt" (Zahl zuerst)
+  const mVorne=text.match(/^(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|gramm|gram|stück|stk\.?)?\s+(.+)$/i);
+  if(mVorne){
+    let grams=parseFloat(mVorne[1].replace(',','.'));
+    const unit=(mVorne[2]||'g').toLowerCase();
+    if(unit==='kg'||unit==='l')grams*=1000;
+    return{name:mVorne[3].trim(),grams};
   }
+  // "Joghurt 150g" (Name zuerst)
+  const mHinten=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|gramm|gram|stück|stk\.?)?$/i);
+  if(mHinten){
+    let grams=parseFloat(mHinten[2].replace(',','.'));
+    const unit=(mHinten[3]||'g').toLowerCase();
+    if(unit==='kg'||unit==='l')grams*=1000;
+    return{name:mHinten[1].trim(),grams};
+  }
+  // Nur Name, keine Menge → 100g Standard
   return{name:text.trim(),grams:100};
 }
 
