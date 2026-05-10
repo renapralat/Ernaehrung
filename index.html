@@ -60,6 +60,17 @@ button{border:none;border-radius:8px;padding:0.6rem 1rem;font-family:inherit;fon
 </head>
 <body>
 <div class="container">
+  <div id="heute-banner" style="display:none;position:sticky;top:0;z-index:10;background:rgba(15,23,42,0.96);border-bottom:1px solid #1e3a5f;padding:0.5rem 0;margin-bottom:1rem;backdrop-filter:blur(8px);">
+    <div style="max-width:720px;margin:0 auto;padding:0 1rem">
+      <div style="font-size:0.65rem;color:#64748b;margin-bottom:2px">Heute gesamt</div>
+      <div style="display:flex;gap:1.2rem">
+        <span><span id="banner-kcal" style="font-size:1.1rem;font-weight:700;color:#f59e0b">0</span><span style="font-size:0.7rem;color:#64748b"> kcal</span></span>
+        <span><span id="banner-eiweiss" style="font-size:1.1rem;font-weight:700;color:#22c55e">0</span><span style="font-size:0.7rem;color:#64748b">g Eiweiß</span></span>
+        <span><span id="banner-zucker" style="font-size:1.1rem;font-weight:700;color:#ec4899">0</span><span style="font-size:0.7rem;color:#64748b">g Zucker</span></span>
+        <span><span id="banner-kh" style="font-size:1.1rem;font-weight:700;color:#3b82f6">0</span><span style="font-size:0.7rem;color:#64748b">g KH</span></span>
+      </div>
+    </div>
+  </div>
   <div class="header">
     <div class="title">🍽️ Ernährungsprotokoll</div>
     <div class="subtitle">Nährwerterfassung via Open Food Facts</div>
@@ -282,6 +293,18 @@ function resetForm(b){foods=[];pendingRows=[];renderFoodList();document.getEleme
 function aktualisiereTagesSumme(datum){
   datum=datum||document.getElementById('datum').value;
   const box=document.getElementById('tages-summe');
+  const heute=heuteStr();
+  // Sticky-Banner immer mit heutigem Stand befüllen
+  const teHeute=eintraege.filter(e=>e.datum&&e.datum.slice(0,10)===heute);
+  const sumH=k=>teHeute.reduce((a,e)=>a+(+e[k]||0),0);
+  const banner=document.getElementById('heute-banner');
+  if(teHeute.length){
+    document.getElementById('banner-kcal').textContent=Math.round(sumH('kalorien'));
+    document.getElementById('banner-eiweiss').textContent=sumH('eiweiss').toFixed(1);
+    document.getElementById('banner-zucker').textContent=sumH('zucker').toFixed(1);
+    document.getElementById('banner-kh').textContent=sumH('kohlenhydrate').toFixed(1);
+    banner.style.display='block';
+  }else{banner.style.display='none';}
   if(!datum){box.classList.remove('show');return;}
   const te=eintraege.filter(e=>e.datum&&e.datum.slice(0,10)===datum);
   if(!te.length){box.classList.remove('show');return;}
@@ -307,7 +330,20 @@ function renderEintraege(){
     if(!gefiltert.length)return;
     irgendwas=true;
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
-    html+=`<table class="entries-table" style="margin-bottom:0.75rem;width:100%"><thead><tr class="day-header"><td colspan="4" style="padding:0.4rem 0.5rem">📅 ${fmt(datum)} <span style="font-weight:400;color:#64748b;font-size:0.75rem">${Math.round(sum('kalorien'))} kcal · ${sum('eiweiss').toFixed(1)}g Eiweiß · ${sum('zucker').toFixed(1)}g Zucker · ${sum('kohlenhydrate').toFixed(1)}g KH</span> <button class="btn-icon" onclick="deleteDay('${datum}')">🗑️</button></td></tr><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th></th></tr></thead><tbody>${gefiltert.map(e=>`<tr><td>${e.lebensmittel||''}</td><td style="text-align:right">${Math.round(+e.kalorien||0)}</td><td style="text-align:right">${(+e.eiweiss||0).toFixed(1)}g</td><td style="text-align:right"><button class="btn-icon" onclick="deleteEintrag('${e.id}','${datum}')">✕</button></td></tr>`).join('')}</tbody></table>`;
+    const kcal=Math.round(sum('kalorien')),eiw=sum('eiweiss').toFixed(1),zuk=sum('zucker').toFixed(1),kh=sum('kohlenhydrate').toFixed(1);
+    html+=`<div style="margin-bottom:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:8px 8px 0 0;padding:0.5rem 0.6rem">
+        <span style="font-weight:700;color:#93c5fd;font-size:0.85rem">📅 ${fmt(datum)}</span>
+        <button class="btn-icon" onclick="deleteDay('${datum}')">🗑️</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.25);border-top:none;padding:0.4rem 0.6rem;margin-bottom:0">
+        <div style="text-align:center"><div style="font-size:1rem;font-weight:700;color:#f59e0b">${kcal}</div><div style="font-size:0.65rem;color:#64748b">kcal</div></div>
+        <div style="text-align:center"><div style="font-size:1rem;font-weight:700;color:#22c55e">${eiw}g</div><div style="font-size:0.65rem;color:#64748b">Eiweiß</div></div>
+        <div style="text-align:center"><div style="font-size:1rem;font-weight:700;color:#ec4899">${zuk}g</div><div style="font-size:0.65rem;color:#64748b">Zucker</div></div>
+        <div style="text-align:center"><div style="font-size:1rem;font-weight:700;color:#3b82f6">${kh}g</div><div style="font-size:0.65rem;color:#64748b">KH</div></div>
+      </div>
+      <div style="overflow-x:auto"><table class="entries-table" style="width:100%;border-radius:0 0 8px 8px;overflow:hidden"><thead><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th style="text-align:right">Zucker</th><th style="text-align:right">KH</th><th></th></tr></thead><tbody>${gefiltert.map(e=>`<tr><td>${e.lebensmittel||''}</td><td style="text-align:right">${Math.round(+e.kalorien||0)}</td><td style="text-align:right">${(+e.eiweiss||0).toFixed(1)}g</td><td style="text-align:right">${(+e.zucker||0).toFixed(1)}g</td><td style="text-align:right">${(+e.kohlenhydrate||0).toFixed(1)}g</td><td style="text-align:right"><button class="btn-icon" onclick="deleteEintrag('${e.id}','${datum}')">✕</button></td></tr>`).join('')}</tbody></table></div>
+    </div>`;
   });
   container.innerHTML=irgendwas?html:'<div class="empty-hint">Keine Einträge für diese Suche.</div>';
 }
