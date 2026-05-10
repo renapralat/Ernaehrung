@@ -116,6 +116,7 @@ button{border:none;border-radius:8px;padding:0.6rem 1rem;font-family:inherit;fon
   </div>
 </div>
 
+<script src="lebensmittel.js"></script>
 <script>
 const URL_BASE = 'https://bxwamphvycjfeexjzgyv.supabase.co/rest/v1/ernaehrung';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4d2FtcGh2eWNqZmVleGp6Z3l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MjI1NjQsImV4cCI6MjA5MzM5ODU2NH0.LMEz3yuh8GmIZ6PfkTxer1yrAYpspNJOBPKTIV7T3qQ';
@@ -165,6 +166,14 @@ function parseFood(text){
   return{name:text.trim(),grams:100};
 }
 
+function sucheLokaleDB(name){
+  if(typeof DB==='undefined')return null;
+  const s=name.toLowerCase().trim();
+  return DB.find(x=>x.n.toLowerCase()===s)
+      ||DB.find(x=>{const n=x.n.toLowerCase();return s.startsWith(n)||n.startsWith(s);})
+      ||null;
+}
+
 async function fetchMitTimeout(url,ms){
   const ctrl=new AbortController();
   const t=setTimeout(()=>ctrl.abort(),ms);
@@ -173,6 +182,8 @@ async function fetchMitTimeout(url,ms){
 }
 
 async function searchOpenFoodFacts(name){
+  const lokal=sucheLokaleDB(name);
+  if(lokal)return{'energy-kcal_100g':lokal.k,'proteins_100g':lokal.e,'sugars_100g':lokal.z,'carbohydrates_100g':lokal.kh};
   const q='&search_simple=1&action=process&json=1&fields=product_name,nutriments&page_size=1';
   const urlDE='https://de.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(name)+q;
   const urlWelt='https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(name)+q;
