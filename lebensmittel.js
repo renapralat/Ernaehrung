@@ -104,6 +104,8 @@ const DB = [
   { n:"Quark mager",        k: 67, e:13.5, z: 3.2, kh: 4.1 },
   { n:"Quark",              k:112, e:11.0, z: 2.5, kh: 3.5 },
   { n:"Sahne",              k:292, e: 2.0, z: 3.3, kh: 3.3 },
+  { n:"Schlagsahne",       k:302, e: 2.3, z: 2.7, kh: 2.7 },
+  { n:"Joghurt 3,5%",      k: 61, e: 3.5, z: 4.0, kh: 4.7 },
   { n:"Vollmilch",          k: 61, e: 3.2, z: 4.8, kh: 4.8 },
   { n:"Halbfettmilch",      k: 47, e: 3.3, z: 4.9, kh: 4.9 },
 
@@ -145,6 +147,9 @@ const DB = [
   { n:"Apfelsaft",          k: 46, e: 0.1, z: 9.9, kh:11.0 },
   { n:"Espresso",           k:  2, e: 0.1, z: 0.0, kh: 0.0 },
   { n:"Kaffee",             k:  2, e: 0.3, z: 0.0, kh: 0.0 },
+  { n:"Kaffeebohnen",       k:  2, e: 0.3, z: 0.0, kh: 0.0 },  // als Getränk zubereitet
+  { n:"Filterkaffee",       k:  2, e: 0.3, z: 0.0, kh: 0.0 },
+  { n:"Americano",          k:  2, e: 0.1, z: 0.0, kh: 0.0 },
   { n:"Cappuccino",         k: 40, e: 2.0, z: 3.5, kh: 3.5 },
   { n:"Latte Macchiato",    k: 55, e: 2.8, z: 4.8, kh: 4.8 },
   { n:"Orangensaft",        k: 45, e: 0.7, z: 8.4, kh:10.4 },
