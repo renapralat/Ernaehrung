@@ -56,6 +56,8 @@ button{border:none;border-radius:8px;padding:0.6rem 1rem;font-family:inherit;fon
 .csv-row{display:flex;gap:0.5rem;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;}
 .csv-row label{margin:0;white-space:nowrap;}
 .csv-row input[type="date"]{width:auto;flex:1;min-width:120px;margin:0;}
+#mikro-btn.aktiv{background:#ef4444!important;color:#fff!important;border:2px solid #fca5a5;animation:mikropuls 1s ease-in-out infinite;}
+@keyframes mikropuls{0%,100%{opacity:1;}50%{opacity:0.6;}}
 </style>
 </head>
 <body>
@@ -88,6 +90,7 @@ button{border:none;border-radius:8px;padding:0.6rem 1rem;font-family:inherit;fon
     <label>Lebensmittel</label>
     <div class="row">
       <input type="text" id="lebensmittel-input" placeholder="z.B. Joghurt, 150g Lachs, Haferflocken 50g" onkeydown="if(event.key==='Enter')addFood()"/>
+      <button id="mikro-btn" class="btn-ghost" onclick="toggleMikro()" title="Spracheingabe">🎤</button>
       <button class="btn-ghost" onclick="addFood()">➕</button>
     </div>
     <ul class="food-list" id="food-list"></ul>
@@ -442,6 +445,47 @@ async function importCSV(file){
   }catch(e){status.textContent='❌ Fehler: '+e.message;status.style.color='#ef4444';}
   document.getElementById('import-file').value='';
 }
+
+let erkennung=null,mikroAktiv=false,gesprochenText='';
+function initSpeech(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Spracheingabe nicht verfügbar. Bitte Chrome oder Edge verwenden.');return null;}
+  const r=new SR();
+  r.lang='de-DE';r.continuous=true;r.interimResults=true;
+  r.onresult=function(ev){
+    const inp=document.getElementById('lebensmittel-input');
+    let interim='';
+    for(let i=ev.resultIndex;i<ev.results.length;i++){
+      const t=ev.results[i][0].transcript;
+      if(ev.results[i].isFinal){
+        if(/\bstopp?\b/i.test(t)){
+          gesprochenText=(gesprochenText+' '+t.replace(/\s*\bstopp?\b\s*/gi,' ').trim()).trim();
+          inp.value=gesprochenText;
+          stopMikro();addFood();return;
+        }
+        gesprochenText=(gesprochenText+' '+t).trim();
+      }else{interim+=t;}
+    }
+    inp.value=(gesprochenText+(interim?' '+interim:'')).trim();
+  };
+  r.onerror=function(e){if(e.error!=='aborted')console.warn('Sprache:',e.error);stopMikro();};
+  r.onend=function(){if(mikroAktiv){try{erkennung.start();}catch(e){}}};
+  return r;
+}
+function startMikro(){
+  if(!erkennung)erkennung=initSpeech();
+  if(!erkennung)return;
+  gesprochenText=document.getElementById('lebensmittel-input').value.trim();
+  mikroAktiv=true;
+  document.getElementById('mikro-btn').classList.add('aktiv');
+  try{erkennung.start();}catch(e){}
+}
+function stopMikro(){
+  mikroAktiv=false;
+  document.getElementById('mikro-btn').classList.remove('aktiv');
+  if(erkennung){try{erkennung.stop();}catch(e){}}
+}
+function toggleMikro(){if(mikroAktiv)stopMikro();else startMikro();}
 
 async function init(){
   const heute=heuteStr();
