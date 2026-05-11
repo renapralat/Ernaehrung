@@ -184,24 +184,51 @@ function addFood(){
 function removeFood(i){foods.splice(i,1);renderFoodList();}
 function renderFoodList(){document.getElementById('food-list').innerHTML=foods.map((f,i)=>`<li class="food-item"><span>${f}</span><button class="btn-icon" onclick="removeFood(${i})">✕</button></li>`).join('');}
 
+const MASS={
+  'teelöffel':5,'tl':5,
+  'esslöffel':15,'el':15,
+  'tasse':200,'tassen':200,
+  'kelle':150,'kellen':150,
+  'glas':200,'gläser':200,
+  'becher':200,
+  'scheibe':30,'scheiben':30,
+  'handvoll':30,
+  'portion':150,'portionen':150,
+  'prise':1,'prisen':1,
+};
+
 function parseFood(text){
-  // "150g Joghurt" oder "150 Gramm Joghurt" (Zahl zuerst)
-  const mVorne=text.match(/^(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|gramm|gram|stück|stk\.?)?\s+(.+)$/i);
+  // "2 Esslöffel Joghurt" / "1 Tasse Milch" / "3 TL Hanfsamen"
+  const mMass=text.match(/^(\d+(?:[.,]\d+)?)\s+(teelöffel|esslöffel|tl|el|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|portion(?:en)?|prise[n]?)\s+(.+)$/i);
+  if(mMass){
+    const anzahl=parseFloat(mMass[1].replace(',','.'));
+    const gramsProEinheit=MASS[mMass[2].toLowerCase()]||15;
+    return{name:mMass[3].trim(),grams:anzahl*gramsProEinheit};
+  }
+  // "Joghurt 2 Esslöffel" (Name zuerst, Maßeinheit hinten)
+  const mMassHinten=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s+(teelöffel|esslöffel|tl|el|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|portion(?:en)?|prise[n]?)$/i);
+  if(mMassHinten){
+    const anzahl=parseFloat(mMassHinten[2].replace(',','.'));
+    const gramsProEinheit=MASS[mMassHinten[3].toLowerCase()]||15;
+    return{name:mMassHinten[1].trim(),grams:anzahl*gramsProEinheit};
+  }
+  // "150g Joghurt" / "150 Gramm Joghurt" (Zahl zuerst)
+  const mVorne=text.match(/^(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|gramm|gram)\s+(.+)$/i);
   if(mVorne){
     let grams=parseFloat(mVorne[1].replace(',','.'));
-    const unit=(mVorne[2]||'g').toLowerCase();
+    const unit=mVorne[2].toLowerCase();
     if(unit==='kg'||unit==='l')grams*=1000;
     return{name:mVorne[3].trim(),grams};
   }
   // "Joghurt 150g" (Name zuerst)
-  const mHinten=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|gramm|gram|stück|stk\.?)?$/i);
-  if(mHinten){
+  const mHinten=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|gramm|gram)?$/i);
+  if(mHinten&&mHinten[2]){
     let grams=parseFloat(mHinten[2].replace(',','.'));
     const unit=(mHinten[3]||'g').toLowerCase();
     if(unit==='kg'||unit==='l')grams*=1000;
     return{name:mHinten[1].trim(),grams};
   }
-  // Nur Name, keine Menge → 100g Standard
+  // Nur Name → 100g Standard
   return{name:text.trim(),grams:100};
 }
 
