@@ -201,6 +201,9 @@ const MASS={
 };
 
 function parseFood(text){
+  // Artikel entfernen: "ein/eine/einen/einer Espresso" → "Espresso"
+  // Verhindert auch, dass "ein Espresso" die DB-Suche auf "Ei" trifft
+  text=text.replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/i,'');
   // "2 Esslöffel Joghurt" / "1 Tasse Milch" / "3 TL Hanfsamen"
   const mMass=text.match(/^(\d+(?:[.,]\d+)?)\s+(teelöffel|esslöffel|tl|el|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|portion(?:en)?|prise[n]?)\s+(.+)$/i);
   if(mMass){
@@ -237,13 +240,14 @@ function parseFood(text){
 
 function sucheLokaleDB(name){
   if(typeof DB==='undefined')return null;
-  const s=name.toLowerCase().trim();
+  // Artikel entfernen (Sicherheitsnetz – parseFood macht das bereits)
+  const s=name.toLowerCase().trim().replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/,'');
   // Exakte Übereinstimmung
   return DB.find(x=>x.n.toLowerCase()===s)
-    // Präfix-Übereinstimmung (Kartoffeln → Kartoffel)
-    ||DB.find(x=>{const n=x.n.toLowerCase();return s.startsWith(n)||n.startsWith(s);})
-    // Enthaltene Übereinstimmung (doppelter Espresso → Espresso)
-    ||DB.find(x=>{const n=x.n.toLowerCase();return n.length>3&&s.includes(n);})
+    // Präfix (min. 4 Zeichen) – verhindert "Ei" für "ein Espresso"
+    ||DB.find(x=>{const n=x.n.toLowerCase();return n.length>=4&&(s.startsWith(n)||n.startsWith(s));})
+    // Enthält-Suche (min. 4 Zeichen) – "doppelter espresso" → "espresso"
+    ||DB.find(x=>{const n=x.n.toLowerCase();return n.length>=4&&s.includes(n);})
     ||null;
 }
 
