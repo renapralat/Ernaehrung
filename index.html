@@ -455,28 +455,35 @@ function initSpeech(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){alert('Spracheingabe nicht verfügbar. Bitte Chrome oder Edge verwenden.');return null;}
   const r=new SR();
-  r.lang='de-DE';r.continuous=true;r.interimResults=true;
+  r.lang='de-DE';
+  r.continuous=false;   // Einzelerkennung – auf Android zuverlässiger
+  r.interimResults=true;
   r.onresult=function(ev){
     const inp=document.getElementById('lebensmittel-input');
-    let interim='';
+    let interim='',final='';
     for(let i=ev.resultIndex;i<ev.results.length;i++){
       const t=ev.results[i][0].transcript;
-      if(ev.results[i].isFinal){
-        if(/\bstopp?\b/i.test(t)){
-          gesprochenText=(gesprochenText+' '+t.replace(/\s*\bstopp?\b\s*/gi,' ').trim()).trim();
-          inp.value=gesprochenText;
-          stopMikro();addFood();return;
-        }
-        gesprochenText=(gesprochenText+' '+t).trim();
-      }else{interim+=t;}
+      if(ev.results[i].isFinal)final+=t; else interim+=t;
     }
     inp.value=(gesprochenText+(interim?' '+interim:'')).trim();
+    if(final){
+      if(/\bstopp?\b/i.test(final)){
+        gesprochenText=(gesprochenText+' '+final.replace(/\s*\bstopp?\b\s*/gi,' ').trim()).trim();
+        inp.value=gesprochenText;
+        stopMikro();addFood();return;
+      }
+      gesprochenText=(gesprochenText+' '+final).trim();
+      inp.value=gesprochenText;
+    }
   };
-  r.onerror=function(e){if(e.error!=='aborted')console.warn('Sprache:',e.error);stopMikro();};
+  r.onerror=function(e){
+    if(e.error==='no-speech')return;  // Stille = kein Fehler, einfach neu starten
+    if(e.error==='not-allowed'){stopMikro();return;}
+    console.warn('Sprache:',e.error);
+  };
   r.onend=function(){
     if(mikroAktiv){
-      // Neues Objekt erzwingen – altes Objekt würde alte Ergebnisse wiederholen
-      setTimeout(()=>{if(mikroAktiv){erkennung=initSpeech();if(erkennung)try{erkennung.start();}catch(e){}}},50);
+      setTimeout(()=>{if(mikroAktiv){erkennung=initSpeech();if(erkennung)try{erkennung.start();}catch(e){}}},100);
     }
   };
   return r;
