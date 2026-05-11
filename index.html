@@ -162,8 +162,11 @@ async function laden(){
 function setModus(m){modus=m;document.getElementById('btn-erfassen').classList.toggle('active',m==='erfassen');document.getElementById('btn-loeschen').classList.toggle('active',m==='loeschen');}
 
 function teileEingabe(val){
-  // Trenne bei "und", "&" oder Komma, aber nicht innerhalb von Zahlen
-  return val.split(/\s+und\s+|,\s*|&\s*/i).map(s=>s.trim()).filter(Boolean);
+  // Trennwörter: splitten die Eingabe in einzelne Lebensmittel
+  const teile=val.split(/\s+(?:und|mit|sowie|außerdem|plus|an)\s+|[,&]\s*/i);
+  // Füllwörter: werden aus jedem Teil entfernt
+  const fuell=/\b(?:dazu|noch|auch|bitte|etwas|mal|dann|je|jeweils|einfach|noch dazu)\b\s*/gi;
+  return teile.map(s=>s.replace(fuell,'').replace(/\s+/g,' ').trim()).filter(Boolean);
 }
 
 function addFood(){
