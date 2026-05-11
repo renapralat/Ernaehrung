@@ -473,21 +473,27 @@ function initSpeech(){
     inp.value=(gesprochenText+(interim?' '+interim:'')).trim();
   };
   r.onerror=function(e){if(e.error!=='aborted')console.warn('Sprache:',e.error);stopMikro();};
-  r.onend=function(){if(mikroAktiv){try{erkennung.start();}catch(e){}}};
+  r.onend=function(){
+    if(mikroAktiv){
+      // Neues Objekt erzwingen – altes Objekt würde alte Ergebnisse wiederholen
+      setTimeout(()=>{if(mikroAktiv){erkennung=initSpeech();if(erkennung)try{erkennung.start();}catch(e){}}},50);
+    }
+  };
   return r;
 }
 function startMikro(){
-  if(!erkennung)erkennung=initSpeech();
-  if(!erkennung)return;
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Spracheingabe nicht verfügbar. Bitte Chrome oder Edge verwenden.');return;}
   gesprochenText=document.getElementById('lebensmittel-input').value.trim();
   mikroAktiv=true;
   document.getElementById('mikro-btn').classList.add('aktiv');
-  try{erkennung.start();}catch(e){}
+  erkennung=initSpeech();
+  if(erkennung)try{erkennung.start();}catch(e){}
 }
 function stopMikro(){
   mikroAktiv=false;
   document.getElementById('mikro-btn').classList.remove('aktiv');
-  if(erkennung){try{erkennung.stop();}catch(e){}}
+  if(erkennung){try{erkennung.stop();}catch(e){} erkennung=null;}
 }
 function toggleMikro(){if(mikroAktiv)stopMikro();else startMikro();}
 
