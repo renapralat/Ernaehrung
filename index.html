@@ -235,9 +235,13 @@ function parseFood(text){
 function sucheLokaleDB(name){
   if(typeof DB==='undefined')return null;
   const s=name.toLowerCase().trim();
+  // Exakte Übereinstimmung
   return DB.find(x=>x.n.toLowerCase()===s)
-      ||DB.find(x=>{const n=x.n.toLowerCase();return s.startsWith(n)||n.startsWith(s);})
-      ||null;
+    // Präfix-Übereinstimmung (Kartoffeln → Kartoffel)
+    ||DB.find(x=>{const n=x.n.toLowerCase();return s.startsWith(n)||n.startsWith(s);})
+    // Enthaltene Übereinstimmung (doppelter Espresso → Espresso)
+    ||DB.find(x=>{const n=x.n.toLowerCase();return n.length>3&&s.includes(n);})
+    ||null;
 }
 
 async function fetchMitTimeout(url,ms){

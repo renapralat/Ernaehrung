@@ -72,6 +72,10 @@ const DB = [
   { n:"Zwiebel",            k: 40, e: 1.1, z: 4.7, kh: 9.3 },
 
   // ── GETREIDE & BROT ───────────────────────────────────────────────────────
+  { n:"Brötchen",           k:270, e: 9.0, z: 2.5, kh:51.0 },
+  { n:"Körnerbrötchen",     k:265, e:10.0, z: 2.0, kh:45.0 },
+  { n:"Vollkornbrötchen",   k:250, e: 9.5, z: 1.5, kh:43.0 },
+  { n:"Laugenbrezel",       k:310, e: 9.0, z: 1.5, kh:62.0 },
   { n:"Cornflakes",         k:373, e: 7.5, z: 7.0, kh:84.0 },
   { n:"Couscous roh",       k:376, e:12.8, z: 0.8, kh:77.4 },
   { n:"Couscous gekocht",   k:112, e: 3.8, z: 0.2, kh:23.2 },
@@ -139,17 +143,44 @@ const DB = [
 
   // ── GETRÄNKE ──────────────────────────────────────────────────────────────
   { n:"Apfelsaft",          k: 46, e: 0.1, z: 9.9, kh:11.0 },
+  { n:"Espresso",           k:  2, e: 0.1, z: 0.0, kh: 0.0 },
   { n:"Kaffee",             k:  2, e: 0.3, z: 0.0, kh: 0.0 },
+  { n:"Cappuccino",         k: 40, e: 2.0, z: 3.5, kh: 3.5 },
+  { n:"Latte Macchiato",    k: 55, e: 2.8, z: 4.8, kh: 4.8 },
   { n:"Orangensaft",        k: 45, e: 0.7, z: 8.4, kh:10.4 },
   { n:"Tee",                k:  1, e: 0.0, z: 0.0, kh: 0.3 },
+  { n:"Sojamilch",          k: 33, e: 3.3, z: 0.5, kh: 0.5 },
+  { n:"Hafermilch",         k: 45, e: 1.0, z: 4.0, kh: 6.6 },
+  { n:"Mandelmilch",        k: 13, e: 0.5, z: 0.1, kh: 0.3 },
+
+  // ── MILCHPRODUKTE ERGÄNZUNG ───────────────────────────────────────────────
+  { n:"Joghurt griechisch", k:133, e: 5.7, z: 3.9, kh: 3.9 },
+  { n:"Skyr",               k: 65, e:11.0, z: 4.0, kh: 4.0 },
+  { n:"Kefir",              k: 52, e: 3.3, z: 4.0, kh: 4.8 },
+  { n:"Schmand",            k:238, e: 2.7, z: 3.0, kh: 3.5 },
+  { n:"Crème fraîche",      k:292, e: 2.2, z: 2.9, kh: 2.9 },
+
+  // ── AUFSCHNITT & WURST ────────────────────────────────────────────────────
+  { n:"Salami",             k:380, e:22.0, z: 0.0, kh: 1.0 },
+  { n:"Leberwurst",         k:310, e:13.0, z: 0.5, kh: 3.0 },
+  { n:"Putenbrust",         k:107, e:22.0, z: 0.0, kh: 0.0 },
+  { n:"Mortadella",         k:285, e:14.0, z: 0.5, kh: 1.5 },
 
   // ── SONSTIGES ─────────────────────────────────────────────────────────────
+  { n:"Hanfsamen",          k:553, e:31.6, z: 1.5, kh: 8.7 },
+  { n:"Hanfprotein",        k:338, e:50.0, z: 2.5, kh:19.0 },
+  { n:"Eiweißpulver",       k:370, e:75.0, z: 4.0, kh:10.0 },
+  { n:"Proteinpulver",      k:370, e:75.0, z: 4.0, kh:10.0 },
+  { n:"Marmelade",          k:250, e: 0.5, z:55.0, kh:60.0 },
   { n:"Hummus",             k:166, e: 7.9, z: 0.4, kh:14.3 },
   { n:"Honig",              k:304, e: 0.3, z:80.0, kh:82.4 },
   { n:"Nutella",            k:539, e: 6.3, z:55.9, kh:57.5 },
   { n:"Olivenöl",           k:884, e: 0.0, z: 0.0, kh: 0.0 },
   { n:"Sonnenblumenöl",     k:884, e: 0.0, z: 0.0, kh: 0.0 },
   { n:"Tomatensoße",        k: 45, e: 1.8, z: 5.3, kh: 8.6 },
+  { n:"Pesto",              k:430, e: 5.0, z: 2.0, kh: 5.0 },
+  { n:"Mayonnaise",         k:680, e: 1.3, z: 1.2, kh: 2.6 },
   { n:"Zucker",             k:399, e: 0.0, z:100.0, kh:100.0 },
+  { n:"Kokosöl",            k:862, e: 0.0, z: 0.0, kh: 0.0 },
 
 ];
