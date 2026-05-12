@@ -144,19 +144,26 @@ const DB = [
   { n:"Walnüsse",           k:654, e:15.2, z: 2.6, kh:13.7 },
 
   // ── GETRÄNKE ──────────────────────────────────────────────────────────────
-  { n:"Apfelsaft",          k: 46, e: 0.1, z: 9.9, kh:11.0 },
-  { n:"Espresso",           k:  2, e: 0.1, z: 0.0, kh: 0.0 },
-  { n:"Kaffee",             k:  2, e: 0.3, z: 0.0, kh: 0.0 },
-  { n:"Kaffeebohnen",       k:  2, e: 0.3, z: 0.0, kh: 0.0 },  // als Getränk zubereitet
-  { n:"Filterkaffee",       k:  2, e: 0.3, z: 0.0, kh: 0.0 },
-  { n:"Americano",          k:  2, e: 0.1, z: 0.0, kh: 0.0 },
-  { n:"Cappuccino",         k: 40, e: 2.0, z: 3.5, kh: 3.5 },
-  { n:"Latte Macchiato",    k: 55, e: 2.8, z: 4.8, kh: 4.8 },
-  { n:"Orangensaft",        k: 45, e: 0.7, z: 8.4, kh:10.4 },
-  { n:"Tee",                k:  1, e: 0.0, z: 0.0, kh: 0.3 },
-  { n:"Sojamilch",          k: 33, e: 3.3, z: 0.5, kh: 0.5 },
-  { n:"Hafermilch",         k: 45, e: 1.0, z: 4.0, kh: 6.6 },
-  { n:"Mandelmilch",        k: 13, e: 0.5, z: 0.1, kh: 0.3 },
+  { n:"Apfelsaft",                k: 46, e: 0.1, z: 9.9, kh:11.0 },
+  { n:"Espresso",                 k:  2, e: 0.1, z: 0.0, kh: 0.0 },
+  { n:"Espresso Doppio",          k:  4, e: 0.2, z: 0.0, kh: 0.0 },
+  { n:"Kaffee",                   k:  2, e: 0.3, z: 0.0, kh: 0.0 },
+  { n:"Kaffee Crema",             k:  5, e: 0.2, z: 0.0, kh: 0.1 },
+  { n:"Kaffeebohnen",             k:  2, e: 0.3, z: 0.0, kh: 0.0 },
+  { n:"Filterkaffee",             k:  2, e: 0.3, z: 0.0, kh: 0.0 },
+  { n:"Americano",                k:  2, e: 0.1, z: 0.0, kh: 0.0 },
+  { n:"Cappuccino",               k: 80, e: 4.0, z: 3.5, kh: 6.0 },   // Standard ~200ml
+  { n:"kleiner Cappuccino",       k: 60, e: 3.0, z: 2.5, kh: 4.5 },
+  { n:"großer Cappuccino",        k:120, e: 7.0, z: 5.0, kh: 9.0 },
+  { n:"Latte Macchiato",          k: 55, e: 2.8, z: 4.8, kh: 4.8 },
+  { n:"Schuss Milch",             k: 20, e: 1.0, z: 1.5, kh: 1.5 },   // ~25ml Vollmilch
+  { n:"Schuss Sojamilch",         k: 11, e: 0.9, z: 0.3, kh: 0.8 },
+  { n:"Geflügelbrühe",            k:  7, e: 1.0, z: 0.0, kh: 0.3 },
+  { n:"Orangensaft",              k: 45, e: 0.7, z: 8.4, kh:10.4 },
+  { n:"Tee",                      k:  1, e: 0.0, z: 0.0, kh: 0.3 },
+  { n:"Sojamilch",                k: 33, e: 3.3, z: 0.5, kh: 0.5 },
+  { n:"Hafermilch",               k: 45, e: 1.0, z: 4.0, kh: 6.6 },
+  { n:"Mandelmilch",              k: 13, e: 0.5, z: 0.1, kh: 0.3 },
 
   // ── MILCHPRODUKTE ERGÄNZUNG ───────────────────────────────────────────────
   { n:"Joghurt griechisch", k:133, e: 5.7, z: 3.9, kh: 3.9 },
@@ -172,20 +179,53 @@ const DB = [
   { n:"Mortadella",         k:285, e:14.0, z: 0.5, kh: 1.5 },
 
   // ── SONSTIGES ─────────────────────────────────────────────────────────────
-  { n:"Hanfsamen",          k:553, e:31.6, z: 1.5, kh: 8.7 },
-  { n:"Hanfprotein",        k:338, e:50.0, z: 2.5, kh:19.0 },
-  { n:"Eiweißpulver",       k:370, e:75.0, z: 4.0, kh:10.0 },
-  { n:"Proteinpulver",      k:370, e:75.0, z: 4.0, kh:10.0 },
-  { n:"Marmelade",          k:250, e: 0.5, z:55.0, kh:60.0 },
-  { n:"Hummus",             k:166, e: 7.9, z: 0.4, kh:14.3 },
-  { n:"Honig",              k:304, e: 0.3, z:80.0, kh:82.4 },
-  { n:"Nutella",            k:539, e: 6.3, z:55.9, kh:57.5 },
-  { n:"Olivenöl",           k:884, e: 0.0, z: 0.0, kh: 0.0 },
-  { n:"Sonnenblumenöl",     k:884, e: 0.0, z: 0.0, kh: 0.0 },
-  { n:"Tomatensoße",        k: 45, e: 1.8, z: 5.3, kh: 8.6 },
-  { n:"Pesto",              k:430, e: 5.0, z: 2.0, kh: 5.0 },
-  { n:"Mayonnaise",         k:680, e: 1.3, z: 1.2, kh: 2.6 },
-  { n:"Zucker",             k:399, e: 0.0, z:100.0, kh:100.0 },
-  { n:"Kokosöl",            k:862, e: 0.0, z: 0.0, kh: 0.0 },
+  { n:"Hanfsamen",                k:553, e:31.6, z: 1.5, kh: 8.7 },
+  { n:"Hanfprotein",              k:338, e:50.0, z: 2.5, kh:19.0 },
+  { n:"Haferkleie",               k:246, e:13.5, z: 0.9, kh:66.0 },
+  { n:"Eiweißpulver",             k:370, e:75.0, z: 4.0, kh:10.0 },
+  { n:"Proteinpulver",            k:370, e:75.0, z: 4.0, kh:10.0 },
+  { n:"Eiweißshake Pulver",       k:400, e:80.0, z: 3.0, kh:10.0 },
+  { n:"Eiweiß Schokolade",        k:470, e:30.0, z:20.0, kh:35.0 },
+  { n:"Protein Snack",            k:440, e:40.0, z: 2.0, kh:20.0 },
+  { n:"Marmelade",                k:250, e: 0.5, z:55.0, kh:60.0 },
+  { n:"Hummus",                   k:166, e: 7.9, z: 0.4, kh:14.3 },
+  { n:"Honig",                    k:304, e: 0.3, z:80.0, kh:82.4 },
+  { n:"Nutella",                  k:539, e: 6.3, z:55.9, kh:57.5 },
+  { n:"Olivenöl",                 k:884, e: 0.0, z: 0.0, kh: 0.0 },
+  { n:"Sonnenblumenöl",           k:884, e: 0.0, z: 0.0, kh: 0.0 },
+  { n:"Tomatensoße",              k: 45, e: 1.8, z: 5.3, kh: 8.6 },
+  { n:"Pesto",                    k:430, e: 5.0, z: 2.0, kh: 5.0 },
+  { n:"Mayonnaise",               k:680, e: 1.3, z: 1.2, kh: 2.6 },
+  { n:"Zucker",                   k:399, e: 0.0, z:100.0, kh:100.0 },
+  { n:"Kokosöl",                  k:862, e: 0.0, z: 0.0, kh: 0.0 },
+  { n:"Tuc",                      k:450, e: 7.0, z: 3.0, kh:64.0 },
+  { n:"Tuc Cracker",              k: 19, e: 0.3, z: 0.1, kh: 3.0 },   // pro Stück
+  { n:"Maiswaffel",               k: 35, e: 0.7, z: 0.2, kh: 7.5 },   // pro Stück
+  { n:"Walnuss",                  k: 33, e: 0.8, z: 0.3, kh: 0.7 },   // pro Stück
+  { n:"Cashewkern",               k: 10, e: 0.3, z: 0.4, kh: 1.6 },   // pro Stück
+  { n:"Kaper",                    k:  1, e: 0.1, z: 0.0, kh: 0.1 },   // pro Stück
+  { n:"Mispel",                   k: 47, e: 0.4, z: 5.7, kh:12.0 },   // pro 100g (~30g/Stück)
+  { n:"Japanische Erdnussbälle",  k:510, e:20.0, z: 3.0, kh:60.0 },
+
+  // ── GEMÜSEGERICHTE & FERTIGGERICHTE ──────────────────────────────────────
+  { n:"Wurzelgemüse",             k: 40, e: 0.7, z: 3.5, kh: 9.0 },
+  { n:"Gemüsepfanne",             k: 65, e: 1.0, z: 3.0, kh: 6.0 },   // mit etwas Öl, pro 100g
+  { n:"gedünstete Möhren",        k: 35, e: 0.8, z: 4.0, kh: 8.0 },
+
+  // ── FLEISCH ERGÄNZUNG ─────────────────────────────────────────────────────
+  { n:"Maishähnchenfleisch",           k:165, e:25.0, z: 0.0, kh: 0.0 },
+  { n:"Maishähnchenfleisch ohne Haut", k:150, e:31.0, z: 0.0, kh: 0.0 },
+  { n:"Blutwurst",                k:270, e: 9.0, z: 0.5, kh: 2.0 },
+  { n:"Thüringer Bratwurst",      k:320, e:18.0, z: 0.0, kh: 2.0 },   // pro Stück/Portion
+  { n:"Thüringer Rostbrätel",     k:370, e:28.0, z: 0.0, kh: 0.0 },   // pro Portion
+
+  // ── RESTAURANTGERICHTE (Richtwerte pro Portion) ───────────────────────────
+  { n:"Lady Steak Gaststätte",    k:280, e:35.0, z: 0.0, kh: 0.0 },
+  { n:"Lady Steak",               k:280, e:35.0, z: 0.0, kh: 0.0 },
+  { n:"Pommes Gaststätte",        k:530, e: 7.0, z: 0.0, kh:70.0 },
+  { n:"Pommes frites",            k:312, e: 3.4, z: 0.3, kh:41.0 },   // pro 100g
+  { n:"Nudeln Gaststätte",        k:550, e:18.0, z: 0.0, kh:85.0 },   // große Portion
+  { n:"Windbeutel",               k:320, e: 5.0, z: 8.0, kh:30.0 },   // pro Stück
+  { n:"Rühreier",                 k:230, e:13.0, z: 0.5, kh: 1.0 },   // 2 Eier mit Butter/Zwiebel
 
 ];
