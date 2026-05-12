@@ -124,7 +124,8 @@ button{border:none;border-radius:8px;padding:0.6rem 1rem;font-family:inherit;fon
     <div class="csv-row">
       <label>Von</label><input type="date" id="export-von"/>
       <label>Bis</label><input type="date" id="export-bis"/>
-      <button class="btn-primary" onclick="exportCSV()">⬇️ Export</button>
+      <button class="btn-primary" onclick="exportCSV()">⬇️ CSV</button>
+      <button class="btn-ghost" onclick="exportText()">📄 Text</button>
     </div>
     <div class="status-msg" id="export-status"></div>
     <div id="import-drop" style="border:2px dashed #334155;border-radius:8px;padding:1.25rem;text-align:center;color:#64748b;font-size:0.85rem;cursor:pointer;margin-top:0.75rem"
@@ -416,6 +417,25 @@ function exportCSV(){
   a.href=url;a.download='ernaehrung'+(von?'_'+von:'')+(bis?'_bis_'+bis:'')+'.csv';
   a.click();URL.revokeObjectURL(url);
   status.textContent='✅ Exportiert.';status.style.color='#22c55e';
+}
+
+function exportText(){
+  const von=document.getElementById('export-von').value,bis=document.getElementById('export-bis').value;
+  const status=document.getElementById('export-status');
+  const gef=eintraege.filter(e=>{const d=e.datum?e.datum.slice(0,10):'';return(!von||d>=von)&&(!bis||d<=bis);});
+  if(!gef.length){status.textContent='⚠️ Keine Einträge.';status.style.color='#f59e0b';return;}
+  const tage={};gef.forEach(e=>{const d=e.datum.slice(0,10);if(!tage[d])tage[d]=[];tage[d].push(e);});
+  const zeilen=[];
+  Object.keys(tage).sort().forEach(datum=>{
+    zeilen.push(datum.replace(/-/g,''));  // 20260511
+    tage[datum].forEach(e=>{if(e.lebensmittel)zeilen.push(e.lebensmittel);});
+    zeilen.push('');  // Leerzeile zwischen Tagen
+  });
+  const blob=new Blob([zeilen.join('\n')],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download='ernaehrung'+(von?'_'+von:'')+(bis?'_bis_'+bis:'')+'.txt';
+  a.click();URL.revokeObjectURL(url);
+  status.textContent='✅ Text exportiert.';status.style.color='#22c55e';
 }
 
 function handleImportDrop(ev){
