@@ -199,21 +199,28 @@ const MASS={
   'handvoll':30,
   'portion':150,'portionen':150,
   'prise':1,'prisen':1,
+  'schuss':25,'schüsse':25,
+  'stück':100,'stücke':100,
 };
 
 function parseFood(text){
-  // Artikel entfernen: "ein/eine/einen/einer Espresso" → "Espresso"
-  // Verhindert auch, dass "ein Espresso" die DB-Suche auf "Ei" trifft
+  // Bruchteile → Dezimalzahl: "halbe Orange" → "0.5 Orange", "viertel Torte" → "0.25 Torte"
+  text=text.replace(/^(halb[e]?[snr]?)\s+/i,'0.5 ');
+  text=text.replace(/^viertel\s+/i,'0.25 ');
+  // Zahlwörter → Ziffern: "drei Kekse" → "3 Kekse", "fünf Cashewkerne" → "5 Cashewkerne"
+  const ZAHL={zwei:2,drei:3,vier:4,fünf:5,sechs:6,sieben:7,acht:8,neun:9,zehn:10,zwölf:12};
+  text=text.replace(/^(zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|zwölf)\s+/i,(_,w)=>ZAHL[w.toLowerCase()]+' ');
+  // Artikel entfernen: "ein/eine/einen/der/die/das" → ""
   text=text.replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/i,'');
-  // "2 Esslöffel Joghurt" / "1 Tasse Milch" / "3 TL Hanfsamen"
-  const mMass=text.match(/^(\d+(?:[.,]\d+)?)\s+(teelöffel|esslöffel|tl|el|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|portion(?:en)?|prise[n]?)\s+(.+)$/i);
+  // "2 Esslöffel Joghurt" / "3 gehäufte EL Haferflocken" / "1 Schuss Milch"
+  const mMass=text.match(/^(\d+(?:[.,]\d+)?)\s+(?:gehäufte?|gestrichene?|große?|kleine?|gute?)?\s*(teelöffel|esslöffel|tl|el|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|portion(?:en)?|prise[n]?|schüsse?|stücke?)\s+(.+)$/i);
   if(mMass){
     const anzahl=parseFloat(mMass[1].replace(',','.'));
     const gramsProEinheit=MASS[mMass[2].toLowerCase()]||15;
     return{name:mMass[3].trim(),grams:anzahl*gramsProEinheit};
   }
   // "Joghurt 2 Esslöffel" (Name zuerst, Maßeinheit hinten)
-  const mMassHinten=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s+(teelöffel|esslöffel|tl|el|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|portion(?:en)?|prise[n]?)$/i);
+  const mMassHinten=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s+(teelöffel|esslöffel|tl|el|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|portion(?:en)?|prise[n]?|schüsse?|stücke?)$/i);
   if(mMassHinten){
     const anzahl=parseFloat(mMassHinten[2].replace(',','.'));
     const gramsProEinheit=MASS[mMassHinten[3].toLowerCase()]||15;
@@ -226,6 +233,12 @@ function parseFood(text){
     const unit=mVorne[2].toLowerCase();
     if(unit==='kg'||unit==='l')grams*=1000;
     return{name:mVorne[3].trim(),grams};
+  }
+  // "3 Maiswaffeln" / "5 Cashewkerne" / "0.5 Apfel" (Anzahl ohne Maßeinheit)
+  const mAnzahl=text.match(/^(\d+(?:[.,]\d+)?)\s+([^\d].+)$/i);
+  if(mAnzahl){
+    const n=parseFloat(mAnzahl[1].replace(',','.'));
+    return{name:mAnzahl[2].trim(),grams:Math.round(n*100)};
   }
   // "Joghurt 150g" (Name zuerst)
   const mHinten=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|gramm|gram)?$/i);
