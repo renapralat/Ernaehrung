@@ -133,15 +133,17 @@ const DB = [
   { n:"Weiße Bohnen",       k:124, e: 8.7, z: 0.5, kh:22.1 },
 
   // ── NÜSSE & SAMEN ─────────────────────────────────────────────────────────
-  { n:"Cashews",            k:553, e:18.2, z: 5.9, kh:30.2 },
-  { n:"Chiasamen",          k:486, e:16.5, z: 0.0, kh:42.1 },
-  { n:"Erdnüsse",           k:567, e:25.8, z: 4.0, kh:16.1 },
-  { n:"Erdnussbutter",      k:588, e:25.0, z: 6.0, kh:21.0 },
-  { n:"Leinsamen",          k:534, e:18.3, z: 1.6, kh:28.9 },
-  { n:"Mandeln",            k:579, e:21.2, z: 4.4, kh:21.7 },
-  { n:"Sesam",              k:573, e:17.7, z: 0.4, kh:23.4 },
-  { n:"Sonnenblumenkerne",  k:584, e:20.8, z: 3.4, kh:20.0 },
-  { n:"Walnüsse",           k:654, e:15.2, z: 2.6, kh:13.7 },
+  { n:"Cashews",                  k:553, e:18.2, z: 5.9, kh:30.2 },
+  { n:"Chiasamen",                k:486, e:16.5, z: 0.0, kh:42.1 },
+  { n:"Erdnüsse",                 k:567, e:25.8, z: 4.0, kh:16.1 },
+  { n:"Erdnussbutter",            k:588, e:25.0, z: 6.0, kh:21.0 },
+  { n:"Kürbiskerne",              k:559, e:30.0, z: 6.0, kh:14.0 },
+  { n:"Kürbiskern",               k: 28, e: 1.5, z: 0.3, kh: 0.7 },   // pro Stück (~5g)
+  { n:"Leinsamen",                k:534, e:18.3, z: 1.6, kh:28.9 },
+  { n:"Mandeln",                  k:579, e:21.2, z: 4.4, kh:21.7 },
+  { n:"Sesam",                    k:573, e:17.7, z: 0.4, kh:23.4 },
+  { n:"Sonnenblumenkerne",        k:584, e:20.8, z: 3.4, kh:20.0 },
+  { n:"Walnüsse",                 k:654, e:15.2, z: 2.6, kh:13.7 },
 
   // ── GETRÄNKE ──────────────────────────────────────────────────────────────
   { n:"Apfelsaft",                k: 46, e: 0.1, z: 9.9, kh:11.0 },
@@ -206,6 +208,10 @@ const DB = [
   { n:"Kaper",                    k:  1, e: 0.1, z: 0.0, kh: 0.1 },   // pro Stück
   { n:"Mispel",                   k: 47, e: 0.4, z: 5.7, kh:12.0 },   // pro 100g (~30g/Stück)
   { n:"Japanische Erdnussbälle",  k:510, e:20.0, z: 3.0, kh:60.0 },
+  { n:"Cranberry getrocknet",     k:308, e: 0.1, z:65.0, kh:75.0 },   // ⚠ viel Zucker
+  { n:"Cranberry",                k: 46, e: 0.4, z: 4.0, kh:12.0 },   // frisch
+  { n:"Drachenfrucht getrocknet", k:270, e: 3.0, z:60.0, kh:65.0 },   // ⚠ viel Zucker
+  { n:"Drachenfrucht",            k: 60, e: 1.2, z: 8.0, kh:13.0 },   // frisch
 
   // ── GEMÜSEGERICHTE & FERTIGGERICHTE ──────────────────────────────────────
   { n:"Wurzelgemüse",             k: 40, e: 0.7, z: 3.5, kh: 9.0 },
@@ -224,7 +230,12 @@ const DB = [
   { n:"Lady Steak",               k:280, e:35.0, z: 0.0, kh: 0.0 },
   { n:"Pommes Gaststätte",        k:530, e: 7.0, z: 0.0, kh:70.0 },
   { n:"Pommes frites",            k:312, e: 3.4, z: 0.3, kh:41.0 },   // pro 100g
+  { n:"Bratkartoffeln",           k:180, e: 2.5, z: 0.3, kh:23.0 },   // pro 100g
+  { n:"Portion Bratkartoffeln",   k:450, e: 6.0, z: 0.8, kh:58.0 },   // ~250g Portion
   { n:"Nudeln Gaststätte",        k:550, e:18.0, z: 0.0, kh:85.0 },   // große Portion
+  { n:"Gemüsesuppe",              k: 40, e: 1.5, z: 2.0, kh: 6.0 },   // pro 100ml
+  { n:"Gemüsesuppe Gaststätte",   k:120, e: 4.0, z: 3.0, kh:16.0 },   // Teller ~300ml
+  { n:"belegtes Brötchen",        k:280, e:12.0, z: 2.0, kh:35.0 },   // ganzes Brötchen belegt
   { n:"Windbeutel",               k:320, e: 5.0, z: 8.0, kh:30.0 },   // pro Stück
   { n:"Rühreier",                 k:230, e:13.0, z: 0.5, kh: 1.0 },   // 2 Eier mit Butter/Zwiebel
 
