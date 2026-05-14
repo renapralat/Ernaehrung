@@ -182,7 +182,7 @@ function addFood(){
     if(m){foods=foods.filter(f=>f.toLowerCase()!==m[1].trim().toLowerCase());foods.push(m[2].trim());}
     else foods.push(t);
   });
-  inp.value='';renderFoodList();
+  inp.value='';gesprochenText='';renderFoodList();
   document.getElementById('result-box').classList.remove('show');pendingResult=null;
 }
 function removeFood(i){foods.splice(i,1);renderFoodList();}
@@ -343,7 +343,7 @@ async function speichernEintrag(){
   }catch(e){alert('Speichern fehlgeschlagen: '+e.message);}
 }
 
-function resetForm(b){foods=[];pendingRows=[];renderFoodList();document.getElementById('result-box').classList.remove('show');if(!b)document.getElementById('lebensmittel-input').value='';}
+function resetForm(b){foods=[];pendingRows=[];renderFoodList();document.getElementById('result-box').classList.remove('show');if(!b){document.getElementById('lebensmittel-input').value='';gesprochenText='';}}
 
 function aktualisiereTagesSumme(datum){
   datum=datum||document.getElementById('datum').value;
