@@ -58,6 +58,7 @@ button{border:none;border-radius:8px;padding:0.6rem 1rem;font-family:inherit;fon
 .csv-row input[type="date"]{width:auto;flex:1;min-width:120px;margin:0;}
 #mikro-btn.aktiv{background:#ef4444!important;color:#fff!important;border:2px solid #fca5a5;animation:mikropuls 1s ease-in-out infinite;}
 @keyframes mikropuls{0%,100%{opacity:1;}50%{opacity:0.6;}}
+#ki-token-input{font-family:monospace;font-size:0.8rem;}
 </style>
 </head>
 <body>
@@ -75,7 +76,7 @@ button{border:none;border-radius:8px;padding:0.6rem 1rem;font-family:inherit;fon
   </div>
   <div class="header">
     <div class="title">🍽️ Ernährungsprotokoll</div>
-    <div class="subtitle">Nährwerterfassung via Open Food Facts</div>
+    <div class="subtitle">Nährwerterfassung via lokale DB · Open Food Facts · KI</div>
     <div id="cloud-status"><span class="dot warn" id="dot"></span><span id="cloud-text">Verbinde…</span></div>
   </div>
 
@@ -141,6 +142,27 @@ button{border:none;border-radius:8px;padding:0.6rem 1rem;font-family:inherit;fon
     </div>
     <input type="file" id="import-file" accept=".csv" style="display:none" onchange="importCSV(this.files[0])">
     <div class="status-msg" id="import-status"></div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+      <div class="card-title" style="margin-bottom:0">🤖 KI-Analyse</div>
+      <span id="ki-badge" class="dot warn"></span>
+    </div>
+    <div id="ki-status-text" style="font-size:0.75rem;color:#f59e0b;margin-bottom:0.75rem">Kein Token – nur lokale DB + Open Food Facts</div>
+    <div id="ki-token-form" style="display:none">
+      <label>GitHub Personal Access Token</label>
+      <div class="row" style="margin-bottom:0.5rem">
+        <input type="password" id="ki-token-input" placeholder="github_pat_…" style="margin-bottom:0"/>
+        <button class="btn-primary" onclick="saveToken()">Speichern</button>
+        <button class="btn-ghost" onclick="deleteToken()">Löschen</button>
+      </div>
+      <div style="font-size:0.72rem;color:#64748b;margin-bottom:0.75rem">
+        GitHub-Konto → Einstellungen → Developer settings → Personal access tokens (Classic) → Generate new token.
+        Keine Berechtigungen nötig. Wird nur auf diesem Gerät gespeichert.
+      </div>
+    </div>
+    <button class="btn-ghost" style="width:100%;font-size:0.8rem" onclick="toggleTokenForm()">⚙️ Token verwalten</button>
   </div>
 </div>
 
@@ -305,15 +327,45 @@ function calcNutrients(nutriments,grams){
   };
 }
 
+async function callGithubKI(name){
+  const token=loadToken();
+  if(!token)return null;
+  try{
+    const r=await fetch('https://models.inference.ai.azure.com/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({
+        model:'gpt-4o-mini',
+        messages:[{role:'user',content:'Nährwerte pro 100g für "'+name+'"? Antworte NUR mit JSON: {"kcal":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0} Nur Zahlen, keine Einheiten.'}],
+        temperature:0.1,
+        max_tokens:80
+      })
+    });
+    if(!r.ok)return null;
+    const d=await r.json();
+    const text=d.choices?.[0]?.message?.content||'';
+    const m=text.match(/\{[^}]+\}/);
+    if(!m)return null;
+    const ki=JSON.parse(m[0]);
+    return{'energy-kcal_100g':+ki.kcal||0,'proteins_100g':+ki.eiweiss||0,'sugars_100g':+ki.zucker||0,'carbohydrates_100g':+ki.kohlenhydrate||0};
+  }catch(e){return null;}
+}
+
 async function analyzeAndShow(){
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
-  const btn=document.getElementById('analyze-btn');btn.textContent='⏳ Suche…';btn.disabled=true;
+  const btn=document.getElementById('analyze-btn');btn.disabled=true;
   try{
     pendingRows=[];
-    const nichtGefunden=[];
+    const nichtGefunden=[],kiGeschaetzt=[];
     for(const food of foods){
       const{name,grams}=parseFood(food);
-      const n=await searchOpenFoodFacts(name);
+      btn.textContent='⏳ Suche: '+name+'…';
+      let n=await searchOpenFoodFacts(name);
+      if(!n){
+        btn.textContent='🤖 KI: '+name+'…';
+        n=await callGithubKI(name);
+        if(n)kiGeschaetzt.push(name);
+      }
       const f=grams/100;
       if(n){
         pendingRows.push({lebensmittel:food,kalorien:Math.round((+n['energy-kcal_100g']||0)*f),eiweiss:+((+n['proteins_100g']||0)*f).toFixed(1),zucker:+((+n['sugars_100g']||0)*f).toFixed(1),kohlenhydrate:+((+n['carbohydrates_100g']||0)*f).toFixed(1)});
@@ -326,7 +378,10 @@ async function analyzeAndShow(){
       '<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th style="text-align:right">Zucker</th><th style="text-align:right">KH</th></tr></thead><tbody>'
       +pendingRows.map(r=>`<tr><td>${r.lebensmittel}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td></tr>`).join('')
       +'</tbody></table>';
-    document.getElementById('result-nf').textContent=nichtGefunden.length?'⚠️ Nicht gefunden (0 kcal): '+nichtGefunden.join(', '):'';
+    let hinweis='';
+    if(kiGeschaetzt.length)hinweis+='🤖 KI-Schätzung: '+kiGeschaetzt.join(', ')+' – bitte prüfen. ';
+    if(nichtGefunden.length)hinweis+='⚠️ Nicht gefunden (0 kcal): '+nichtGefunden.join(', ');
+    document.getElementById('result-nf').textContent=hinweis.trim();
     document.getElementById('result-box').classList.add('show');
   }catch(e){alert('Fehler: '+e.message);}
   finally{btn.textContent='📊 Nährwerte ermitteln';btn.disabled=false;}
@@ -554,12 +609,46 @@ function clearSuche(){
   renderEintraege();
 }
 
+function loadToken(){return localStorage.getItem('github_ki_token')||'';}
+function saveToken(){
+  const t=document.getElementById('ki-token-input').value.trim();
+  if(!t){alert('Bitte Token eingeben.');return;}
+  localStorage.setItem('github_ki_token',t);
+  document.getElementById('ki-token-input').value='';
+  updateKiStatus();
+  document.getElementById('ki-token-form').style.display='none';
+}
+function deleteToken(){
+  localStorage.removeItem('github_ki_token');
+  document.getElementById('ki-token-input').value='';
+  updateKiStatus();
+}
+function toggleTokenForm(){
+  const f=document.getElementById('ki-token-form');
+  f.style.display=f.style.display==='none'?'block':'none';
+}
+function updateKiStatus(){
+  const t=loadToken();
+  const badge=document.getElementById('ki-badge');
+  const txt=document.getElementById('ki-status-text');
+  if(t){
+    badge.className='dot ok';
+    txt.textContent='KI-Analyse aktiv – unbekannte Lebensmittel werden automatisch per KI geschätzt.';
+    txt.style.color='#22c55e';
+  }else{
+    badge.className='dot warn';
+    txt.textContent='Kein Token – nur lokale DB + Open Food Facts.';
+    txt.style.color='#f59e0b';
+  }
+}
+
 async function init(){
   const heute=heuteStr();
   document.getElementById('datum').value=heute;
   document.getElementById('datum').max=heute;
   document.getElementById('export-von').value=heute.slice(0,8)+'01';
   document.getElementById('export-bis').value=heute;
+  updateKiStatus();
   await laden();
 }
 init();
