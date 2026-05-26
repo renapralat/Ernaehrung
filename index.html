@@ -56,11 +56,24 @@ button{border:none;border-radius:8px;padding:0.6rem 1rem;font-family:inherit;fon
 .csv-row{display:flex;gap:0.5rem;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;}
 .csv-row label{margin:0;white-space:nowrap;}
 .csv-row input[type="date"]{width:auto;flex:1;min-width:120px;margin:0;}
+#mikro-btn.aktiv{background:#ef4444!important;color:#fff!important;border:2px solid #fca5a5;animation:mikropuls 1s ease-in-out infinite;}
+@keyframes mikropuls{0%,100%{opacity:1;}50%{opacity:0.6;}}
 #ki-token-input{font-family:monospace;font-size:0.8rem;}
 </style>
 </head>
 <body>
 <div class="container">
+  <div id="heute-banner" style="display:none;position:sticky;top:0;z-index:10;background:rgba(15,23,42,0.96);border-bottom:1px solid #1e3a5f;padding:0.5rem 0;margin-bottom:1rem;backdrop-filter:blur(8px);">
+    <div style="max-width:720px;margin:0 auto;padding:0 1rem">
+      <div style="font-size:0.65rem;color:#64748b;margin-bottom:2px">Heute gesamt</div>
+      <div style="display:flex;gap:1.2rem">
+        <span><span id="banner-kcal" style="font-size:1.1rem;font-weight:700;color:#f59e0b">0</span><span style="font-size:0.7rem;color:#64748b"> kcal</span></span>
+        <span><span id="banner-eiweiss" style="font-size:1.1rem;font-weight:700;color:#22c55e">0</span><span style="font-size:0.7rem;color:#64748b">g Eiweiß</span></span>
+        <span><span id="banner-zucker" style="font-size:1.1rem;font-weight:700;color:#ec4899">0</span><span style="font-size:0.7rem;color:#64748b">g Zucker</span></span>
+        <span><span id="banner-kh" style="font-size:1.1rem;font-weight:700;color:#3b82f6">0</span><span style="font-size:0.7rem;color:#64748b">g KH</span></span>
+      </div>
+    </div>
+  </div>
   <div class="header">
     <div class="title">🍽️ Ernährungsprotokoll</div>
     <div class="subtitle">Nährwerterfassung via lokale DB · Open Food Facts · KI</div>
@@ -77,16 +90,18 @@ button{border:none;border-radius:8px;padding:0.6rem 1rem;font-family:inherit;fon
     <input type="date" id="datum"/>
     <label>Lebensmittel</label>
     <div class="row">
-      <input type="text" id="lebensmittel-input" placeholder="z.B. Haferflocken 50g, Kaffee" onkeydown="if(event.key==='Enter')addFood()"/>
+      <input type="text" id="lebensmittel-input" placeholder="z.B. Joghurt, 150g Lachs, Haferflocken 50g" onkeydown="if(event.key==='Enter')addFood()"/>
+      <button class="btn-ghost" onclick="clearLebensmittelInput()" title="Löschen">✕</button>
+      <button id="mikro-btn" class="btn-ghost" onclick="toggleMikro()" title="Spracheingabe">🎤</button>
       <button class="btn-ghost" onclick="addFood()">➕</button>
     </div>
     <ul class="food-list" id="food-list"></ul>
     <button class="btn-primary" id="analyze-btn" onclick="analyzeAndShow()" style="width:100%">📊 Nährwerte ermitteln</button>
     <div class="result-box" id="result-box">
-      <div style="font-size:0.8rem;color:#94a3b8;margin-bottom:0.5rem">Datenbank-Analyse</div>
-      <div id="result-text" style="font-size:0.85rem;color:#cbd5e1;margin-bottom:0.75rem"></div>
-      <div class="result-grid" id="result-grid"></div>
-      <div style="display:flex;gap:0.5rem;margin-top:0.5rem">
+      <div style="font-size:0.8rem;font-weight:700;color:#10b981;margin-bottom:0.5rem">✅ Analysiert – bitte prüfen:</div>
+      <div style="overflow-x:auto;margin-bottom:0.5rem" id="result-table-wrap"></div>
+      <div id="result-nf" style="font-size:0.75rem;color:#f59e0b;margin-bottom:0.5rem"></div>
+      <div style="display:flex;gap:0.5rem">
         <button class="btn-success" style="flex:1" onclick="speichernEintrag()">💾 Speichern</button>
         <button class="btn-ghost" style="flex:1" onclick="resetForm()">↩️ Zurück</button>
       </div>
@@ -99,21 +114,34 @@ button{border:none;border-radius:8px;padding:0.6rem 1rem;font-family:inherit;fon
 
   <div class="card">
     <div class="card-title">📋 Einträge</div>
-    <div class="search-box">
-      <span class="search-icon">🔍</span>
-      <input type="text" id="suche" style="padding-left:2rem" placeholder="Suche (Ei, Ei*, *ei)" oninput="renderEintraege()"/>
+    <div class="row" style="margin-bottom:0.5rem">
+      <div class="search-box" style="margin-bottom:0">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="suche" style="padding-left:2rem;margin-bottom:0" placeholder="Suche (Ei, Ei*, *ei)" oninput="renderEintraege()"/>
+      </div>
+      <button class="btn-ghost" onclick="clearSuche()" title="Suche löschen">✕</button>
     </div>
     <div id="eintraege-container"><div class="empty-hint">Lädt…</div></div>
   </div>
 
   <div class="card">
-    <div class="card-title">📤 CSV-Export</div>
+    <div class="card-title">📤 CSV-Export / 📥 Import</div>
     <div class="csv-row">
       <label>Von</label><input type="date" id="export-von"/>
       <label>Bis</label><input type="date" id="export-bis"/>
-      <button class="btn-primary" onclick="exportCSV()">⬇️ Export</button>
+      <button class="btn-primary" onclick="exportCSV()">⬇️ CSV</button>
+      <button class="btn-ghost" onclick="exportText()">📄 Text</button>
     </div>
     <div class="status-msg" id="export-status"></div>
+    <div id="import-drop" style="border:2px dashed #334155;border-radius:8px;padding:1.25rem;text-align:center;color:#64748b;font-size:0.85rem;cursor:pointer;margin-top:0.75rem"
+      ondragover="event.preventDefault();this.style.borderColor='#3b82f6'"
+      ondragleave="this.style.borderColor='#334155'"
+      ondrop="handleImportDrop(event)"
+      onclick="document.getElementById('import-file').click()">
+      📂 CSV importieren – hier klicken oder Datei hierher ziehen
+    </div>
+    <input type="file" id="import-file" accept=".csv" style="display:none" onchange="importCSV(this.files[0])">
+    <div class="status-msg" id="import-status"></div>
   </div>
 
   <div class="card">
@@ -138,12 +166,13 @@ button{border:none;border-radius:8px;padding:0.6rem 1rem;font-family:inherit;fon
   </div>
 </div>
 
+<script src="lebensmittel.js"></script>
 <script>
 const URL_BASE = 'https://bxwamphvycjfeexjzgyv.supabase.co/rest/v1/ernaehrung';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4d2FtcGh2eWNqZmVleGp6Z3l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MjI1NjQsImV4cCI6MjA5MzM5ODU2NH0.LMEz3yuh8GmIZ6PfkTxer1yrAYpspNJOBPKTIV7T3qQ';
 const H = {'Content-Type':'application/json','apikey':KEY,'Authorization':'Bearer '+KEY,'Prefer':'return=representation'};
 
-let eintraege=[], foods=[], modus='erfassen', pendingResult=null;
+let eintraege=[], foods=[], modus='erfassen', pendingRows=[];
 
 function setStatus(t,txt){document.getElementById('dot').className='dot '+t;document.getElementById('cloud-text').textContent=txt;}
 function heuteStr(){return new Date().toISOString().slice(0,10);}
@@ -162,36 +191,129 @@ async function laden(){
 
 function setModus(m){modus=m;document.getElementById('btn-erfassen').classList.toggle('active',m==='erfassen');document.getElementById('btn-loeschen').classList.toggle('active',m==='loeschen');}
 
+function teileEingabe(val){
+  // Trennwörter: splitten die Eingabe in einzelne Lebensmittel
+  const teile=val.split(/\s+(?:und|mit|sowie|außerdem|plus|an)\s+|[,&]\s*/i);
+  // Füllwörter: werden aus jedem Teil entfernt
+  const fuell=/\b(?:dazu|noch|auch|bitte|etwas|mal|dann|je|jeweils|einfach|noch dazu)\b\s*/gi;
+  return teile.map(s=>s.replace(fuell,'').replace(/\s+/g,' ').trim()).filter(Boolean);
+}
+
 function addFood(){
   const inp=document.getElementById('lebensmittel-input');
   const val=inp.value.trim();if(!val)return;
-  const m=val.match(/^statt\s+(.+?)\s+bitte\s+(.+)$/i);
-  if(m){foods=foods.filter(f=>f.toLowerCase()!==m[1].trim().toLowerCase());foods.push(m[2].trim());}
-  else foods.push(val);
-  inp.value='';renderFoodList();
+  const teile=teileEingabe(val);
+  teile.forEach(t=>{
+    const m=t.match(/^statt\s+(.+?)\s+bitte\s+(.+)$/i);
+    if(m){foods=foods.filter(f=>f.toLowerCase()!==m[1].trim().toLowerCase());foods.push(m[2].trim());}
+    else foods.push(t);
+  });
+  inp.value='';gesprochenText='';renderFoodList();
   document.getElementById('result-box').classList.remove('show');pendingResult=null;
 }
 function removeFood(i){foods.splice(i,1);renderFoodList();}
 function renderFoodList(){document.getElementById('food-list').innerHTML=foods.map((f,i)=>`<li class="food-item"><span>${f}</span><button class="btn-icon" onclick="removeFood(${i})">✕</button></li>`).join('');}
 
+const MASS={
+  'teelöffel':5,'tl':5,
+  'esslöffel':15,'el':15,
+  'tasse':200,'tassen':200,
+  'kelle':150,'kellen':150,
+  'glas':200,'gläser':200,
+  'becher':200,
+  'scheibe':30,'scheiben':30,
+  'handvoll':30,
+  'portion':150,'portionen':150,
+  'prise':1,'prisen':1,
+  'schuss':25,'schüsse':25,
+  'stück':100,'stücke':100,
+};
+
 function parseFood(text){
-  const m=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|st[uü]ck|stk\.?)?$/i);
-  if(m){
-    const name=m[1].trim();
-    let grams=parseFloat(m[2].replace(',','.'));
-    const unit=(m[3]||'g').toLowerCase();
-    if(unit==='kg')grams*=1000;
-    if(unit==='l')grams*=1000;
-    return{name,grams};
+  // Bruchteile → Dezimalzahl: "halbe Orange" → "0.5 Orange", "viertel Torte" → "0.25 Torte"
+  text=text.replace(/^(halb[e]?[snr]?)\s+/i,'0.5 ');
+  text=text.replace(/^viertel\s+/i,'0.25 ');
+  // Zahlwörter → Ziffern: "drei Kekse" → "3 Kekse", "fünf Cashewkerne" → "5 Cashewkerne"
+  const ZAHL={zwei:2,drei:3,vier:4,fünf:5,sechs:6,sieben:7,acht:8,neun:9,zehn:10,zwölf:12};
+  text=text.replace(/^(zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|zwölf)\s+/i,(_,w)=>ZAHL[w.toLowerCase()]+' ');
+  // Artikel entfernen: "ein/eine/einen/der/die/das" → ""
+  text=text.replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/i,'');
+  // "2 Esslöffel Joghurt" / "3 gehäufte EL Haferflocken" / "1 Schuss Milch"
+  const mMass=text.match(/^(\d+(?:[.,]\d+)?)\s+(?:gehäufte?|gestrichene?|große?|kleine?|gute?)?\s*(teelöffel|esslöffel|tl|el|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|portion(?:en)?|prise[n]?|schüsse?|stücke?)\s+(.+)$/i);
+  if(mMass){
+    const anzahl=parseFloat(mMass[1].replace(',','.'));
+    const gramsProEinheit=MASS[mMass[2].toLowerCase()]||15;
+    return{name:mMass[3].trim(),grams:anzahl*gramsProEinheit};
   }
+  // "Joghurt 2 Esslöffel" (Name zuerst, Maßeinheit hinten)
+  const mMassHinten=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s+(teelöffel|esslöffel|tl|el|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|portion(?:en)?|prise[n]?|schüsse?|stücke?)$/i);
+  if(mMassHinten){
+    const anzahl=parseFloat(mMassHinten[2].replace(',','.'));
+    const gramsProEinheit=MASS[mMassHinten[3].toLowerCase()]||15;
+    return{name:mMassHinten[1].trim(),grams:anzahl*gramsProEinheit};
+  }
+  // "150g Joghurt" / "150 Gramm Joghurt" (Zahl zuerst)
+  const mVorne=text.match(/^(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|gramm|gram)\s+(.+)$/i);
+  if(mVorne){
+    let grams=parseFloat(mVorne[1].replace(',','.'));
+    const unit=mVorne[2].toLowerCase();
+    if(unit==='kg'||unit==='l')grams*=1000;
+    return{name:mVorne[3].trim(),grams};
+  }
+  // "3 Maiswaffeln" / "5 Cashewkerne" / "0.5 Apfel" (Anzahl ohne Maßeinheit)
+  const mAnzahl=text.match(/^(\d+(?:[.,]\d+)?)\s+([^\d].+)$/i);
+  if(mAnzahl){
+    const n=parseFloat(mAnzahl[1].replace(',','.'));
+    return{name:mAnzahl[2].trim(),grams:Math.round(n*100)};
+  }
+  // "Joghurt 150g" (Name zuerst)
+  const mHinten=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|gramm|gram)?$/i);
+  if(mHinten&&mHinten[2]){
+    let grams=parseFloat(mHinten[2].replace(',','.'));
+    const unit=(mHinten[3]||'g').toLowerCase();
+    if(unit==='kg'||unit==='l')grams*=1000;
+    return{name:mHinten[1].trim(),grams};
+  }
+  // Nur Name → 100g Standard
   return{name:text.trim(),grams:100};
 }
 
+function sucheLokaleDB(name){
+  if(typeof DB==='undefined')return null;
+  // Artikel entfernen (Sicherheitsnetz – parseFood macht das bereits)
+  const s=name.toLowerCase().trim().replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/,'');
+  // Exakte Übereinstimmung
+  return DB.find(x=>x.n.toLowerCase()===s)
+    // Präfix (min. 4 Zeichen) – verhindert "Ei" für "ein Espresso"
+    ||DB.find(x=>{const n=x.n.toLowerCase();return n.length>=4&&(s.startsWith(n)||n.startsWith(s));})
+    // Enthält-Suche (min. 4 Zeichen) – "doppelter espresso" → "espresso"
+    ||DB.find(x=>{const n=x.n.toLowerCase();return n.length>=4&&s.includes(n);})
+    ||null;
+}
+
+async function fetchMitTimeout(url,ms){
+  const ctrl=new AbortController();
+  const t=setTimeout(()=>ctrl.abort(),ms);
+  try{const r=await fetch(url,{signal:ctrl.signal});clearTimeout(t);return r;}
+  catch(e){clearTimeout(t);throw e;}
+}
+
 async function searchOpenFoodFacts(name){
-  const url='https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(name)+'&search_simple=1&action=process&json=1&fields=product_name,nutriments&page_size=1';
-  const r=await fetch(url);
-  const d=await r.json();
-  if(d.products&&d.products.length>0&&d.products[0].nutriments)return d.products[0].nutriments;
+  const lokal=sucheLokaleDB(name);
+  if(lokal)return{'energy-kcal_100g':lokal.k,'proteins_100g':lokal.e,'sugars_100g':lokal.z,'carbohydrates_100g':lokal.kh};
+  const q='&search_simple=1&action=process&json=1&fields=product_name,nutriments&page_size=1';
+  const urlDE='https://de.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(name)+q;
+  const urlWelt='https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(name)+q;
+  try{
+    const r=await fetchMitTimeout(urlDE,5000);
+    const d=await r.json();
+    if(d.products&&d.products.length>0&&d.products[0].nutriments)return d.products[0].nutriments;
+  }catch(e){}
+  try{
+    const r=await fetchMitTimeout(urlWelt,5000);
+    const d=await r.json();
+    if(d.products&&d.products.length>0&&d.products[0].nutriments)return d.products[0].nutriments;
+  }catch(e){}
   return null;
 }
 
@@ -205,12 +327,36 @@ function calcNutrients(nutriments,grams){
   };
 }
 
+async function callGithubKI(name){
+  const token=loadToken();
+  if(!token)return null;
+  try{
+    const r=await fetch('https://models.inference.ai.azure.com/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({
+        model:'gpt-4o-mini',
+        messages:[{role:'user',content:'Nährwerte pro 100g für "'+name+'"? Antworte NUR mit JSON: {"kcal":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0} Nur Zahlen, keine Einheiten.'}],
+        temperature:0.1,
+        max_tokens:80
+      })
+    });
+    if(!r.ok)return null;
+    const d=await r.json();
+    const text=d.choices?.[0]?.message?.content||'';
+    const m=text.match(/\{[^}]+\}/);
+    if(!m)return null;
+    const ki=JSON.parse(m[0]);
+    return{'energy-kcal_100g':+ki.kcal||0,'proteins_100g':+ki.eiweiss||0,'sugars_100g':+ki.zucker||0,'carbohydrates_100g':+ki.kohlenhydrate||0};
+  }catch(e){return null;}
+}
+
 async function analyzeAndShow(){
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
   const btn=document.getElementById('analyze-btn');btn.disabled=true;
   try{
-    let kcal=0,eiweiss=0,zucker=0,kh=0;
-    const beschParts=[],kiGeschaetzt=[],nichtGefunden=[];
+    pendingRows=[];
+    const nichtGefunden=[],kiGeschaetzt=[];
     for(const food of foods){
       const{name,grams}=parseFood(food);
       btn.textContent='⏳ Suche: '+name+'…';
@@ -220,45 +366,59 @@ async function analyzeAndShow(){
         n=await callGithubKI(name);
         if(n)kiGeschaetzt.push(name);
       }
+      const f=grams/100;
       if(n){
-        const v=calcNutrients(n,grams);
-        kcal+=v.kalorien;eiweiss+=v.eiweiss;zucker+=v.zucker;kh+=v.kohlenhydrate;
-        beschParts.push(food+(kiGeschaetzt.includes(name)?' 🤖':''));
+        pendingRows.push({lebensmittel:food,kalorien:Math.round((+n['energy-kcal_100g']||0)*f),eiweiss:+((+n['proteins_100g']||0)*f).toFixed(1),zucker:+((+n['sugars_100g']||0)*f).toFixed(1),kohlenhydrate:+((+n['carbohydrates_100g']||0)*f).toFixed(1)});
       }else{
         nichtGefunden.push(food);
-        beschParts.push(food+' ⚠️');
+        pendingRows.push({lebensmittel:food,kalorien:0,eiweiss:0,zucker:0,kohlenhydrate:0});
       }
     }
+    document.getElementById('result-table-wrap').innerHTML=
+      '<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th style="text-align:right">Zucker</th><th style="text-align:right">KH</th></tr></thead><tbody>'
+      +pendingRows.map(r=>`<tr><td>${r.lebensmittel}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td></tr>`).join('')
+      +'</tbody></table>';
     let hinweis='';
-    if(kiGeschaetzt.length)hinweis+='🤖 KI-Schätzung: '+kiGeschaetzt.join(', ')+'. ';
+    if(kiGeschaetzt.length)hinweis+='🤖 KI-Schätzung: '+kiGeschaetzt.join(', ')+' – bitte prüfen. ';
     if(nichtGefunden.length)hinweis+='⚠️ Nicht gefunden (0 kcal): '+nichtGefunden.join(', ');
-    pendingResult={beschreibung:beschParts.join(', '),kalorien:kcal,eiweiss,zucker,kohlenhydrate:kh};
-    document.getElementById('result-text').textContent=pendingResult.beschreibung+(hinweis?' – '+hinweis:'');
-    document.getElementById('result-grid').innerHTML=`<div class="result-item"><div class="result-val">${Math.round(kcal)}</div><div class="result-label">kcal</div></div><div class="result-item"><div class="result-val">${eiweiss.toFixed(1)}g</div><div class="result-label">Eiweiß</div></div><div class="result-item"><div class="result-val">${zucker.toFixed(1)}g</div><div class="result-label">Zucker</div></div><div class="result-item"><div class="result-val">${kh.toFixed(1)}g</div><div class="result-label">KH</div></div>`;
+    document.getElementById('result-nf').textContent=hinweis.trim();
     document.getElementById('result-box').classList.add('show');
   }catch(e){alert('Fehler: '+e.message);}
   finally{btn.textContent='📊 Nährwerte ermitteln';btn.disabled=false;}
 }
 
 async function speichernEintrag(){
-  if(!pendingResult)return;
+  if(!pendingRows||!pendingRows.length)return;
   const datum=document.getElementById('datum').value;
   if(!datum){alert('Bitte Datum wählen.');return;}
-  const eintrag={datum,lebensmittel:foods.join(', '),kalorien:Math.round(+pendingResult.kalorien||0),eiweiss:+(+pendingResult.eiweiss||0).toFixed(1),zucker:+(+pendingResult.zucker||0).toFixed(1),kohlenhydrate:+(+pendingResult.kohlenhydrate||0).toFixed(1)};
   try{
-    const r=await fetch(URL_BASE,{method:'POST',headers:H,body:JSON.stringify(eintrag)});
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const saved=await r.json();
-    eintraege.unshift(saved[0]||eintrag);
+    for(const row of pendingRows){
+      const r=await fetch(URL_BASE,{method:'POST',headers:H,body:JSON.stringify({datum,lebensmittel:row.lebensmittel,kalorien:row.kalorien,eiweiss:row.eiweiss,zucker:row.zucker,kohlenhydrate:row.kohlenhydrate})});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const saved=await r.json();
+      eintraege.unshift(saved[0]||{datum,...row});
+    }
     aktualisiereTagesSumme(datum);renderEintraege();resetForm(true);
   }catch(e){alert('Speichern fehlgeschlagen: '+e.message);}
 }
 
-function resetForm(b){foods=[];renderFoodList();pendingResult=null;document.getElementById('result-box').classList.remove('show');if(!b)document.getElementById('lebensmittel-input').value='';}
+function resetForm(b){foods=[];pendingRows=[];renderFoodList();document.getElementById('result-box').classList.remove('show');if(!b){document.getElementById('lebensmittel-input').value='';gesprochenText='';}}
 
 function aktualisiereTagesSumme(datum){
   datum=datum||document.getElementById('datum').value;
   const box=document.getElementById('tages-summe');
+  const heute=heuteStr();
+  // Sticky-Banner immer mit heutigem Stand befüllen
+  const teHeute=eintraege.filter(e=>e.datum&&e.datum.slice(0,10)===heute);
+  const sumH=k=>teHeute.reduce((a,e)=>a+(+e[k]||0),0);
+  const banner=document.getElementById('heute-banner');
+  if(teHeute.length){
+    document.getElementById('banner-kcal').textContent=Math.round(sumH('kalorien'));
+    document.getElementById('banner-eiweiss').textContent=sumH('eiweiss').toFixed(1);
+    document.getElementById('banner-zucker').textContent=sumH('zucker').toFixed(1);
+    document.getElementById('banner-kh').textContent=sumH('kohlenhydrate').toFixed(1);
+    banner.style.display='block';
+  }else{banner.style.display='none';}
   if(!datum){box.classList.remove('show');return;}
   const te=eintraege.filter(e=>e.datum&&e.datum.slice(0,10)===datum);
   if(!te.length){box.classList.remove('show');return;}
@@ -284,7 +444,20 @@ function renderEintraege(){
     if(!gefiltert.length)return;
     irgendwas=true;
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
-    html+=`<table class="entries-table" style="margin-bottom:0.75rem;width:100%"><thead><tr class="day-header"><td colspan="4" style="padding:0.4rem 0.5rem">📅 ${fmt(datum)} <span style="font-weight:400;color:#64748b;font-size:0.75rem">${Math.round(sum('kalorien'))} kcal · ${sum('eiweiss').toFixed(1)}g Eiweiß · ${sum('zucker').toFixed(1)}g Zucker · ${sum('kohlenhydrate').toFixed(1)}g KH</span> <button class="btn-icon" onclick="deleteDay('${datum}')">🗑️</button></td></tr><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th></th></tr></thead><tbody>${gefiltert.map(e=>`<tr><td>${e.lebensmittel||''}</td><td style="text-align:right">${Math.round(+e.kalorien||0)}</td><td style="text-align:right">${(+e.eiweiss||0).toFixed(1)}g</td><td style="text-align:right"><button class="btn-icon" onclick="deleteEintrag('${e.id}','${datum}')">✕</button></td></tr>`).join('')}</tbody></table>`;
+    const kcal=Math.round(sum('kalorien')),eiw=sum('eiweiss').toFixed(1),zuk=sum('zucker').toFixed(1),kh=sum('kohlenhydrate').toFixed(1);
+    html+=`<div style="margin-bottom:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:8px 8px 0 0;padding:0.5rem 0.6rem">
+        <span style="font-weight:700;color:#93c5fd;font-size:0.85rem">📅 ${fmt(datum)}</span>
+        <button class="btn-icon" onclick="deleteDay('${datum}')">🗑️</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.25);border-top:none;padding:0.4rem 0.6rem;margin-bottom:0">
+        <div style="text-align:center"><div style="font-size:1rem;font-weight:700;color:#f59e0b">${kcal}</div><div style="font-size:0.65rem;color:#64748b">kcal</div></div>
+        <div style="text-align:center"><div style="font-size:1rem;font-weight:700;color:#22c55e">${eiw}g</div><div style="font-size:0.65rem;color:#64748b">Eiweiß</div></div>
+        <div style="text-align:center"><div style="font-size:1rem;font-weight:700;color:#ec4899">${zuk}g</div><div style="font-size:0.65rem;color:#64748b">Zucker</div></div>
+        <div style="text-align:center"><div style="font-size:1rem;font-weight:700;color:#3b82f6">${kh}g</div><div style="font-size:0.65rem;color:#64748b">KH</div></div>
+      </div>
+      <div style="overflow-x:auto"><table class="entries-table" style="width:100%;border-radius:0 0 8px 8px;overflow:hidden"><thead><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th style="text-align:right">Zucker</th><th style="text-align:right">KH</th><th></th></tr></thead><tbody>${gefiltert.map(e=>`<tr><td>${e.lebensmittel||''}</td><td style="text-align:right">${Math.round(+e.kalorien||0)}</td><td style="text-align:right">${(+e.eiweiss||0).toFixed(1)}g</td><td style="text-align:right">${(+e.zucker||0).toFixed(1)}g</td><td style="text-align:right">${(+e.kohlenhydrate||0).toFixed(1)}g</td><td style="text-align:right"><button class="btn-icon" onclick="deleteEintrag('${e.id}','${datum}')">✕</button></td></tr>`).join('')}</tbody></table></div>
+    </div>`;
   });
   container.innerHTML=irgendwas?html:'<div class="empty-hint">Keine Einträge für diese Suche.</div>';
 }
@@ -318,6 +491,124 @@ function exportCSV(){
   status.textContent='✅ Exportiert.';status.style.color='#22c55e';
 }
 
+function exportText(){
+  const von=document.getElementById('export-von').value,bis=document.getElementById('export-bis').value;
+  const status=document.getElementById('export-status');
+  const gef=eintraege.filter(e=>{const d=e.datum?e.datum.slice(0,10):'';return(!von||d>=von)&&(!bis||d<=bis);});
+  if(!gef.length){status.textContent='⚠️ Keine Einträge.';status.style.color='#f59e0b';return;}
+  const tage={};gef.forEach(e=>{const d=e.datum.slice(0,10);if(!tage[d])tage[d]=[];tage[d].push(e);});
+  const zeilen=[];
+  Object.keys(tage).sort().forEach(datum=>{
+    zeilen.push(datum.replace(/-/g,''));  // 20260511
+    tage[datum].forEach(e=>{if(e.lebensmittel)zeilen.push(e.lebensmittel);});
+    zeilen.push('');  // Leerzeile zwischen Tagen
+  });
+  const blob=new Blob([zeilen.join('\n')],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download='ernaehrung'+(von?'_'+von:'')+(bis?'_bis_'+bis:'')+'.txt';
+  a.click();URL.revokeObjectURL(url);
+  status.textContent='✅ Text exportiert.';status.style.color='#22c55e';
+}
+
+function handleImportDrop(ev){
+  ev.preventDefault();
+  document.getElementById('import-drop').style.borderColor='#334155';
+  const file=ev.dataTransfer.files[0];
+  if(file&&file.name.toLowerCase().endsWith('.csv'))importCSV(file);
+  else alert('Bitte eine CSV-Datei verwenden.');
+}
+
+async function importCSV(file){
+  if(!file)return;
+  const status=document.getElementById('import-status');
+  status.textContent='Wird geladen…';status.style.color='#94a3b8';
+  try{
+    const text=await file.text();
+    const zeilen=text.replace(/^﻿/,'').split('\n').filter(z=>z.trim());
+    let importiert=0;const neu=[];
+    for(const zeile of zeilen){
+      const t=zeile.split(';').map(s=>s.trim());
+      if(t.length<6||t[0]==='Datum'||t[1]==='GESAMT'||!t[1])continue;
+      let datum=t[0];
+      if(datum.includes('.')){const[d,m,y]=datum.split('.');datum=y+'-'+m+'-'+d;}
+      if(!datum)continue;
+      const eintrag={datum,lebensmittel:t[1],kalorien:parseFloat(t[2])||0,eiweiss:parseFloat(t[3])||0,zucker:parseFloat(t[4])||0,kohlenhydrate:parseFloat(t[5])||0};
+      const exists=eintraege.find(e=>e.datum&&e.datum.slice(0,10)===datum&&e.lebensmittel===eintrag.lebensmittel&&Math.round(e.kalorien)===Math.round(eintrag.kalorien));
+      if(!exists){
+        const r=await fetch(URL_BASE,{method:'POST',headers:H,body:JSON.stringify(eintrag)});
+        if(r.ok){const saved=await r.json();neu.push(saved[0]||eintrag);importiert++;}
+      }
+    }
+    eintraege=[...neu,...eintraege];
+    if(importiert>0){renderEintraege();aktualisiereTagesSumme();status.textContent='✅ '+importiert+' Einträge importiert.';status.style.color='#22c55e';}
+    else{status.textContent='ℹ️ Keine neuen Einträge gefunden.';status.style.color='#f59e0b';}
+  }catch(e){status.textContent='❌ Fehler: '+e.message;status.style.color='#ef4444';}
+  document.getElementById('import-file').value='';
+}
+
+let erkennung=null,mikroAktiv=false,gesprochenText='';
+function initSpeech(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Spracheingabe nicht verfügbar. Bitte Chrome oder Edge verwenden.');return null;}
+  const r=new SR();
+  r.lang='de-DE';
+  r.continuous=false;   // Einzelerkennung – auf Android zuverlässiger
+  r.interimResults=true;
+  r.onresult=function(ev){
+    const inp=document.getElementById('lebensmittel-input');
+    let interim='',final='';
+    for(let i=ev.resultIndex;i<ev.results.length;i++){
+      const t=ev.results[i][0].transcript;
+      if(ev.results[i].isFinal)final+=t; else interim+=t;
+    }
+    inp.value=(gesprochenText+(interim?' '+interim:'')).trim();
+    if(final){
+      if(/\bstopp?\b/i.test(final)){
+        gesprochenText=(gesprochenText+' '+final.replace(/\s*\bstopp?\b\s*/gi,' ').trim()).trim();
+        inp.value=gesprochenText;
+        stopMikro();addFood();return;
+      }
+      gesprochenText=(gesprochenText+' '+final).trim();
+      inp.value=gesprochenText;
+    }
+  };
+  r.onerror=function(e){
+    if(e.error==='no-speech')return;  // Stille = kein Fehler, einfach neu starten
+    if(e.error==='not-allowed'){stopMikro();return;}
+    console.warn('Sprache:',e.error);
+  };
+  r.onend=function(){
+    if(mikroAktiv){
+      setTimeout(()=>{if(mikroAktiv){erkennung=initSpeech();if(erkennung)try{erkennung.start();}catch(e){}}},100);
+    }
+  };
+  return r;
+}
+function startMikro(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Spracheingabe nicht verfügbar. Bitte Chrome oder Edge verwenden.');return;}
+  gesprochenText=document.getElementById('lebensmittel-input').value.trim();
+  mikroAktiv=true;
+  document.getElementById('mikro-btn').classList.add('aktiv');
+  erkennung=initSpeech();
+  if(erkennung)try{erkennung.start();}catch(e){}
+}
+function stopMikro(){
+  mikroAktiv=false;
+  document.getElementById('mikro-btn').classList.remove('aktiv');
+  if(erkennung){try{erkennung.stop();}catch(e){} erkennung=null;}
+}
+function toggleMikro(){if(mikroAktiv)stopMikro();else startMikro();}
+
+function clearLebensmittelInput(){
+  document.getElementById('lebensmittel-input').value='';
+  gesprochenText='';
+}
+function clearSuche(){
+  document.getElementById('suche').value='';
+  renderEintraege();
+}
+
 function loadToken(){return localStorage.getItem('github_ki_token')||'';}
 function saveToken(){
   const t=document.getElementById('ki-token-input').value.trim();
@@ -349,30 +640,6 @@ function updateKiStatus(){
     txt.textContent='Kein Token – nur lokale DB + Open Food Facts.';
     txt.style.color='#f59e0b';
   }
-}
-
-async function callGithubKI(name){
-  const token=loadToken();
-  if(!token)return null;
-  try{
-    const r=await fetch('https://models.inference.ai.azure.com/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body:JSON.stringify({
-        model:'gpt-4o-mini',
-        messages:[{role:'user',content:'Nährwerte pro 100g für "'+name+'"? Antworte NUR mit JSON: {"kcal":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0} Nur Zahlen, keine Einheiten.'}],
-        temperature:0.1,
-        max_tokens:80
-      })
-    });
-    if(!r.ok)return null;
-    const d=await r.json();
-    const text=d.choices?.[0]?.message?.content||'';
-    const m=text.match(/\{[^}]+\}/);
-    if(!m)return null;
-    const ki=JSON.parse(m[0]);
-    return{'energy-kcal_100g':+ki.kcal||0,'proteins_100g':+ki.eiweiss||0,'sugars_100g':+ki.zucker||0,'carbohydrates_100g':+ki.kohlenhydrate||0};
-  }catch(e){return null;}
 }
 
 async function init(){
