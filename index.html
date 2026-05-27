@@ -539,11 +539,20 @@ function renderEintraege(){
         <div style="text-align:center"><div style="font-size:0.95rem;font-weight:700;color:#3b82f6">${kh}g</div><div style="font-size:0.62rem;color:#64748b">KH</div></div>
       </div>
       <div style="overflow-x:auto"><table class="entries-table" style="width:100%;border-radius:0 0 8px 8px;overflow:hidden"><thead><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th style="text-align:right">Zucker</th><th style="text-align:right">KH</th><th></th></tr></thead><tbody>
-      ${gefiltert.map(e=>`<tr><td>${e.lebensmittel||''}</td><td style="text-align:right">${Math.round(+e.kalorien||0)}</td><td style="text-align:right">${(+e.eiweiss||0).toFixed(1)}g</td><td style="text-align:right">${(+e.zucker||0).toFixed(1)}g</td><td style="text-align:right">${(+e.kohlenhydrate||0).toFixed(1)}g</td><td style="text-align:right"><button class="btn-food btn-food-del" onclick="deleteEintrag('${e.id}','${datum}')">✕</button></td></tr>`).join('')}
+      ${gefiltert.map(e=>{const lmEsc=(e.lebensmittel||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");return `<tr><td>${e.lebensmittel||''}</td><td style="text-align:right">${Math.round(+e.kalorien||0)}</td><td style="text-align:right">${(+e.eiweiss||0).toFixed(1)}g</td><td style="text-align:right">${(+e.zucker||0).toFixed(1)}g</td><td style="text-align:right">${(+e.kohlenhydrate||0).toFixed(1)}g</td><td style="text-align:right;white-space:nowrap"><button class="btn-food btn-food-edit" onclick="wiederholenEintrag('${lmEsc}')" title="Wiederholen / zur Eingabe hinzufügen">↩</button> <button class="btn-food btn-food-del" onclick="deleteEintrag('${e.id}','${datum}')">✕</button></td></tr>`;}).join('')}
       </tbody></table></div>
     </div>`;
   });
   container.innerHTML=irgendwas?html:'<div class="empty-hint">Keine Einträge für diese Suche.</div>';
+}
+
+function wiederholenEintrag(lm){
+  if(!lm)return;
+  foods.push(lm);
+  renderFoodList();
+  document.getElementById('result-box').classList.remove('show');
+  pendingRows=[];
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 async function deleteEintrag(id,datum){
