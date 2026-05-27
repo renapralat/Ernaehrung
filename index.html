@@ -55,11 +55,24 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
 .result-label{font-size:0.68rem;color:#64748b;}
 /* KI assessment block */
 .ki-beschreibung{font-size:0.85rem;line-height:1.6;font-style:italic;color:#86efac;padding:0.6rem 0.75rem;background:rgba(74,222,128,0.05);border-radius:8px;border-left:2px solid #4ade80;margin-bottom:0.65rem;}
-/* entries table */
+/* entries table (still used in result-box) */
 .entries-table{width:100%;border-collapse:collapse;font-size:0.82rem;}
 .entries-table th{text-align:left;padding:0.4rem 0.5rem;color:#64748b;border-bottom:1px solid #334155;font-weight:600;}
 .entries-table td{padding:0.32rem 0.5rem;border-bottom:1px solid #1e293b;}
 .entries-table tr.total-row td{border-top:1px solid #334155;font-weight:700;color:#93c5fd;}
+/* entry cards in entries list */
+.entry-card{padding:0.65rem 0.75rem;}
+.entry-card+.entry-card{border-top:1px solid #1e293b;}
+.entry-card-name{font-size:0.88rem;font-weight:600;margin-bottom:0.45rem;color:#f1f5f9;}
+.entry-card-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.25rem;margin-bottom:0.45rem;}
+.ecg-item{text-align:center;background:#0f172a;border-radius:6px;padding:0.3rem 0.2rem;}
+.ecg-val{font-size:0.95rem;font-weight:700;}
+.ecg-label{font-size:0.62rem;color:#64748b;margin-top:1px;}
+.entry-card-actions{display:flex;justify-content:space-between;align-items:center;}
+.btn-rep{background:rgba(96,165,250,0.12);border:1px solid rgba(96,165,250,0.3);color:#60a5fa;padding:0.28rem 0.7rem;font-size:0.78rem;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;}
+.btn-rep:hover{background:rgba(96,165,250,0.22);}
+.btn-del-sm{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:0.28rem 0.6rem;font-size:0.78rem;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:700;}
+.btn-del-sm:hover{background:rgba(239,68,68,0.22);}
 .status-msg{font-size:0.78rem;margin-top:0.4rem;min-height:1.1em;}
 .empty-hint{text-align:center;color:#475569;padding:1.5rem;font-size:0.875rem;}
 .search-box{position:relative;}
@@ -513,6 +526,23 @@ function aktualisiereBanner(){
 
 function matchSuche(name,s){if(!s)return true;const n=name.toLowerCase();s=s.toLowerCase();if(s.startsWith('*')&&s.endsWith('*'))return n.includes(s.slice(1,-1));if(s.startsWith('*'))return n.endsWith(s.slice(1));if(s.endsWith('*'))return n.startsWith(s.slice(0,-1));return n.includes(s);}
 
+function eintragKarte(e, datum){
+  const lmEsc=(e.lebensmittel||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  return '<div class="entry-card">'
+    +'<div class="entry-card-name">🍽 '+(e.lebensmittel||'')+'</div>'
+    +'<div class="entry-card-grid">'
+      +'<div class="ecg-item"><div class="ecg-val" style="color:#f59e0b">'+Math.round(+e.kalorien||0)+'</div><div class="ecg-label">kcal</div></div>'
+      +'<div class="ecg-item"><div class="ecg-val" style="color:#22c55e">'+(+e.eiweiss||0).toFixed(1)+'g</div><div class="ecg-label">Eiweiß</div></div>'
+      +'<div class="ecg-item"><div class="ecg-val" style="color:#ec4899">'+(+e.zucker||0).toFixed(1)+'g</div><div class="ecg-label">Zucker</div></div>'
+      +'<div class="ecg-item"><div class="ecg-val" style="color:#3b82f6">'+(+e.kohlenhydrate||0).toFixed(1)+'g</div><div class="ecg-label">KH</div></div>'
+    +'</div>'
+    +'<div class="entry-card-actions">'
+      +'<button class="btn-rep" onclick="wiederholenEintrag(\''+lmEsc+'\')">↩ Wiederholen</button>'
+      +'<button class="btn-del-sm" onclick="deleteEintrag(\''+e.id+'\',\''+datum+'\')">✕</button>'
+    +'</div>'
+  +'</div>';
+}
+
 function renderEintraege(){
   const container=document.getElementById('eintraege-container');
   const suche=document.getElementById('suche').value.trim();
@@ -527,21 +557,26 @@ function renderEintraege(){
     irgendwas=true;
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
     const kcal=Math.round(sum('kalorien')),eiw=sum('eiweiss').toFixed(1),zuk=sum('zucker').toFixed(1),kh=sum('kohlenhydrate').toFixed(1);
-    html+=`<div style="margin-bottom:0.75rem">
-      <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:8px 8px 0 0;padding:0.45rem 0.6rem">
-        <span style="font-weight:700;color:#93c5fd;font-size:0.82rem">📅 ${fmt(datum)}</span>
-        <button class="btn-food btn-food-del" onclick="deleteDay('${datum}')" style="font-size:0.8rem">🗑️</button>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.25);border-top:none;padding:0.35rem 0.6rem;">
-        <div style="text-align:center"><div style="font-size:0.95rem;font-weight:700;color:#f59e0b">${kcal}</div><div style="font-size:0.62rem;color:#64748b">kcal</div></div>
-        <div style="text-align:center"><div style="font-size:0.95rem;font-weight:700;color:#22c55e">${eiw}g</div><div style="font-size:0.62rem;color:#64748b">Eiweiß</div></div>
-        <div style="text-align:center"><div style="font-size:0.95rem;font-weight:700;color:#ec4899">${zuk}g</div><div style="font-size:0.62rem;color:#64748b">Zucker</div></div>
-        <div style="text-align:center"><div style="font-size:0.95rem;font-weight:700;color:#3b82f6">${kh}g</div><div style="font-size:0.62rem;color:#64748b">KH</div></div>
-      </div>
-      <div style="overflow-x:auto"><table class="entries-table" style="width:100%;border-radius:0 0 8px 8px;overflow:hidden"><thead><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th style="text-align:right">Zucker</th><th style="text-align:right">KH</th><th></th></tr></thead><tbody>
-      ${gefiltert.map(e=>{const lmEsc=(e.lebensmittel||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");return `<tr><td>${e.lebensmittel||''}</td><td style="text-align:right">${Math.round(+e.kalorien||0)}</td><td style="text-align:right">${(+e.eiweiss||0).toFixed(1)}g</td><td style="text-align:right">${(+e.zucker||0).toFixed(1)}g</td><td style="text-align:right">${(+e.kohlenhydrate||0).toFixed(1)}g</td><td style="text-align:right;white-space:nowrap"><button class="btn-food btn-food-edit" onclick="wiederholenEintrag('${lmEsc}')" title="Wiederholen / zur Eingabe hinzufügen">↩</button> <button class="btn-food btn-food-del" onclick="deleteEintrag('${e.id}','${datum}')">✕</button></td></tr>`;}).join('')}
-      </tbody></table></div>
-    </div>`;
+    html+='<div style="margin-bottom:0.75rem">'
+      // Day header
+      +'<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:8px 8px 0 0;padding:0.45rem 0.75rem">'
+        +'<div>'
+          +'<span style="font-weight:700;color:#93c5fd;font-size:0.85rem">📅 '+fmt(datum)+'</span>'
+        +'</div>'
+        +'<button class="btn-del-sm" onclick="deleteDay(\''+datum+'\')" title="Tag löschen">🗑️</button>'
+      +'</div>'
+      // Day totals bar
+      +'<div style="display:grid;grid-template-columns:repeat(4,1fr);background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.25);border-top:none;padding:0.3rem 0.5rem;text-align:center;">'
+        +'<div><span style="font-size:0.88rem;font-weight:700;color:#f59e0b">'+kcal+'</span><span style="font-size:0.62rem;color:#64748b"> kcal</span></div>'
+        +'<div><span style="font-size:0.88rem;font-weight:700;color:#22c55e">'+eiw+'g</span><span style="font-size:0.62rem;color:#64748b"> Eiw</span></div>'
+        +'<div><span style="font-size:0.88rem;font-weight:700;color:#ec4899">'+zuk+'g</span><span style="font-size:0.62rem;color:#64748b"> Zck</span></div>'
+        +'<div><span style="font-size:0.88rem;font-weight:700;color:#3b82f6">'+kh+'g</span><span style="font-size:0.62rem;color:#64748b"> KH</span></div>'
+      +'</div>'
+      // Entry cards
+      +'<div style="border:1px solid rgba(59,130,246,0.25);border-top:none;border-radius:0 0 8px 8px;">'
+        +gefiltert.map(e=>eintragKarte(e,datum)).join('')
+      +'</div>'
+    +'</div>';
   });
   container.innerHTML=irgendwas?html:'<div class="empty-hint">Keine Einträge für diese Suche.</div>';
 }
@@ -595,28 +630,34 @@ function exportCSV(){
 function pad(s,n){s=String(s);while(s.length<n)s=' '+s;return s;}
 function padR(s,n){s=String(s);while(s.length<n)s=s+' ';return s;}
 
+// Spaltenbreiten für Briefform (Courier)
+const BF={name:32,kcal:6,eiw:7,zck:7,kh:7};
+function briefZeile(name,kcal,eiw,zck,kh){
+  return padR(String(name).slice(0,BF.name),BF.name)+pad(String(kcal),BF.kcal)+pad(String(eiw),BF.eiw)+pad(String(zck),BF.zck)+pad(String(kh),BF.kh);
+}
+
 function exportBrief(){
   const status=document.getElementById('export-status');
   const von=document.getElementById('export-von').value,bis=document.getElementById('export-bis').value;
   const gef=getExportTage();
   if(!gef.length){status.textContent='⚠️ Keine Einträge.';status.style.color='#f59e0b';return;}
   const tage={};gef.forEach(e=>{const d=e.datum.slice(0,10);if(!tage[d])tage[d]=[];tage[d].push(e);});
-  const linie='─'.repeat(62);
+  const linie='─'.repeat(BF.name+BF.kcal+BF.eiw+BF.zck+BF.kh);
   const zeilen=['ERNÄHRUNGSPROTOKOLL – BRIEFFORM',''];
   if(von||bis)zeilen.push('Zeitraum: '+(von?fmt(von):'')+(von&&bis?' bis ':bis?'bis ':'')+( bis?fmt(bis):''),'');
-  zeilen.push(padR('Datum / Lebensmittel',28)+pad('kcal',6)+pad('Eiw.g',7)+pad('Zck.g',7)+pad('KH.g',7));
+  zeilen.push(briefZeile('Lebensmittel','kcal','Eiw.g','Zck.g','KH.g'));
   zeilen.push(linie);
   Object.keys(tage).sort().forEach(datum=>{
-    zeilen.push(fmt(datum));
+    zeilen.push('');
+    zeilen.push('── '+fmt(datum)+' '+'─'.repeat(Math.max(0,linie.length-5-fmt(datum).length)));
     tage[datum].forEach(e=>{
-      const lm=(e.lebensmittel||'').slice(0,26);
-      zeilen.push('  '+padR(lm,26)+pad(Math.round(+e.kalorien||0),6)+pad((+e.eiweiss||0).toFixed(1),7)+pad((+e.zucker||0).toFixed(1),7)+pad((+e.kohlenhydrate||0).toFixed(1),7));
+      zeilen.push(briefZeile(e.lebensmittel||'',Math.round(+e.kalorien||0),(+e.eiweiss||0).toFixed(1),(+e.zucker||0).toFixed(1),(+e.kohlenhydrate||0).toFixed(1)));
     });
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
-    zeilen.push('  '+padR('GESAMT',26)+pad(Math.round(sum('kalorien')),6)+pad(sum('eiweiss').toFixed(1),7)+pad(sum('zucker').toFixed(1),7)+pad(sum('kohlenhydrate').toFixed(1),7));
-    zeilen.push('');
+    zeilen.push(linie);
+    zeilen.push(briefZeile('GESAMT',Math.round(sum('kalorien')),sum('eiweiss').toFixed(1),sum('zucker').toFixed(1),sum('kohlenhydrate').toFixed(1)));
   });
-  zeilen.push(linie);
+  zeilen.push('');zeilen.push(linie);
   const txt=zeilen.join('\n');
   const out=document.getElementById('brief-output');
   out.value=txt;out.style.display='block';
