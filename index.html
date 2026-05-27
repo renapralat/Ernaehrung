@@ -8,132 +8,167 @@
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:'Segoe UI',system-ui,sans-serif; background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%); min-height:100vh; padding:1rem; color:#f1f5f9; }
 .container { max-width:720px; margin:0 auto; }
-.header { text-align:center; margin-bottom:1.5rem; }
-.title { font-size:1.8rem; font-weight:700; }
-.subtitle { color:#64748b; font-size:0.8rem; margin-top:4px; }
-#cloud-status { display:inline-flex; align-items:center; gap:6px; font-size:0.75rem; color:#64748b; margin-top:8px; }
+.header { text-align:center; margin-bottom:1rem; }
+.title { font-size:1.6rem; font-weight:700; }
+.subtitle { color:#64748b; font-size:0.78rem; margin-top:4px; }
+#cloud-status { display:inline-flex; align-items:center; gap:6px; font-size:0.75rem; color:#64748b; margin-top:6px; }
 .dot { width:8px; height:8px; border-radius:50%; background:#475569; display:inline-block; transition:background 0.3s; }
 .dot.ok{background:#22c55e;} .dot.err{background:#ef4444;} .dot.warn{background:#f59e0b;}
-.card { background:rgba(30,41,59,0.8); border:1px solid #334155; border-radius:12px; padding:1.25rem; margin-bottom:1rem; }
-.card-title { font-size:1rem; font-weight:600; margin-bottom:1rem; color:#cbd5e1; }
-label { display:block; font-size:0.8rem; font-weight:600; color:#94a3b8; margin-bottom:5px; }
-input[type="text"],input[type="date"] { width:100%; background:#0f172a; color:#f1f5f9; border:1px solid #334155; border-radius:8px; padding:0.6rem 0.8rem; font-family:inherit; font-size:0.9rem; margin-bottom:0.75rem; }
+.card { background:rgba(30,41,59,0.8); border:1px solid #334155; border-radius:12px; padding:1rem; margin-bottom:0.75rem; }
+.card-title { font-size:0.85rem; font-weight:600; margin-bottom:0.75rem; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; }
+input[type="text"],input[type="date"] { background:#0f172a; color:#f1f5f9; border:1px solid #334155; border-radius:8px; padding:0.55rem 0.75rem; font-family:inherit; font-size:0.88rem; }
 input:focus{outline:none;border-color:#3b82f6;}
 input[type="date"]{color-scheme:dark;cursor:pointer;}
-button{border:none;border-radius:8px;padding:0.6rem 1rem;font-family:inherit;font-size:0.875rem;font-weight:600;cursor:pointer;transition:all 0.15s;}
+button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.15s;}
 .btn-primary{background:#3b82f6;color:#fff;} .btn-primary:hover{background:#2563eb;}
+.btn-primary:disabled{background:#334155;color:#64748b;cursor:not-allowed;}
 .btn-success{background:#22c55e;color:#fff;}
 .btn-ghost{background:#334155;color:#cbd5e1;} .btn-ghost:hover{background:#475569;}
-.btn-icon{background:transparent;color:#64748b;padding:0.2rem 0.4rem;font-size:0.85rem;}
-.btn-icon:hover{color:#ef4444;}
-.row{display:flex;gap:0.5rem;align-items:flex-end;margin-bottom:0.75rem;}
-.row>*{flex:1;margin-bottom:0!important;} .row button{flex:0 0 auto;}
-.modus-row{display:flex;gap:0.5rem;margin-bottom:1rem;}
-.modus-btn{flex:1;padding:0.5rem;border-radius:8px;background:#0f172a;color:#64748b;border:2px solid transparent;font-weight:600;font-size:0.875rem;cursor:pointer;transition:all 0.2s;}
-.modus-btn.active{border-color:#3b82f6;color:#3b82f6;background:rgba(59,130,246,0.1);}
-.food-list{list-style:none;margin-bottom:0.75rem;}
-.food-item{display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0.6rem;background:#0f172a;border-radius:6px;margin-bottom:4px;font-size:0.85rem;}
-.result-box{background:#0f172a;border-radius:8px;padding:0.75rem;margin-top:0.75rem;display:none;}
+.btn-ki{background:rgba(74,222,128,0.15);color:#4ade80;border:1px solid rgba(74,222,128,0.35);} .btn-ki:hover{background:rgba(74,222,128,0.25);}
+.btn-ki:disabled{background:#334155;color:#64748b;cursor:not-allowed;border-color:#334155;}
+.btn-icon-sq{padding:0.55rem 0.7rem;flex:0 0 auto;}
+/* icon-row: field icon + input + buttons */
+.icon-row{display:flex;gap:0.4rem;align-items:center;margin-bottom:0.5rem;}
+.field-icon{font-size:1.1rem;flex:0 0 auto;width:1.6rem;text-align:center;}
+.flex-input{flex:1;min-width:0;}
+/* download row */
+.dl-row{display:flex;gap:0.4rem;align-items:center;margin-bottom:0.65rem;flex-wrap:wrap;}
+.date-sm{width:130px;padding:0.45rem 0.6rem;font-size:0.8rem;}
+.dl-label{font-size:0.72rem;color:#64748b;white-space:nowrap;}
+/* food list */
+.food-list{list-style:none;margin-bottom:0.65rem;}
+.food-item{display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0.6rem;background:#0f172a;border-radius:6px;margin-bottom:3px;font-size:0.85rem;border-left:2px solid #3b82f6;}
+.food-item-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.food-item-btns{display:flex;gap:0.25rem;flex:0 0 auto;}
+.btn-food{background:transparent;border:none;padding:0.15rem 0.4rem;font-size:0.82rem;cursor:pointer;border-radius:4px;}
+.btn-food-edit{color:#60a5fa;} .btn-food-edit:hover{background:rgba(96,165,250,0.15);}
+.btn-food-del{color:#ef4444;} .btn-food-del:hover{background:rgba(239,68,68,0.15);}
+/* analyze buttons row */
+.analyze-row{display:flex;gap:0.5rem;margin-bottom:0.65rem;}
+.analyze-row button{flex:1;}
+/* result box */
+.result-box{background:#0f172a;border-radius:10px;padding:0.85rem;display:none;border:1px solid #1e3a5f;}
 .result-box.show{display:block;}
-.result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;margin:0.75rem 0;}
+.result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;margin:0.65rem 0;}
 .result-item{text-align:center;}
-.result-val{font-size:1.1rem;font-weight:700;}
-.result-label{font-size:0.7rem;color:#64748b;}
-.tages-summe{background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:0.75rem;margin-top:0.75rem;display:none;}
-.tages-summe.show{display:block;}
-.summe-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.25rem;}
-.summe-item{text-align:center;}
-.summe-val{font-size:1rem;font-weight:700;}
-.summe-label{font-size:0.65rem;color:#64748b;}
+.result-val{font-size:1.05rem;font-weight:700;}
+.result-label{font-size:0.68rem;color:#64748b;}
+/* KI assessment block */
+.ki-beschreibung{font-size:0.85rem;line-height:1.6;font-style:italic;color:#86efac;padding:0.6rem 0.75rem;background:rgba(74,222,128,0.05);border-radius:8px;border-left:2px solid #4ade80;margin-bottom:0.65rem;}
+/* entries table */
 .entries-table{width:100%;border-collapse:collapse;font-size:0.82rem;}
 .entries-table th{text-align:left;padding:0.4rem 0.5rem;color:#64748b;border-bottom:1px solid #334155;font-weight:600;}
-.entries-table td{padding:0.35rem 0.5rem;border-bottom:1px solid #1e293b;}
-.day-header td{background:rgba(59,130,246,0.08);border-bottom:1px solid #334155;font-weight:700;color:#93c5fd;font-size:0.8rem;}
-.status-msg{font-size:0.8rem;margin-top:0.5rem;min-height:1.2em;}
-.empty-hint{text-align:center;color:#475569;padding:2rem;font-size:0.875rem;}
+.entries-table td{padding:0.32rem 0.5rem;border-bottom:1px solid #1e293b;}
+.entries-table tr.total-row td{border-top:1px solid #334155;font-weight:700;color:#93c5fd;}
+.status-msg{font-size:0.78rem;margin-top:0.4rem;min-height:1.1em;}
+.empty-hint{text-align:center;color:#475569;padding:1.5rem;font-size:0.875rem;}
 .search-box{position:relative;}
 .search-icon{position:absolute;left:0.6rem;top:50%;transform:translateY(-50%);color:#64748b;pointer-events:none;}
-.csv-row{display:flex;gap:0.5rem;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;}
-.csv-row label{margin:0;white-space:nowrap;}
-.csv-row input[type="date"]{width:auto;flex:1;min-width:120px;margin:0;}
-#mikro-btn.aktiv{background:#ef4444!important;color:#fff!important;border:2px solid #fca5a5;animation:mikropuls 1s ease-in-out infinite;}
+/* loading spinner */
+.loading{display:inline-block;width:13px;height:13px;border:2px solid #334155;border-top-color:#4ade80;border-radius:50%;animation:spin 0.7s linear infinite;margin-right:5px;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
+/* mic button active */
+.mikro-aktiv{background:#ef4444!important;color:#fff!important;border:2px solid #fca5a5!important;animation:mikropuls 1s ease-in-out infinite;}
 @keyframes mikropuls{0%,100%{opacity:1;}50%{opacity:0.6;}}
+/* brief textarea */
+#brief-output{width:100%;background:#0f172a;color:#f1f5f9;border:1px solid #334155;border-radius:8px;padding:0.75rem;font-family:'Courier New',Courier,monospace;font-size:0.78rem;resize:vertical;white-space:pre;overflow:auto;}
 #ki-token-input{font-family:monospace;font-size:0.8rem;}
+/* import drop zone */
+#import-drop{border:2px dashed #334155;border-radius:8px;padding:1rem;text-align:center;color:#64748b;font-size:0.85rem;cursor:pointer;margin-top:0.5rem;}
 </style>
 </head>
 <body>
 <div class="container">
-  <div id="heute-banner" style="display:none;position:sticky;top:0;z-index:10;background:rgba(15,23,42,0.96);border-bottom:1px solid #1e3a5f;padding:0.5rem 0;margin-bottom:1rem;backdrop-filter:blur(8px);">
+
+  <!-- Sticky today banner -->
+  <div id="heute-banner" style="display:none;position:sticky;top:0;z-index:10;background:rgba(15,23,42,0.96);border-bottom:1px solid #1e3a5f;padding:0.5rem 0;margin-bottom:0.75rem;backdrop-filter:blur(8px);">
     <div style="max-width:720px;margin:0 auto;padding:0 1rem">
-      <div style="font-size:0.65rem;color:#64748b;margin-bottom:2px">Heute gesamt</div>
+      <div style="font-size:0.62rem;color:#64748b;margin-bottom:2px">Heute gesamt</div>
       <div style="display:flex;gap:1.2rem">
-        <span><span id="banner-kcal" style="font-size:1.1rem;font-weight:700;color:#f59e0b">0</span><span style="font-size:0.7rem;color:#64748b"> kcal</span></span>
-        <span><span id="banner-eiweiss" style="font-size:1.1rem;font-weight:700;color:#22c55e">0</span><span style="font-size:0.7rem;color:#64748b">g Eiweiß</span></span>
-        <span><span id="banner-zucker" style="font-size:1.1rem;font-weight:700;color:#ec4899">0</span><span style="font-size:0.7rem;color:#64748b">g Zucker</span></span>
-        <span><span id="banner-kh" style="font-size:1.1rem;font-weight:700;color:#3b82f6">0</span><span style="font-size:0.7rem;color:#64748b">g KH</span></span>
+        <span><span id="banner-kcal" style="font-size:1.05rem;font-weight:700;color:#f59e0b">0</span><span style="font-size:0.68rem;color:#64748b"> kcal</span></span>
+        <span><span id="banner-eiweiss" style="font-size:1.05rem;font-weight:700;color:#22c55e">0</span><span style="font-size:0.68rem;color:#64748b">g Eiw</span></span>
+        <span><span id="banner-zucker" style="font-size:1.05rem;font-weight:700;color:#ec4899">0</span><span style="font-size:0.68rem;color:#64748b">g Zck</span></span>
+        <span><span id="banner-kh" style="font-size:1.05rem;font-weight:700;color:#3b82f6">0</span><span style="font-size:0.68rem;color:#64748b">g KH</span></span>
       </div>
     </div>
   </div>
+
   <div class="header">
     <div class="title">🍽️ Ernährungsprotokoll</div>
     <div class="subtitle">Nährwerterfassung via lokale DB · Open Food Facts · KI</div>
     <div id="cloud-status"><span class="dot warn" id="dot"></span><span id="cloud-text">Verbinde…</span></div>
   </div>
 
+  <!-- Main card: export + search + input + analyze -->
   <div class="card">
-    <div class="card-title">📝 Erfassen</div>
-    <div class="modus-row">
-      <button class="modus-btn active" id="btn-erfassen" onclick="setModus('erfassen')">➕ Erfassen</button>
-      <button class="modus-btn" id="btn-loeschen" onclick="setModus('loeschen')">🗑️ Löschen</button>
+
+    <!-- Download row (replaces Erfassen/Löschen) -->
+    <div class="dl-row">
+      <span class="dl-label">Von</span>
+      <input type="date" id="export-von" class="date-sm"/>
+      <span class="dl-label">Bis</span>
+      <input type="date" id="export-bis" class="date-sm"/>
+      <button class="btn-primary" onclick="exportCSV()">⬇️ CSV</button>
+      <button class="btn-ghost" onclick="exportBrief()">📄 Brief</button>
     </div>
-    <label>Datum</label>
-    <input type="date" id="datum"/>
-    <label>Lebensmittel</label>
-    <div class="row">
-      <input type="text" id="lebensmittel-input" placeholder="z.B. Joghurt, 150g Lachs, Haferflocken 50g" onkeydown="if(event.key==='Enter')addFood()"/>
-      <button class="btn-ghost" onclick="clearLebensmittelInput()" title="Löschen">✕</button>
-      <button id="mikro-btn" class="btn-ghost" onclick="toggleMikro()" title="Spracheingabe">🎤</button>
-      <button class="btn-ghost" onclick="addFood()">➕</button>
+    <textarea id="brief-output" style="display:none;min-height:160px;" readonly></textarea>
+    <div class="status-msg" id="export-status"></div>
+
+    <!-- Search with mic -->
+    <div class="icon-row">
+      <span class="field-icon">🔍</span>
+      <input type="text" id="suche" class="flex-input" placeholder="Suche (Joghurt, Jo*, *hurt)" oninput="renderEintraege()"/>
+      <button id="mikro-suche-btn" class="btn-ghost btn-icon-sq" onclick="toggleMikroSuche()" title="Sprachsuche">🎤</button>
+      <button class="btn-ghost btn-icon-sq" onclick="clearSuche()" title="Suche löschen">✕</button>
     </div>
+
+    <!-- Date (icon only, no label) -->
+    <div class="icon-row">
+      <span class="field-icon">📅</span>
+      <input type="date" id="datum" class="flex-input"/>
+    </div>
+
+    <!-- Food input with mic (icon only, no label) -->
+    <div class="icon-row">
+      <span class="field-icon">🥗</span>
+      <input type="text" id="lebensmittel-input" class="flex-input" placeholder="z.B. Joghurt 150g, Haferflocken 50g" onkeydown="if(event.key==='Enter')addFood()"/>
+      <button id="mikro-btn" class="btn-ghost btn-icon-sq" onclick="toggleMikro()" title="Spracheingabe">🎤</button>
+      <button class="btn-ghost btn-icon-sq" onclick="clearLebensmittelInput()" title="Löschen">✕</button>
+      <button class="btn-ghost btn-icon-sq" onclick="addFood()" title="Hinzufügen">+</button>
+    </div>
+
+    <!-- Food list -->
     <ul class="food-list" id="food-list"></ul>
-    <button class="btn-primary" id="analyze-btn" onclick="analyzeAndShow()" style="width:100%">📊 Nährwerte ermitteln</button>
-    <div class="result-box" id="result-box">
-      <div style="font-size:0.8rem;font-weight:700;color:#10b981;margin-bottom:0.5rem">✅ Analysiert – bitte prüfen:</div>
-      <div style="overflow-x:auto;margin-bottom:0.5rem" id="result-table-wrap"></div>
-      <div id="result-nf" style="font-size:0.75rem;color:#f59e0b;margin-bottom:0.5rem"></div>
-      <div style="display:flex;gap:0.5rem">
-        <button class="btn-success" style="flex:1" onclick="speichernEintrag()">💾 Speichern</button>
-        <button class="btn-ghost" style="flex:1" onclick="resetForm()">↩️ Zurück</button>
-      </div>
+
+    <!-- Analyze buttons -->
+    <div class="analyze-row">
+      <button class="btn-primary" id="analyze-btn" onclick="analyzeAndShow()">📊 Nährwerte ermitteln</button>
+      <button class="btn-ki" id="ki-btn" onclick="analyzeKI()">🤖 +KI Bewertung</button>
     </div>
-    <div class="tages-summe" id="tages-summe">
-      <div style="font-size:0.8rem;color:#94a3b8;margin-bottom:0.5rem">Tagessumme <span id="summe-datum"></span></div>
-      <div class="summe-grid" id="summe-grid"></div>
+
+    <!-- Result box (no Tagessumme – shown in sticky banner above) -->
+    <div class="result-box" id="result-box">
+      <div id="ki-beschreibung" class="ki-beschreibung" style="display:none"></div>
+      <div style="font-size:0.8rem;font-weight:700;color:#10b981;margin-bottom:0.5rem" id="result-header">✅ Analysiert – bitte prüfen:</div>
+      <div style="overflow-x:auto;margin-bottom:0.4rem" id="result-table-wrap"></div>
+      <div id="result-nf" style="font-size:0.75rem;color:#f59e0b;margin-bottom:0.4rem"></div>
+      <div class="result-grid" id="result-totals" style="display:none;margin:0.5rem 0;"></div>
+      <div style="display:flex;gap:0.5rem;margin-top:0.5rem">
+        <button class="btn-success" style="flex:1" onclick="speichernEintrag()">💾 Speichern</button>
+        <button class="btn-ghost" style="flex:1" onclick="closeResults()">↩️ Zurück</button>
+      </div>
     </div>
   </div>
 
+  <!-- Entries -->
   <div class="card">
-    <div class="card-title">📋 Einträge</div>
-    <div class="row" style="margin-bottom:0.5rem">
-      <div class="search-box" style="margin-bottom:0">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="suche" style="padding-left:2rem;margin-bottom:0" placeholder="Suche (Ei, Ei*, *ei)" oninput="renderEintraege()"/>
-      </div>
-      <button class="btn-ghost" onclick="clearSuche()" title="Suche löschen">✕</button>
-    </div>
     <div id="eintraege-container"><div class="empty-hint">Lädt…</div></div>
   </div>
 
+  <!-- CSV Import -->
   <div class="card">
-    <div class="card-title">📤 CSV-Export / 📥 Import</div>
-    <div class="csv-row">
-      <label>Von</label><input type="date" id="export-von"/>
-      <label>Bis</label><input type="date" id="export-bis"/>
-      <button class="btn-primary" onclick="exportCSV()">⬇️ CSV</button>
-      <button class="btn-ghost" onclick="exportText()">📄 Text</button>
-    </div>
-    <div class="status-msg" id="export-status"></div>
-    <div id="import-drop" style="border:2px dashed #334155;border-radius:8px;padding:1.25rem;text-align:center;color:#64748b;font-size:0.85rem;cursor:pointer;margin-top:0.75rem"
+    <div class="card-title">📥 CSV-Import</div>
+    <div id="import-drop"
       ondragover="event.preventDefault();this.style.borderColor='#3b82f6'"
       ondragleave="this.style.borderColor='#334155'"
       ondrop="handleImportDrop(event)"
@@ -144,22 +179,21 @@ button{border:none;border-radius:8px;padding:0.6rem 1rem;font-family:inherit;fon
     <div class="status-msg" id="import-status"></div>
   </div>
 
+  <!-- KI / GitHub Token -->
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
       <div class="card-title" style="margin-bottom:0">🤖 KI-Analyse</div>
       <span id="ki-badge" class="dot warn"></span>
     </div>
-    <div id="ki-status-text" style="font-size:0.75rem;color:#f59e0b;margin-bottom:0.75rem">Kein Token – nur lokale DB + Open Food Facts</div>
+    <div id="ki-status-text" style="font-size:0.75rem;color:#f59e0b;margin-bottom:0.65rem">Kein Token – nur lokale DB + Open Food Facts</div>
     <div id="ki-token-form" style="display:none">
-      <label>GitHub Personal Access Token</label>
-      <div class="row" style="margin-bottom:0.5rem">
-        <input type="password" id="ki-token-input" placeholder="github_pat_…" style="margin-bottom:0"/>
+      <div style="display:flex;gap:0.4rem;margin-bottom:0.5rem;">
+        <input type="password" id="ki-token-input" class="flex-input" placeholder="github_pat_…"/>
         <button class="btn-primary" onclick="saveToken()">Speichern</button>
         <button class="btn-ghost" onclick="deleteToken()">Löschen</button>
       </div>
-      <div style="font-size:0.72rem;color:#64748b;margin-bottom:0.75rem">
-        GitHub-Konto → Einstellungen → Developer settings → Personal access tokens (Classic) → Generate new token.
-        Keine Berechtigungen nötig. Wird nur auf diesem Gerät gespeichert.
+      <div style="font-size:0.72rem;color:#64748b;margin-bottom:0.65rem">
+        GitHub → Einstellungen → Developer settings → Personal access tokens (Classic) → Generate. Keine Berechtigungen nötig. Nur lokal gespeichert.
       </div>
     </div>
     <button class="btn-ghost" style="width:100%;font-size:0.8rem" onclick="toggleTokenForm()">⚙️ Token verwalten</button>
@@ -172,7 +206,7 @@ const URL_BASE = 'https://bxwamphvycjfeexjzgyv.supabase.co/rest/v1/ernaehrung';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4d2FtcGh2eWNqZmVleGp6Z3l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MjI1NjQsImV4cCI6MjA5MzM5ODU2NH0.LMEz3yuh8GmIZ6PfkTxer1yrAYpspNJOBPKTIV7T3qQ';
 const H = {'Content-Type':'application/json','apikey':KEY,'Authorization':'Bearer '+KEY,'Prefer':'return=representation'};
 
-let eintraege=[], foods=[], modus='erfassen', pendingRows=[];
+let eintraege=[], foods=[], pendingRows=[], pendingKIMode=false;
 
 function setStatus(t,txt){document.getElementById('dot').className='dot '+t;document.getElementById('cloud-text').textContent=txt;}
 function heuteStr(){return new Date().toISOString().slice(0,10);}
@@ -186,15 +220,13 @@ async function laden(){
     eintraege=await r.json();
     setStatus('ok','Cloud verbunden ✓');
   }catch(e){setStatus('err','Fehler: '+e.message);eintraege=[];}
-  renderEintraege();aktualisiereTagesSumme();
+  renderEintraege();aktualisiereBanner();
 }
 
-function setModus(m){modus=m;document.getElementById('btn-erfassen').classList.toggle('active',m==='erfassen');document.getElementById('btn-loeschen').classList.toggle('active',m==='loeschen');}
+// ─── Food list ──────────────────────────────────────────────────────────────
 
 function teileEingabe(val){
-  // Trennwörter: splitten die Eingabe in einzelne Lebensmittel
   const teile=val.split(/\s+(?:und|mit|sowie|außerdem|plus|an)\s+|[,&]\s*/i);
-  // Füllwörter: werden aus jedem Teil entfernt
   const fuell=/\b(?:dazu|noch|auch|bitte|etwas|mal|dann|je|jeweils|einfach|noch dazu)\b\s*/gi;
   return teile.map(s=>s.replace(fuell,'').replace(/\s+/g,' ').trim()).filter(Boolean);
 }
@@ -209,10 +241,33 @@ function addFood(){
     else foods.push(t);
   });
   inp.value='';gesprochenText='';renderFoodList();
-  document.getElementById('result-box').classList.remove('show');pendingResult=null;
+  document.getElementById('result-box').classList.remove('show');pendingRows=[];
 }
+
 function removeFood(i){foods.splice(i,1);renderFoodList();}
-function renderFoodList(){document.getElementById('food-list').innerHTML=foods.map((f,i)=>`<li class="food-item"><span>${f}</span><button class="btn-icon" onclick="removeFood(${i})">✕</button></li>`).join('');}
+
+function editFood(i){
+  const inp=document.getElementById('lebensmittel-input');
+  inp.value=foods[i];
+  foods.splice(i,1);
+  renderFoodList();
+  document.getElementById('result-box').classList.remove('show');pendingRows=[];
+  inp.focus();
+}
+
+function renderFoodList(){
+  document.getElementById('food-list').innerHTML=foods.map((f,i)=>
+    `<li class="food-item">
+      <span class="food-item-name">${f}</span>
+      <span class="food-item-btns">
+        <button class="btn-food btn-food-edit" onclick="editFood(${i})" title="Bearbeiten">✏️</button>
+        <button class="btn-food btn-food-del" onclick="removeFood(${i})" title="Löschen">✕</button>
+      </span>
+    </li>`
+  ).join('');
+}
+
+// ─── Nutrient parsing ────────────────────────────────────────────────────────
 
 const MASS={
   'teelöffel':5,'tl':5,
@@ -230,63 +285,29 @@ const MASS={
 };
 
 function parseFood(text){
-  // Bruchteile → Dezimalzahl: "halbe Orange" → "0.5 Orange", "viertel Torte" → "0.25 Torte"
   text=text.replace(/^(halb[e]?[snr]?)\s+/i,'0.5 ');
   text=text.replace(/^viertel\s+/i,'0.25 ');
-  // Zahlwörter → Ziffern: "drei Kekse" → "3 Kekse", "fünf Cashewkerne" → "5 Cashewkerne"
   const ZAHL={zwei:2,drei:3,vier:4,fünf:5,sechs:6,sieben:7,acht:8,neun:9,zehn:10,zwölf:12};
   text=text.replace(/^(zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|zwölf)\s+/i,(_,w)=>ZAHL[w.toLowerCase()]+' ');
-  // Artikel entfernen: "ein/eine/einen/der/die/das" → ""
   text=text.replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/i,'');
-  // "2 Esslöffel Joghurt" / "3 gehäufte EL Haferflocken" / "1 Schuss Milch"
   const mMass=text.match(/^(\d+(?:[.,]\d+)?)\s+(?:gehäufte?|gestrichene?|große?|kleine?|gute?)?\s*(teelöffel|esslöffel|tl|el|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|portion(?:en)?|prise[n]?|schüsse?|stücke?)\s+(.+)$/i);
-  if(mMass){
-    const anzahl=parseFloat(mMass[1].replace(',','.'));
-    const gramsProEinheit=MASS[mMass[2].toLowerCase()]||15;
-    return{name:mMass[3].trim(),grams:anzahl*gramsProEinheit};
-  }
-  // "Joghurt 2 Esslöffel" (Name zuerst, Maßeinheit hinten)
+  if(mMass){const anzahl=parseFloat(mMass[1].replace(',','.'));const gramsProEinheit=MASS[mMass[2].toLowerCase()]||15;return{name:mMass[3].trim(),grams:anzahl*gramsProEinheit};}
   const mMassHinten=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s+(teelöffel|esslöffel|tl|el|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|portion(?:en)?|prise[n]?|schüsse?|stücke?)$/i);
-  if(mMassHinten){
-    const anzahl=parseFloat(mMassHinten[2].replace(',','.'));
-    const gramsProEinheit=MASS[mMassHinten[3].toLowerCase()]||15;
-    return{name:mMassHinten[1].trim(),grams:anzahl*gramsProEinheit};
-  }
-  // "150g Joghurt" / "150 Gramm Joghurt" (Zahl zuerst)
+  if(mMassHinten){const anzahl=parseFloat(mMassHinten[2].replace(',','.'));const gramsProEinheit=MASS[mMassHinten[3].toLowerCase()]||15;return{name:mMassHinten[1].trim(),grams:anzahl*gramsProEinheit};}
   const mVorne=text.match(/^(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|gramm|gram)\s+(.+)$/i);
-  if(mVorne){
-    let grams=parseFloat(mVorne[1].replace(',','.'));
-    const unit=mVorne[2].toLowerCase();
-    if(unit==='kg'||unit==='l')grams*=1000;
-    return{name:mVorne[3].trim(),grams};
-  }
-  // "3 Maiswaffeln" / "5 Cashewkerne" / "0.5 Apfel" (Anzahl ohne Maßeinheit)
+  if(mVorne){let grams=parseFloat(mVorne[1].replace(',','.'));const unit=mVorne[2].toLowerCase();if(unit==='kg'||unit==='l')grams*=1000;return{name:mVorne[3].trim(),grams};}
   const mAnzahl=text.match(/^(\d+(?:[.,]\d+)?)\s+([^\d].+)$/i);
-  if(mAnzahl){
-    const n=parseFloat(mAnzahl[1].replace(',','.'));
-    return{name:mAnzahl[2].trim(),grams:Math.round(n*100)};
-  }
-  // "Joghurt 150g" (Name zuerst)
+  if(mAnzahl){const n=parseFloat(mAnzahl[1].replace(',','.'));return{name:mAnzahl[2].trim(),grams:Math.round(n*100)};}
   const mHinten=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|gramm|gram)?$/i);
-  if(mHinten&&mHinten[2]){
-    let grams=parseFloat(mHinten[2].replace(',','.'));
-    const unit=(mHinten[3]||'g').toLowerCase();
-    if(unit==='kg'||unit==='l')grams*=1000;
-    return{name:mHinten[1].trim(),grams};
-  }
-  // Nur Name → 100g Standard
+  if(mHinten&&mHinten[2]){let grams=parseFloat(mHinten[2].replace(',','.'));const unit=(mHinten[3]||'g').toLowerCase();if(unit==='kg'||unit==='l')grams*=1000;return{name:mHinten[1].trim(),grams};}
   return{name:text.trim(),grams:100};
 }
 
 function sucheLokaleDB(name){
   if(typeof DB==='undefined')return null;
-  // Artikel entfernen (Sicherheitsnetz – parseFood macht das bereits)
   const s=name.toLowerCase().trim().replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/,'');
-  // Exakte Übereinstimmung
   return DB.find(x=>x.n.toLowerCase()===s)
-    // Präfix (min. 4 Zeichen) – verhindert "Ei" für "ein Espresso"
     ||DB.find(x=>{const n=x.n.toLowerCase();return n.length>=4&&(s.startsWith(n)||n.startsWith(s));})
-    // Enthält-Suche (min. 4 Zeichen) – "doppelter espresso" → "espresso"
     ||DB.find(x=>{const n=x.n.toLowerCase();return n.length>=4&&s.includes(n);})
     ||null;
 }
@@ -304,32 +325,13 @@ async function searchOpenFoodFacts(name){
   const q='&search_simple=1&action=process&json=1&fields=product_name,nutriments&page_size=1';
   const urlDE='https://de.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(name)+q;
   const urlWelt='https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(name)+q;
-  try{
-    const r=await fetchMitTimeout(urlDE,5000);
-    const d=await r.json();
-    if(d.products&&d.products.length>0&&d.products[0].nutriments)return d.products[0].nutriments;
-  }catch(e){}
-  try{
-    const r=await fetchMitTimeout(urlWelt,5000);
-    const d=await r.json();
-    if(d.products&&d.products.length>0&&d.products[0].nutriments)return d.products[0].nutriments;
-  }catch(e){}
+  try{const r=await fetchMitTimeout(urlDE,5000);const d=await r.json();if(d.products&&d.products.length>0&&d.products[0].nutriments)return d.products[0].nutriments;}catch(e){}
+  try{const r=await fetchMitTimeout(urlWelt,5000);const d=await r.json();if(d.products&&d.products.length>0&&d.products[0].nutriments)return d.products[0].nutriments;}catch(e){}
   return null;
 }
 
-function calcNutrients(nutriments,grams){
-  const f=grams/100;
-  return{
-    kalorien:(+nutriments['energy-kcal_100g']||0)*f,
-    eiweiss:(+nutriments['proteins_100g']||0)*f,
-    zucker:(+nutriments['sugars_100g']||0)*f,
-    kohlenhydrate:(+nutriments['carbohydrates_100g']||0)*f
-  };
-}
-
 async function callGithubKI(name){
-  const token=loadToken();
-  if(!token)return null;
+  const token=loadToken();if(!token)return null;
   try{
     const r=await fetch('https://models.inference.ai.azure.com/chat/completions',{
       method:'POST',
@@ -337,35 +339,34 @@ async function callGithubKI(name){
       body:JSON.stringify({
         model:'gpt-4o-mini',
         messages:[{role:'user',content:'Nährwerte pro 100g für "'+name+'"? Antworte NUR mit JSON: {"kcal":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0} Nur Zahlen, keine Einheiten.'}],
-        temperature:0.1,
-        max_tokens:80
+        temperature:0.1,max_tokens:80
       })
     });
     if(!r.ok)return null;
     const d=await r.json();
     const text=d.choices?.[0]?.message?.content||'';
-    const m=text.match(/\{[^}]+\}/);
-    if(!m)return null;
+    const m=text.match(/\{[^}]+\}/);if(!m)return null;
     const ki=JSON.parse(m[0]);
     return{'energy-kcal_100g':+ki.kcal||0,'proteins_100g':+ki.eiweiss||0,'sugars_100g':+ki.zucker||0,'carbohydrates_100g':+ki.kohlenhydrate||0};
   }catch(e){return null;}
 }
 
+// ─── Analyse: Nährwerte (individual lookup) ──────────────────────────────────
+
 async function analyzeAndShow(){
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
-  const btn=document.getElementById('analyze-btn');btn.disabled=true;
+  const btn=document.getElementById('analyze-btn');
+  const kibtn=document.getElementById('ki-btn');
+  btn.disabled=true;kibtn.disabled=true;
+  const orig=btn.innerHTML;
   try{
-    pendingRows=[];
+    pendingRows=[];pendingKIMode=false;
     const nichtGefunden=[],kiGeschaetzt=[];
     for(const food of foods){
       const{name,grams}=parseFood(food);
-      btn.textContent='⏳ Suche: '+name+'…';
+      btn.innerHTML='⏳ '+name+'…';
       let n=await searchOpenFoodFacts(name);
-      if(!n){
-        btn.textContent='🤖 KI: '+name+'…';
-        n=await callGithubKI(name);
-        if(n)kiGeschaetzt.push(name);
-      }
+      if(!n){btn.innerHTML='🤖 '+name+'…';n=await callGithubKI(name);if(n)kiGeschaetzt.push(name);}
       const f=grams/100;
       if(n){
         pendingRows.push({lebensmittel:food,kalorien:Math.round((+n['energy-kcal_100g']||0)*f),eiweiss:+((+n['proteins_100g']||0)*f).toFixed(1),zucker:+((+n['sugars_100g']||0)*f).toFixed(1),kohlenhydrate:+((+n['carbohydrates_100g']||0)*f).toFixed(1)});
@@ -374,18 +375,97 @@ async function analyzeAndShow(){
         pendingRows.push({lebensmittel:food,kalorien:0,eiweiss:0,zucker:0,kohlenhydrate:0});
       }
     }
+    showNWResults(pendingRows,kiGeschaetzt,nichtGefunden);
+  }catch(e){alert('Fehler: '+e.message);}
+  finally{btn.innerHTML=orig;btn.disabled=false;kibtn.disabled=false;}
+}
+
+function showNWResults(rows,kiGeschaetzt,nichtGefunden){
+  document.getElementById('ki-beschreibung').style.display='none';
+  const totKcal=rows.reduce((a,r)=>a+r.kalorien,0);
+  const totEiw=rows.reduce((a,r)=>a+r.eiweiss,0);
+  const totZck=rows.reduce((a,r)=>a+r.zucker,0);
+  const totKH=rows.reduce((a,r)=>a+r.kohlenhydrate,0);
+  document.getElementById('result-table-wrap').innerHTML=
+    '<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th style="text-align:right">Zucker</th><th style="text-align:right">KH</th></tr></thead><tbody>'
+    +rows.map(r=>`<tr><td>${r.lebensmittel}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td></tr>`).join('')
+    +(rows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right"><strong>${totKcal}</strong></td><td style="text-align:right"><strong>${totEiw.toFixed(1)}g</strong></td><td style="text-align:right"><strong>${totZck.toFixed(1)}g</strong></td><td style="text-align:right"><strong>${totKH.toFixed(1)}g</strong></td></tr>`:'')
+    +'</tbody></table>';
+  let hinweis='';
+  if(kiGeschaetzt.length)hinweis+='🤖 KI-Schätzung: '+kiGeschaetzt.join(', ')+' – bitte prüfen. ';
+  if(nichtGefunden.length)hinweis+='⚠️ Nicht gefunden (0 kcal): '+nichtGefunden.join(', ');
+  document.getElementById('result-nf').textContent=hinweis.trim();
+  document.getElementById('result-totals').style.display='none';
+  document.getElementById('result-box').classList.add('show');
+}
+
+// ─── Analyse: KI Bewertung (whole-meal prompt) ───────────────────────────────
+
+async function analyzeKI(){
+  if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
+  const token=loadToken();
+  if(!token){alert('Für die KI-Bewertung wird ein GitHub-Token benötigt. Bitte unten eintragen.');return;}
+  const btn=document.getElementById('ki-btn');
+  const nwbtn=document.getElementById('analyze-btn');
+  btn.disabled=true;nwbtn.disabled=true;
+  const orig=btn.innerHTML;
+  btn.innerHTML='<span class="loading"></span>KI analysiert…';
+  try{
+    const prompt='Du bist Ernährungsberaterin. Analysiere diese Mahlzeit für eine Person die auf Zucker (Diabetes) und Eiweiß (Alter) achtet.\n\nLebensmittel:\n'
+      +foods.map((f,i)=>(i+1)+'. '+f).join('\n')
+      +'\n\nAntworte NUR mit JSON (keine Backticks, kein Markdown):\n{"beschreibung":"1-2 Sätze Bewertung","einzeln":[{"name":"Name mit Menge","kalorien":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0}],"kalorien":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0}';
+
+    const resp=await fetch('https://models.inference.ai.azure.com/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({model:'gpt-4o',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:600})
+    });
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    const d=await resp.json();
+    const text=d.choices?.[0]?.message?.content||'';
+    const m=text.match(/\{[\s\S]+\}/);
+    if(!m)throw new Error('Kein JSON in Antwort: '+text.slice(0,100));
+    const ki=JSON.parse(m[0]);
+
+    pendingKIMode=true;
+    pendingRows=(ki.einzeln||[]).map(e=>({
+      lebensmittel:e.name,
+      kalorien:Math.round(+e.kalorien||0),
+      eiweiss:+(+e.eiweiss||0).toFixed(1),
+      zucker:+(+e.zucker||0).toFixed(1),
+      kohlenhydrate:+(+e.kohlenhydrate||0).toFixed(1)
+    }));
+
+    // Show beschreibung
+    const kbEl=document.getElementById('ki-beschreibung');
+    if(ki.beschreibung){kbEl.textContent='💬 '+ki.beschreibung;kbEl.style.display='block';}
+    else kbEl.style.display='none';
+
+    // Show table
     document.getElementById('result-table-wrap').innerHTML=
       '<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th style="text-align:right">Zucker</th><th style="text-align:right">KH</th></tr></thead><tbody>'
       +pendingRows.map(r=>`<tr><td>${r.lebensmittel}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td></tr>`).join('')
       +'</tbody></table>';
-    let hinweis='';
-    if(kiGeschaetzt.length)hinweis+='🤖 KI-Schätzung: '+kiGeschaetzt.join(', ')+' – bitte prüfen. ';
-    if(nichtGefunden.length)hinweis+='⚠️ Nicht gefunden (0 kcal): '+nichtGefunden.join(', ');
-    document.getElementById('result-nf').textContent=hinweis.trim();
+    document.getElementById('result-nf').textContent='';
+
+    // Show totals grid
+    const totKcal=Math.round(+ki.kalorien||0);
+    const totEiw=(+ki.eiweiss||0).toFixed(1);
+    const totZck=(+ki.zucker||0).toFixed(1);
+    const totKH=(+ki.kohlenhydrate||0).toFixed(1);
+    const tg=document.getElementById('result-totals');
+    tg.innerHTML=`
+      <div class="result-item"><div class="result-val" style="color:#f59e0b">${totKcal}</div><div class="result-label">kcal gesamt</div></div>
+      <div class="result-item"><div class="result-val" style="color:#22c55e">${totEiw}g</div><div class="result-label">Eiweiß</div></div>
+      <div class="result-item"><div class="result-val" style="color:#ec4899">${totZck}g</div><div class="result-label">Zucker</div></div>
+      <div class="result-item"><div class="result-val" style="color:#3b82f6">${totKH}g</div><div class="result-label">KH</div></div>`;
+    tg.style.display='grid';
     document.getElementById('result-box').classList.add('show');
-  }catch(e){alert('Fehler: '+e.message);}
-  finally{btn.textContent='📊 Nährwerte ermitteln';btn.disabled=false;}
+  }catch(e){alert('KI-Analyse fehlgeschlagen: '+e.message);}
+  finally{btn.innerHTML=orig;btn.disabled=false;nwbtn.disabled=false;}
 }
+
+// ─── Save & close ────────────────────────────────────────────────────────────
 
 async function speichernEintrag(){
   if(!pendingRows||!pendingRows.length)return;
@@ -398,17 +478,25 @@ async function speichernEintrag(){
       const saved=await r.json();
       eintraege.unshift(saved[0]||{datum,...row});
     }
-    aktualisiereTagesSumme(datum);renderEintraege();resetForm(true);
+    aktualisiereBanner();renderEintraege();
+    // Clear everything after save
+    foods=[];pendingRows=[];renderFoodList();
+    document.getElementById('result-box').classList.remove('show');
+    document.getElementById('lebensmittel-input').value='';
+    gesprochenText='';
   }catch(e){alert('Speichern fehlgeschlagen: '+e.message);}
 }
 
-function resetForm(b){foods=[];pendingRows=[];renderFoodList();document.getElementById('result-box').classList.remove('show');if(!b){document.getElementById('lebensmittel-input').value='';gesprochenText='';}}
+// Schließt Ergebnisse, BEHÄLT aber die food-Liste – Modus kann gewechselt werden
+function closeResults(){
+  document.getElementById('result-box').classList.remove('show');
+  pendingRows=[];
+}
 
-function aktualisiereTagesSumme(datum){
-  datum=datum||document.getElementById('datum').value;
-  const box=document.getElementById('tages-summe');
+// ─── Banner (heute) ───────────────────────────────────────────────────────────
+
+function aktualisiereBanner(){
   const heute=heuteStr();
-  // Sticky-Banner immer mit heutigem Stand befüllen
   const teHeute=eintraege.filter(e=>e.datum&&e.datum.slice(0,10)===heute);
   const sumH=k=>teHeute.reduce((a,e)=>a+(+e[k]||0),0);
   const banner=document.getElementById('heute-banner');
@@ -419,15 +507,9 @@ function aktualisiereTagesSumme(datum){
     document.getElementById('banner-kh').textContent=sumH('kohlenhydrate').toFixed(1);
     banner.style.display='block';
   }else{banner.style.display='none';}
-  if(!datum){box.classList.remove('show');return;}
-  const te=eintraege.filter(e=>e.datum&&e.datum.slice(0,10)===datum);
-  if(!te.length){box.classList.remove('show');return;}
-  const sum=k=>te.reduce((a,e)=>a+(+e[k]||0),0);
-  document.getElementById('summe-datum').textContent=fmt(datum);
-  document.getElementById('summe-grid').innerHTML=`<div class="summe-item"><div class="summe-val" style="color:#f59e0b">${Math.round(sum('kalorien'))}</div><div class="summe-label">kcal</div></div><div class="summe-item"><div class="summe-val" style="color:#22c55e">${sum('eiweiss').toFixed(1)}g</div><div class="summe-label">Eiweiß</div></div><div class="summe-item"><div class="summe-val" style="color:#ec4899">${sum('zucker').toFixed(1)}g</div><div class="summe-label">Zucker</div></div><div class="summe-item"><div class="summe-val" style="color:#3b82f6">${sum('kohlenhydrate').toFixed(1)}g</div><div class="summe-label">KH</div></div>`;
-  box.classList.add('show');
 }
-document.getElementById('datum').addEventListener('change',()=>aktualisiereTagesSumme());
+
+// ─── Entries list ─────────────────────────────────────────────────────────────
 
 function matchSuche(name,s){if(!s)return true;const n=name.toLowerCase();s=s.toLowerCase();if(s.startsWith('*')&&s.endsWith('*'))return n.includes(s.slice(1,-1));if(s.startsWith('*'))return n.endsWith(s.slice(1));if(s.endsWith('*'))return n.startsWith(s.slice(0,-1));return n.includes(s);}
 
@@ -445,40 +527,49 @@ function renderEintraege(){
     irgendwas=true;
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
     const kcal=Math.round(sum('kalorien')),eiw=sum('eiweiss').toFixed(1),zuk=sum('zucker').toFixed(1),kh=sum('kohlenhydrate').toFixed(1);
-    html+=`<div style="margin-bottom:1rem">
-      <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:8px 8px 0 0;padding:0.5rem 0.6rem">
-        <span style="font-weight:700;color:#93c5fd;font-size:0.85rem">📅 ${fmt(datum)}</span>
-        <button class="btn-icon" onclick="deleteDay('${datum}')">🗑️</button>
+    html+=`<div style="margin-bottom:0.75rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:8px 8px 0 0;padding:0.45rem 0.6rem">
+        <span style="font-weight:700;color:#93c5fd;font-size:0.82rem">📅 ${fmt(datum)}</span>
+        <button class="btn-food btn-food-del" onclick="deleteDay('${datum}')" style="font-size:0.8rem">🗑️</button>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.25);border-top:none;padding:0.4rem 0.6rem;margin-bottom:0">
-        <div style="text-align:center"><div style="font-size:1rem;font-weight:700;color:#f59e0b">${kcal}</div><div style="font-size:0.65rem;color:#64748b">kcal</div></div>
-        <div style="text-align:center"><div style="font-size:1rem;font-weight:700;color:#22c55e">${eiw}g</div><div style="font-size:0.65rem;color:#64748b">Eiweiß</div></div>
-        <div style="text-align:center"><div style="font-size:1rem;font-weight:700;color:#ec4899">${zuk}g</div><div style="font-size:0.65rem;color:#64748b">Zucker</div></div>
-        <div style="text-align:center"><div style="font-size:1rem;font-weight:700;color:#3b82f6">${kh}g</div><div style="font-size:0.65rem;color:#64748b">KH</div></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.25);border-top:none;padding:0.35rem 0.6rem;">
+        <div style="text-align:center"><div style="font-size:0.95rem;font-weight:700;color:#f59e0b">${kcal}</div><div style="font-size:0.62rem;color:#64748b">kcal</div></div>
+        <div style="text-align:center"><div style="font-size:0.95rem;font-weight:700;color:#22c55e">${eiw}g</div><div style="font-size:0.62rem;color:#64748b">Eiweiß</div></div>
+        <div style="text-align:center"><div style="font-size:0.95rem;font-weight:700;color:#ec4899">${zuk}g</div><div style="font-size:0.62rem;color:#64748b">Zucker</div></div>
+        <div style="text-align:center"><div style="font-size:0.95rem;font-weight:700;color:#3b82f6">${kh}g</div><div style="font-size:0.62rem;color:#64748b">KH</div></div>
       </div>
-      <div style="overflow-x:auto"><table class="entries-table" style="width:100%;border-radius:0 0 8px 8px;overflow:hidden"><thead><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th style="text-align:right">Zucker</th><th style="text-align:right">KH</th><th></th></tr></thead><tbody>${gefiltert.map(e=>`<tr><td>${e.lebensmittel||''}</td><td style="text-align:right">${Math.round(+e.kalorien||0)}</td><td style="text-align:right">${(+e.eiweiss||0).toFixed(1)}g</td><td style="text-align:right">${(+e.zucker||0).toFixed(1)}g</td><td style="text-align:right">${(+e.kohlenhydrate||0).toFixed(1)}g</td><td style="text-align:right"><button class="btn-icon" onclick="deleteEintrag('${e.id}','${datum}')">✕</button></td></tr>`).join('')}</tbody></table></div>
+      <div style="overflow-x:auto"><table class="entries-table" style="width:100%;border-radius:0 0 8px 8px;overflow:hidden"><thead><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th style="text-align:right">Zucker</th><th style="text-align:right">KH</th><th></th></tr></thead><tbody>
+      ${gefiltert.map(e=>`<tr><td>${e.lebensmittel||''}</td><td style="text-align:right">${Math.round(+e.kalorien||0)}</td><td style="text-align:right">${(+e.eiweiss||0).toFixed(1)}g</td><td style="text-align:right">${(+e.zucker||0).toFixed(1)}g</td><td style="text-align:right">${(+e.kohlenhydrate||0).toFixed(1)}g</td><td style="text-align:right"><button class="btn-food btn-food-del" onclick="deleteEintrag('${e.id}','${datum}')">✕</button></td></tr>`).join('')}
+      </tbody></table></div>
     </div>`;
   });
   container.innerHTML=irgendwas?html:'<div class="empty-hint">Keine Einträge für diese Suche.</div>';
 }
 
 async function deleteEintrag(id,datum){
-  try{await fetch(URL_BASE+'?id=eq.'+id,{method:'DELETE',headers:H});eintraege=eintraege.filter(e=>String(e.id)!==String(id));aktualisiereTagesSumme(datum);renderEintraege();}
+  try{await fetch(URL_BASE+'?id=eq.'+id,{method:'DELETE',headers:H});eintraege=eintraege.filter(e=>String(e.id)!==String(id));aktualisiereBanner();renderEintraege();}
   catch(e){alert('Fehler: '+e.message);}
 }
 async function deleteDay(datum){
   if(!confirm('Tag '+fmt(datum)+' wirklich löschen?'))return;
-  try{await fetch(URL_BASE+'?datum=eq.'+datum,{method:'DELETE',headers:H});eintraege=eintraege.filter(e=>!e.datum||e.datum.slice(0,10)!==datum);renderEintraege();aktualisiereTagesSumme(datum);}
+  try{await fetch(URL_BASE+'?datum=eq.'+datum,{method:'DELETE',headers:H});eintraege=eintraege.filter(e=>!e.datum||e.datum.slice(0,10)!==datum);aktualisiereBanner();renderEintraege();}
   catch(e){alert('Fehler: '+e.message);}
 }
 
-function exportCSV(){
+// ─── Export ───────────────────────────────────────────────────────────────────
+
+function getExportTage(){
   const von=document.getElementById('export-von').value,bis=document.getElementById('export-bis').value;
+  return eintraege.filter(e=>{const d=e.datum?e.datum.slice(0,10):'';return(!von||d>=von)&&(!bis||d<=bis);});
+}
+
+function exportCSV(){
   const status=document.getElementById('export-status');
-  const gef=eintraege.filter(e=>{const d=e.datum?e.datum.slice(0,10):'';return(!von||d>=von)&&(!bis||d<=bis);});
+  const von=document.getElementById('export-von').value,bis=document.getElementById('export-bis').value;
+  const gef=getExportTage();
   if(!gef.length){status.textContent='⚠️ Keine Einträge.';status.style.color='#f59e0b';return;}
   const tage={};gef.forEach(e=>{const d=e.datum.slice(0,10);if(!tage[d])tage[d]=[];tage[d].push(e);});
-  const zeilen=['\uFEFFDatum;Lebensmittel;Kalorien (kcal);Eiweiß (g);Zucker (g);Kohlenhydrate (g)'];
+  const zeilen=['﻿Datum;Lebensmittel;Kalorien (kcal);Eiweiß (g);Zucker (g);Kohlenhydrate (g)'];
   Object.keys(tage).sort().forEach(datum=>{
     tage[datum].forEach(e=>zeilen.push([fmt(datum),e.lebensmittel,Math.round(+e.kalorien||0),(+e.eiweiss||0).toFixed(1),(+e.zucker||0).toFixed(1),(+e.kohlenhydrate||0).toFixed(1)].join(';')));
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
@@ -488,27 +579,47 @@ function exportCSV(){
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
   a.href=url;a.download='ernaehrung'+(von?'_'+von:'')+(bis?'_bis_'+bis:'')+'.csv';
   a.click();URL.revokeObjectURL(url);
-  status.textContent='✅ Exportiert.';status.style.color='#22c55e';
+  document.getElementById('brief-output').style.display='none';
+  status.textContent='✅ CSV exportiert.';status.style.color='#22c55e';
 }
 
-function exportText(){
-  const von=document.getElementById('export-von').value,bis=document.getElementById('export-bis').value;
+function pad(s,n){s=String(s);while(s.length<n)s=' '+s;return s;}
+function padR(s,n){s=String(s);while(s.length<n)s=s+' ';return s;}
+
+function exportBrief(){
   const status=document.getElementById('export-status');
-  const gef=eintraege.filter(e=>{const d=e.datum?e.datum.slice(0,10):'';return(!von||d>=von)&&(!bis||d<=bis);});
+  const von=document.getElementById('export-von').value,bis=document.getElementById('export-bis').value;
+  const gef=getExportTage();
   if(!gef.length){status.textContent='⚠️ Keine Einträge.';status.style.color='#f59e0b';return;}
   const tage={};gef.forEach(e=>{const d=e.datum.slice(0,10);if(!tage[d])tage[d]=[];tage[d].push(e);});
-  const zeilen=[];
+  const linie='─'.repeat(62);
+  const zeilen=['ERNÄHRUNGSPROTOKOLL – BRIEFFORM',''];
+  if(von||bis)zeilen.push('Zeitraum: '+(von?fmt(von):'')+(von&&bis?' bis ':bis?'bis ':'')+( bis?fmt(bis):''),'');
+  zeilen.push(padR('Datum / Lebensmittel',28)+pad('kcal',6)+pad('Eiw.g',7)+pad('Zck.g',7)+pad('KH.g',7));
+  zeilen.push(linie);
   Object.keys(tage).sort().forEach(datum=>{
-    zeilen.push(datum.replace(/-/g,''));  // 20260511
-    tage[datum].forEach(e=>{if(e.lebensmittel)zeilen.push(e.lebensmittel);});
-    zeilen.push('');  // Leerzeile zwischen Tagen
+    zeilen.push(fmt(datum));
+    tage[datum].forEach(e=>{
+      const lm=(e.lebensmittel||'').slice(0,26);
+      zeilen.push('  '+padR(lm,26)+pad(Math.round(+e.kalorien||0),6)+pad((+e.eiweiss||0).toFixed(1),7)+pad((+e.zucker||0).toFixed(1),7)+pad((+e.kohlenhydrate||0).toFixed(1),7));
+    });
+    const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
+    zeilen.push('  '+padR('GESAMT',26)+pad(Math.round(sum('kalorien')),6)+pad(sum('eiweiss').toFixed(1),7)+pad(sum('zucker').toFixed(1),7)+pad(sum('kohlenhydrate').toFixed(1),7));
+    zeilen.push('');
   });
-  const blob=new Blob([zeilen.join('\n')],{type:'text/plain;charset=utf-8'});
+  zeilen.push(linie);
+  const txt=zeilen.join('\n');
+  const out=document.getElementById('brief-output');
+  out.value=txt;out.style.display='block';
+  status.textContent='✅ Briefform – markieren und kopieren, oder als TXT:';status.style.color='#22c55e';
+  // Also offer download
+  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
-  a.href=url;a.download='ernaehrung'+(von?'_'+von:'')+(bis?'_bis_'+bis:'')+'.txt';
+  a.href=url;a.download='ernaehrung_brief'+(von?'_'+von:'')+(bis?'_bis_'+bis:'')+'.txt';
   a.click();URL.revokeObjectURL(url);
-  status.textContent='✅ Text exportiert.';status.style.color='#22c55e';
 }
+
+// ─── Import ───────────────────────────────────────────────────────────────────
 
 function handleImportDrop(ev){
   ev.preventDefault();
@@ -540,74 +651,98 @@ async function importCSV(file){
       }
     }
     eintraege=[...neu,...eintraege];
-    if(importiert>0){renderEintraege();aktualisiereTagesSumme();status.textContent='✅ '+importiert+' Einträge importiert.';status.style.color='#22c55e';}
+    if(importiert>0){renderEintraege();aktualisiereBanner();status.textContent='✅ '+importiert+' Einträge importiert.';status.style.color='#22c55e';}
     else{status.textContent='ℹ️ Keine neuen Einträge gefunden.';status.style.color='#f59e0b';}
   }catch(e){status.textContent='❌ Fehler: '+e.message;status.style.color='#ef4444';}
   document.getElementById('import-file').value='';
 }
 
+// ─── Speech recognition (Lebensmittel) ───────────────────────────────────────
+
 let erkennung=null,mikroAktiv=false,gesprochenText='';
-function initSpeech(){
+function initSpeech(onResult,onEnd){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){alert('Spracheingabe nicht verfügbar. Bitte Chrome oder Edge verwenden.');return null;}
+  if(!SR)return null;
   const r=new SR();
-  r.lang='de-DE';
-  r.continuous=false;   // Einzelerkennung – auf Android zuverlässiger
-  r.interimResults=true;
-  r.onresult=function(ev){
-    const inp=document.getElementById('lebensmittel-input');
-    let interim='',final='';
-    for(let i=ev.resultIndex;i<ev.results.length;i++){
-      const t=ev.results[i][0].transcript;
-      if(ev.results[i].isFinal)final+=t; else interim+=t;
-    }
-    inp.value=(gesprochenText+(interim?' '+interim:'')).trim();
-    if(final){
-      if(/\bstopp?\b/i.test(final)){
-        gesprochenText=(gesprochenText+' '+final.replace(/\s*\bstopp?\b\s*/gi,' ').trim()).trim();
-        inp.value=gesprochenText;
-        stopMikro();addFood();return;
-      }
-      gesprochenText=(gesprochenText+' '+final).trim();
-      inp.value=gesprochenText;
-    }
-  };
-  r.onerror=function(e){
-    if(e.error==='no-speech')return;  // Stille = kein Fehler, einfach neu starten
-    if(e.error==='not-allowed'){stopMikro();return;}
-    console.warn('Sprache:',e.error);
-  };
-  r.onend=function(){
-    if(mikroAktiv){
-      setTimeout(()=>{if(mikroAktiv){erkennung=initSpeech();if(erkennung)try{erkennung.start();}catch(e){}}},100);
-    }
-  };
+  r.lang='de-DE';r.continuous=false;r.interimResults=true;
+  r.onresult=onResult;
+  r.onerror=function(e){if(e.error==='no-speech')return;if(e.error==='not-allowed'){stopMikro();return;}};
+  r.onend=onEnd;
   return r;
 }
+
 function startMikro(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){alert('Spracheingabe nicht verfügbar. Bitte Chrome oder Edge verwenden.');return;}
   gesprochenText=document.getElementById('lebensmittel-input').value.trim();
   mikroAktiv=true;
-  document.getElementById('mikro-btn').classList.add('aktiv');
-  erkennung=initSpeech();
+  document.getElementById('mikro-btn').classList.add('mikro-aktiv');
+  erkennung=initSpeech(
+    function(ev){
+      const inp=document.getElementById('lebensmittel-input');
+      let interim='',final='';
+      for(let i=ev.resultIndex;i<ev.results.length;i++){
+        const t=ev.results[i][0].transcript;
+        if(ev.results[i].isFinal)final+=t; else interim+=t;
+      }
+      inp.value=(gesprochenText+(interim?' '+interim:'')).trim();
+      if(final){
+        if(/\bstopp?\b/i.test(final)){
+          gesprochenText=(gesprochenText+' '+final.replace(/\s*\bstopp?\b\s*/gi,' ').trim()).trim();
+          inp.value=gesprochenText;stopMikro();addFood();return;
+        }
+        gesprochenText=(gesprochenText+' '+final).trim();
+        inp.value=gesprochenText;
+      }
+    },
+    function(){if(mikroAktiv){setTimeout(()=>{if(mikroAktiv){erkennung=initSpeech(erkennung.onresult,erkennung.onend);if(erkennung)try{erkennung.start();}catch(e){}}},100);}}
+  );
   if(erkennung)try{erkennung.start();}catch(e){}
 }
 function stopMikro(){
   mikroAktiv=false;
-  document.getElementById('mikro-btn').classList.remove('aktiv');
+  document.getElementById('mikro-btn').classList.remove('mikro-aktiv');
   if(erkennung){try{erkennung.stop();}catch(e){} erkennung=null;}
 }
 function toggleMikro(){if(mikroAktiv)stopMikro();else startMikro();}
 
-function clearLebensmittelInput(){
-  document.getElementById('lebensmittel-input').value='';
-  gesprochenText='';
+// ─── Speech recognition (Suche) ──────────────────────────────────────────────
+
+let erkennungSuche=null,mikroSucheAktiv=false;
+
+function startMikroSuche(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Spracheingabe nicht verfügbar. Bitte Chrome oder Edge verwenden.');return;}
+  mikroSucheAktiv=true;
+  document.getElementById('mikro-suche-btn').classList.add('mikro-aktiv');
+  const inp=document.getElementById('suche');
+  erkennungSuche=initSpeech(
+    function(ev){
+      let interim='',final='';
+      for(let i=ev.resultIndex;i<ev.results.length;i++){
+        const t=ev.results[i][0].transcript;
+        if(ev.results[i].isFinal)final+=t; else interim+=t;
+      }
+      if(interim)inp.value=interim;
+      if(final){inp.value=final.trim();stopMikroSuche();renderEintraege();}
+    },
+    function(){if(mikroSucheAktiv){setTimeout(()=>{if(mikroSucheAktiv){erkennungSuche=initSpeech(erkennungSuche.onresult,erkennungSuche.onend);if(erkennungSuche)try{erkennungSuche.start();}catch(e){}}},100);}}
+  );
+  if(erkennungSuche)try{erkennungSuche.start();}catch(e){}
 }
-function clearSuche(){
-  document.getElementById('suche').value='';
-  renderEintraege();
+function stopMikroSuche(){
+  mikroSucheAktiv=false;
+  document.getElementById('mikro-suche-btn').classList.remove('mikro-aktiv');
+  if(erkennungSuche){try{erkennungSuche.stop();}catch(e){} erkennungSuche=null;}
 }
+function toggleMikroSuche(){if(mikroSucheAktiv)stopMikroSuche();else startMikroSuche();}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function clearLebensmittelInput(){document.getElementById('lebensmittel-input').value='';gesprochenText='';}
+function clearSuche(){document.getElementById('suche').value='';renderEintraege();}
+
+// ─── Token management ─────────────────────────────────────────────────────────
 
 function loadToken(){return localStorage.getItem('github_ki_token')||'';}
 function saveToken(){
@@ -618,29 +753,17 @@ function saveToken(){
   updateKiStatus();
   document.getElementById('ki-token-form').style.display='none';
 }
-function deleteToken(){
-  localStorage.removeItem('github_ki_token');
-  document.getElementById('ki-token-input').value='';
-  updateKiStatus();
-}
-function toggleTokenForm(){
-  const f=document.getElementById('ki-token-form');
-  f.style.display=f.style.display==='none'?'block':'none';
-}
+function deleteToken(){localStorage.removeItem('github_ki_token');document.getElementById('ki-token-input').value='';updateKiStatus();}
+function toggleTokenForm(){const f=document.getElementById('ki-token-form');f.style.display=f.style.display==='none'?'block':'none';}
 function updateKiStatus(){
   const t=loadToken();
   const badge=document.getElementById('ki-badge');
   const txt=document.getElementById('ki-status-text');
-  if(t){
-    badge.className='dot ok';
-    txt.textContent='KI-Analyse aktiv – unbekannte Lebensmittel werden automatisch per KI geschätzt.';
-    txt.style.color='#22c55e';
-  }else{
-    badge.className='dot warn';
-    txt.textContent='Kein Token – nur lokale DB + Open Food Facts.';
-    txt.style.color='#f59e0b';
-  }
+  if(t){badge.className='dot ok';txt.textContent='KI-Analyse aktiv – unbekannte Lebensmittel + KI-Bewertung verfügbar.';txt.style.color='#22c55e';}
+  else{badge.className='dot warn';txt.textContent='Kein Token – nur lokale DB + Open Food Facts. KI-Bewertung nicht verfügbar.';txt.style.color='#f59e0b';}
 }
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
 
 async function init(){
   const heute=heuteStr();
