@@ -485,12 +485,20 @@ async function speichernEintrag(){
   const datum=document.getElementById('datum').value;
   if(!datum){alert('Bitte Datum wählen.');return;}
   try{
-    for(const row of pendingRows){
-      const r=await fetch(URL_BASE,{method:'POST',headers:H,body:JSON.stringify({datum,lebensmittel:row.lebensmittel,kalorien:row.kalorien,eiweiss:row.eiweiss,zucker:row.zucker,kohlenhydrate:row.kohlenhydrate})});
-      if(!r.ok)throw new Error('HTTP '+r.status);
-      const saved=await r.json();
-      eintraege.unshift(saved[0]||{datum,...row});
-    }
+    // Ganze Mahlzeit als EIN Eintrag speichern
+    const gesamt={
+      datum,
+      lebensmittel: foods.join(', '),
+      zutaten: pendingRows.length>1 ? JSON.stringify(pendingRows) : null,
+      kalorien: Math.round(pendingRows.reduce((a,r)=>a+r.kalorien,0)),
+      eiweiss: +pendingRows.reduce((a,r)=>a+r.eiweiss,0).toFixed(1),
+      zucker: +pendingRows.reduce((a,r)=>a+r.zucker,0).toFixed(1),
+      kohlenhydrate: +pendingRows.reduce((a,r)=>a+r.kohlenhydrate,0).toFixed(1)
+    };
+    const r=await fetch(URL_BASE,{method:'POST',headers:H,body:JSON.stringify(gesamt)});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const saved=await r.json();
+    eintraege.unshift(saved[0]||{datum,...gesamt});
     aktualisiereBanner();renderEintraege();
     // Clear everything after save
     foods=[];pendingRows=[];renderFoodList();
@@ -528,8 +536,27 @@ function matchSuche(name,s){if(!s)return true;const n=name.toLowerCase();s=s.toL
 
 function eintragKarte(e, datum){
   const lmEsc=(e.lebensmittel||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  // Parse stored individual items
+  let zutaten=null;
+  if(e.zutaten){try{zutaten=JSON.parse(e.zutaten);}catch(ex){}}
+  // Individual breakdown rows
+  let zutatenHTML='';
+  if(zutaten&&zutaten.length>1){
+    zutatenHTML='<div style="margin:0.35rem 0;">'
+      +zutaten.map(z=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:0.2rem 0.4rem;background:#0a1628;border-radius:4px;margin-bottom:2px;">'
+        +'<span style="flex:1;font-size:0.78rem;color:#94a3b8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+z.lebensmittel+'</span>'
+        +'<span style="display:flex;gap:0.5rem;font-size:0.72rem;flex-shrink:0;margin-left:0.4rem;">'
+          +'<span style="color:#f59e0b">'+Math.round(+z.kalorien||0)+' kcal</span>'
+          +'<span style="color:#22c55e">'+(+z.eiweiss||0).toFixed(1)+'g</span>'
+          +'<span style="color:#ec4899">'+(+z.zucker||0).toFixed(1)+'g</span>'
+          +'<span style="color:#3b82f6">'+(+z.kohlenhydrate||0).toFixed(1)+'g</span>'
+        +'</span>'
+      +'</div>').join('')
+    +'</div>';
+  }
   return '<div class="entry-card">'
     +'<div class="entry-card-name">🍽 '+(e.lebensmittel||'')+'</div>'
+    +zutatenHTML
     +'<div class="entry-card-grid">'
       +'<div class="ecg-item"><div class="ecg-val" style="color:#f59e0b">'+Math.round(+e.kalorien||0)+'</div><div class="ecg-label">kcal</div></div>'
       +'<div class="ecg-item"><div class="ecg-val" style="color:#22c55e">'+(+e.eiweiss||0).toFixed(1)+'g</div><div class="ecg-label">Eiweiß</div></div>'
@@ -583,7 +610,8 @@ function renderEintraege(){
 
 function wiederholenEintrag(lm){
   if(!lm)return;
-  foods.push(lm);
+  // Mahlzeit in einzelne Lebensmittel aufteilen
+  lm.split(',').map(s=>s.trim()).filter(Boolean).forEach(t=>foods.push(t));
   renderFoodList();
   document.getElementById('result-box').classList.remove('show');
   pendingRows=[];
@@ -651,11 +679,18 @@ function exportBrief(){
     zeilen.push('');
     zeilen.push('── '+fmt(datum)+' '+'─'.repeat(Math.max(0,linie.length-5-fmt(datum).length)));
     tage[datum].forEach(e=>{
+      // Mahlzeit-Zeile
       zeilen.push(briefZeile(e.lebensmittel||'',Math.round(+e.kalorien||0),(+e.eiweiss||0).toFixed(1),(+e.zucker||0).toFixed(1),(+e.kohlenhydrate||0).toFixed(1)));
+      // Einzelteile wenn vorhanden
+      let zutaten=null;
+      if(e.zutaten){try{zutaten=JSON.parse(e.zutaten);}catch(ex){}}
+      if(zutaten&&zutaten.length>1){
+        zutaten.forEach(z=>zeilen.push('  '+briefZeile(z.lebensmittel||'',Math.round(+z.kalorien||0),(+z.eiweiss||0).toFixed(1),(+z.zucker||0).toFixed(1),(+z.kohlenhydrate||0).toFixed(1))));
+      }
     });
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
     zeilen.push(linie);
-    zeilen.push(briefZeile('GESAMT',Math.round(sum('kalorien')),sum('eiweiss').toFixed(1),sum('zucker').toFixed(1),sum('kohlenhydrate').toFixed(1)));
+    zeilen.push(briefZeile('GESAMT '+fmt(datum),Math.round(sum('kalorien')),sum('eiweiss').toFixed(1),sum('zucker').toFixed(1),sum('kohlenhydrate').toFixed(1)));
   });
   zeilen.push('');zeilen.push(linie);
   const txt=zeilen.join('\n');
