@@ -175,7 +175,8 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
       <!-- Kategorie/Notiz direkt vor dem Speichern -->
       <div class="icon-row" style="margin-top:0.6rem;margin-bottom:0.3rem;">
         <span class="field-icon">🏷</span>
-        <input type="text" id="kategorie-input" class="flex-input" placeholder="Notiz/Kategorie: Mittag, Snack, Gaststätte Müllmax…" oninput="updateChips()"/>
+        <input type="text" id="kategorie-input" class="flex-input" placeholder="Notiz/Kategorie: Mittag, Snack, Gaststätte…" oninput="updateChips()"/>
+        <button id="mikro-kat-btn" class="btn-ghost btn-icon-sq" onclick="toggleMikroKat()" title="Spracheingabe Notiz">🎤</button>
         <button class="btn-ghost btn-icon-sq" onclick="setKategorie('')" title="Löschen">✕</button>
       </div>
       <div class="chip-row" style="margin-bottom:0.5rem;">
@@ -811,6 +812,36 @@ function stopMikroSuche(){
   if(erkennungSuche){try{erkennungSuche.stop();}catch(e){} erkennungSuche=null;}
 }
 function toggleMikroSuche(){if(mikroSucheAktiv)stopMikroSuche();else startMikroSuche();}
+
+// ─── Speech recognition (Kategorie/Notiz) ────────────────────────────────────
+
+let erkennungKat=null,mikroKatAktiv=false;
+function startMikroKat(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Spracheingabe nicht verfügbar. Bitte Chrome oder Edge verwenden.');return;}
+  mikroKatAktiv=true;
+  document.getElementById('mikro-kat-btn').classList.add('mikro-aktiv');
+  const inp=document.getElementById('kategorie-input');
+  erkennungKat=initSpeech(
+    function(ev){
+      let interim='',final='';
+      for(let i=ev.resultIndex;i<ev.results.length;i++){
+        const t=ev.results[i][0].transcript;
+        if(ev.results[i].isFinal)final+=t; else interim+=t;
+      }
+      if(interim)inp.value=interim;
+      if(final){inp.value=final.trim();updateChips();stopMikroKat();}
+    },
+    function(){if(mikroKatAktiv){setTimeout(()=>{if(mikroKatAktiv){erkennungKat=initSpeech(erkennungKat.onresult,erkennungKat.onend);if(erkennungKat)try{erkennungKat.start();}catch(e){}}},100);}}
+  );
+  if(erkennungKat)try{erkennungKat.start();}catch(e){}
+}
+function stopMikroKat(){
+  mikroKatAktiv=false;
+  document.getElementById('mikro-kat-btn').classList.remove('mikro-aktiv');
+  if(erkennungKat){try{erkennungKat.stop();}catch(e){} erkennungKat=null;}
+}
+function toggleMikroKat(){if(mikroKatAktiv)stopMikroKat();else startMikroKat();}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
