@@ -73,6 +73,12 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
 .btn-rep:hover{background:rgba(96,165,250,0.22);}
 .btn-del-sm{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:0.28rem 0.6rem;font-size:0.78rem;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:700;}
 .btn-del-sm:hover{background:rgba(239,68,68,0.22);}
+/* Kategorie */
+.chip-row{display:flex;gap:0.3rem;flex-wrap:wrap;margin-bottom:0.5rem;}
+.chip{background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:20px;padding:0.2rem 0.65rem;font-size:0.75rem;cursor:pointer;font-family:inherit;transition:all 0.15s;}
+.chip:hover{background:#334155;color:#f1f5f9;}
+.chip.aktiv{background:rgba(59,130,246,0.18);border-color:#3b82f6;color:#60a5fa;}
+.kat-badge{display:inline-block;background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);border-radius:12px;padding:0.08rem 0.5rem;font-size:0.7rem;font-weight:600;margin-left:0.4rem;vertical-align:middle;}
 .status-msg{font-size:0.78rem;margin-top:0.4rem;min-height:1.1em;}
 .empty-hint{text-align:center;color:#475569;padding:1.5rem;font-size:0.875rem;}
 .search-box{position:relative;}
@@ -153,6 +159,20 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
     <!-- Food list -->
     <ul class="food-list" id="food-list"></ul>
 
+    <!-- Kategorie -->
+    <div class="icon-row">
+      <span class="field-icon">🏷</span>
+      <input type="text" id="kategorie-input" class="flex-input" placeholder="Kategorie (optional): Mittag, Snack, Gaststätte…" oninput="updateChips()"/>
+      <button class="btn-ghost btn-icon-sq" onclick="setKategorie('')" title="Löschen">✕</button>
+    </div>
+    <div class="chip-row">
+      <button class="chip" onclick="setKategorie('Frühstück')">Frühstück</button>
+      <button class="chip" onclick="setKategorie('Mittag')">Mittag</button>
+      <button class="chip" onclick="setKategorie('Abendessen')">Abendessen</button>
+      <button class="chip" onclick="setKategorie('Snack')">Snack</button>
+      <button class="chip" onclick="setKategorie('Gaststätte')">Gaststätte</button>
+    </div>
+
     <!-- Analyze buttons -->
     <div class="analyze-row">
       <button class="btn-primary" id="analyze-btn" onclick="analyzeAndShow()">📊 Nährwerte ermitteln</button>
@@ -178,19 +198,6 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
     <div id="eintraege-container"><div class="empty-hint">Lädt…</div></div>
   </div>
 
-  <!-- CSV Import -->
-  <div class="card">
-    <div class="card-title">📥 CSV-Import</div>
-    <div id="import-drop"
-      ondragover="event.preventDefault();this.style.borderColor='#3b82f6'"
-      ondragleave="this.style.borderColor='#334155'"
-      ondrop="handleImportDrop(event)"
-      onclick="document.getElementById('import-file').click()">
-      📂 CSV importieren – hier klicken oder Datei hierher ziehen
-    </div>
-    <input type="file" id="import-file" accept=".csv" style="display:none" onchange="importCSV(this.files[0])">
-    <div class="status-msg" id="import-status"></div>
-  </div>
 
   <!-- KI / GitHub Token -->
   <div class="card">
@@ -486,9 +493,11 @@ async function speichernEintrag(){
   if(!datum){alert('Bitte Datum wählen.');return;}
   try{
     // Ganze Mahlzeit als EIN Eintrag speichern
+    const kategorieVal=document.getElementById('kategorie-input').value.trim();
     const gesamt={
       datum,
       lebensmittel: foods.join(', '),
+      kategorie: kategorieVal||null,
       zutaten: pendingRows.length>1 ? JSON.stringify(pendingRows) : null,
       kalorien: Math.round(pendingRows.reduce((a,r)=>a+r.kalorien,0)),
       eiweiss: +pendingRows.reduce((a,r)=>a+r.eiweiss,0).toFixed(1),
@@ -504,8 +513,18 @@ async function speichernEintrag(){
     foods=[];pendingRows=[];renderFoodList();
     document.getElementById('result-box').classList.remove('show');
     document.getElementById('lebensmittel-input').value='';
-    gesprochenText='';
+    document.getElementById('kategorie-input').value='';
+    updateChips();gesprochenText='';
   }catch(e){alert('Speichern fehlgeschlagen: '+e.message);}
+}
+
+function setKategorie(k){
+  document.getElementById('kategorie-input').value=k;
+  updateChips();
+}
+function updateChips(){
+  const v=document.getElementById('kategorie-input').value.trim();
+  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('aktiv',c.textContent===v));
 }
 
 // Schließt Ergebnisse, BEHÄLT aber die food-Liste – Modus kann gewechselt werden
@@ -554,8 +573,9 @@ function eintragKarte(e, datum){
       +'</div>').join('')
     +'</div>';
   }
+  const katBadge=e.kategorie?'<span class="kat-badge">'+e.kategorie+'</span>':'';
   return '<div class="entry-card">'
-    +'<div class="entry-card-name">🍽 '+(e.lebensmittel||'')+'</div>'
+    +'<div class="entry-card-name">🍽 '+(e.lebensmittel||'')+katBadge+'</div>'
     +zutatenHTML
     +'<div class="entry-card-grid">'
       +'<div class="ecg-item"><div class="ecg-val" style="color:#f59e0b">'+Math.round(+e.kalorien||0)+'</div><div class="ecg-label">kcal</div></div>'
@@ -635,17 +655,22 @@ function getExportTage(){
   return eintraege.filter(e=>{const d=e.datum?e.datum.slice(0,10):'';return(!von||d>=von)&&(!bis||d<=bis);});
 }
 
+// Dezimalzahl mit Komma für deutsches Excel
+function deNum(v,d=1){return (+v||0).toFixed(d).replace('.',',');}
+
 function exportCSV(){
   const status=document.getElementById('export-status');
   const von=document.getElementById('export-von').value,bis=document.getElementById('export-bis').value;
   const gef=getExportTage();
   if(!gef.length){status.textContent='⚠️ Keine Einträge.';status.style.color='#f59e0b';return;}
   const tage={};gef.forEach(e=>{const d=e.datum.slice(0,10);if(!tage[d])tage[d]=[];tage[d].push(e);});
-  const zeilen=['﻿Datum;Lebensmittel;Kalorien (kcal);Eiweiß (g);Zucker (g);Kohlenhydrate (g)'];
+  const zeilen=['﻿Datum;Kategorie;Lebensmittel;Kalorien (kcal);Eiweiß (g);Zucker (g);Kohlenhydrate (g)'];
   Object.keys(tage).sort().forEach(datum=>{
-    tage[datum].forEach(e=>zeilen.push([fmt(datum),e.lebensmittel,Math.round(+e.kalorien||0),(+e.eiweiss||0).toFixed(1),(+e.zucker||0).toFixed(1),(+e.kohlenhydrate||0).toFixed(1)].join(';')));
+    tage[datum].forEach(e=>{
+      zeilen.push([fmt(datum),e.kategorie||'',e.lebensmittel,Math.round(+e.kalorien||0),deNum(e.eiweiss),deNum(e.zucker),deNum(e.kohlenhydrate)].join(';'));
+    });
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
-    zeilen.push([fmt(datum),'GESAMT',Math.round(sum('kalorien')),sum('eiweiss').toFixed(1),sum('zucker').toFixed(1),sum('kohlenhydrate').toFixed(1)].join(';'));
+    zeilen.push([fmt(datum),'','GESAMT',Math.round(sum('kalorien')),deNum(sum('eiweiss')),deNum(sum('zucker')),deNum(sum('kohlenhydrate'))].join(';'));
   });
   const blob=new Blob([zeilen.join('\r\n')],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
@@ -679,12 +704,14 @@ function exportBrief(){
     zeilen.push('');
     zeilen.push('── '+fmt(datum)+' '+'─'.repeat(Math.max(0,linie.length-5-fmt(datum).length)));
     tage[datum].forEach(e=>{
-      // Mahlzeit-Zeile
-      zeilen.push(briefZeile(e.lebensmittel||'',Math.round(+e.kalorien||0),(+e.eiweiss||0).toFixed(1),(+e.zucker||0).toFixed(1),(+e.kohlenhydrate||0).toFixed(1)));
-      // Einzelteile wenn vorhanden
       let zutaten=null;
       if(e.zutaten){try{zutaten=JSON.parse(e.zutaten);}catch(ex){}}
-      if(zutaten&&zutaten.length>1){
+      const mehrere=zutaten&&zutaten.length>1;
+      // Hauptzeile: bei mehreren Zutaten + Kategorie → Kategorie anzeigen, sonst Lebensmittel
+      const hauptLabel=mehrere&&e.kategorie ? e.kategorie : (e.lebensmittel||'');
+      zeilen.push(briefZeile(hauptLabel,Math.round(+e.kalorien||0),(+e.eiweiss||0).toFixed(1),(+e.zucker||0).toFixed(1),(+e.kohlenhydrate||0).toFixed(1)));
+      // Einzelteile eingerückt (nur bei mehreren Zutaten)
+      if(mehrere){
         zutaten.forEach(z=>zeilen.push('  '+briefZeile(z.lebensmittel||'',Math.round(+z.kalorien||0),(+z.eiweiss||0).toFixed(1),(+z.zucker||0).toFixed(1),(+z.kohlenhydrate||0).toFixed(1))));
       }
     });
@@ -702,44 +729,6 @@ function exportBrief(){
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
   a.href=url;a.download='ernaehrung_brief'+(von?'_'+von:'')+(bis?'_bis_'+bis:'')+'.txt';
   a.click();URL.revokeObjectURL(url);
-}
-
-// ─── Import ───────────────────────────────────────────────────────────────────
-
-function handleImportDrop(ev){
-  ev.preventDefault();
-  document.getElementById('import-drop').style.borderColor='#334155';
-  const file=ev.dataTransfer.files[0];
-  if(file&&file.name.toLowerCase().endsWith('.csv'))importCSV(file);
-  else alert('Bitte eine CSV-Datei verwenden.');
-}
-
-async function importCSV(file){
-  if(!file)return;
-  const status=document.getElementById('import-status');
-  status.textContent='Wird geladen…';status.style.color='#94a3b8';
-  try{
-    const text=await file.text();
-    const zeilen=text.replace(/^﻿/,'').split('\n').filter(z=>z.trim());
-    let importiert=0;const neu=[];
-    for(const zeile of zeilen){
-      const t=zeile.split(';').map(s=>s.trim());
-      if(t.length<6||t[0]==='Datum'||t[1]==='GESAMT'||!t[1])continue;
-      let datum=t[0];
-      if(datum.includes('.')){const[d,m,y]=datum.split('.');datum=y+'-'+m+'-'+d;}
-      if(!datum)continue;
-      const eintrag={datum,lebensmittel:t[1],kalorien:parseFloat(t[2])||0,eiweiss:parseFloat(t[3])||0,zucker:parseFloat(t[4])||0,kohlenhydrate:parseFloat(t[5])||0};
-      const exists=eintraege.find(e=>e.datum&&e.datum.slice(0,10)===datum&&e.lebensmittel===eintrag.lebensmittel&&Math.round(e.kalorien)===Math.round(eintrag.kalorien));
-      if(!exists){
-        const r=await fetch(URL_BASE,{method:'POST',headers:H,body:JSON.stringify(eintrag)});
-        if(r.ok){const saved=await r.json();neu.push(saved[0]||eintrag);importiert++;}
-      }
-    }
-    eintraege=[...neu,...eintraege];
-    if(importiert>0){renderEintraege();aktualisiereBanner();status.textContent='✅ '+importiert+' Einträge importiert.';status.style.color='#22c55e';}
-    else{status.textContent='ℹ️ Keine neuen Einträge gefunden.';status.style.color='#f59e0b';}
-  }catch(e){status.textContent='❌ Fehler: '+e.message;status.style.color='#ef4444';}
-  document.getElementById('import-file').value='';
 }
 
 // ─── Speech recognition (Lebensmittel) ───────────────────────────────────────
