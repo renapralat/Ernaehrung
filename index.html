@@ -159,20 +159,6 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
     <!-- Food list -->
     <ul class="food-list" id="food-list"></ul>
 
-    <!-- Kategorie -->
-    <div class="icon-row">
-      <span class="field-icon">🏷</span>
-      <input type="text" id="kategorie-input" class="flex-input" placeholder="Kategorie (optional): Mittag, Snack, Gaststätte…" oninput="updateChips()"/>
-      <button class="btn-ghost btn-icon-sq" onclick="setKategorie('')" title="Löschen">✕</button>
-    </div>
-    <div class="chip-row">
-      <button class="chip" onclick="setKategorie('Frühstück')">Frühstück</button>
-      <button class="chip" onclick="setKategorie('Mittag')">Mittag</button>
-      <button class="chip" onclick="setKategorie('Abendessen')">Abendessen</button>
-      <button class="chip" onclick="setKategorie('Snack')">Snack</button>
-      <button class="chip" onclick="setKategorie('Gaststätte')">Gaststätte</button>
-    </div>
-
     <!-- Analyze buttons -->
     <div class="analyze-row">
       <button class="btn-primary" id="analyze-btn" onclick="analyzeAndShow()">📊 Nährwerte ermitteln</button>
@@ -186,7 +172,20 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
       <div style="overflow-x:auto;margin-bottom:0.4rem" id="result-table-wrap"></div>
       <div id="result-nf" style="font-size:0.75rem;color:#f59e0b;margin-bottom:0.4rem"></div>
       <div class="result-grid" id="result-totals" style="display:none;margin:0.5rem 0;"></div>
-      <div style="display:flex;gap:0.5rem;margin-top:0.5rem">
+      <!-- Kategorie/Notiz direkt vor dem Speichern -->
+      <div class="icon-row" style="margin-top:0.6rem;margin-bottom:0.3rem;">
+        <span class="field-icon">🏷</span>
+        <input type="text" id="kategorie-input" class="flex-input" placeholder="Notiz/Kategorie: Mittag, Snack, Gaststätte Müllmax…" oninput="updateChips()"/>
+        <button class="btn-ghost btn-icon-sq" onclick="setKategorie('')" title="Löschen">✕</button>
+      </div>
+      <div class="chip-row" style="margin-bottom:0.5rem;">
+        <button class="chip" onclick="setKategorie('Frühstück')">Frühstück</button>
+        <button class="chip" onclick="setKategorie('Mittag')">Mittag</button>
+        <button class="chip" onclick="setKategorie('Abendessen')">Abendessen</button>
+        <button class="chip" onclick="setKategorie('Snack')">Snack</button>
+        <button class="chip" onclick="setKategorie('Gaststätte')">Gaststätte</button>
+      </div>
+      <div style="display:flex;gap:0.5rem;">
         <button class="btn-success" style="flex:1" onclick="speichernEintrag()">💾 Speichern</button>
         <button class="btn-ghost" style="flex:1" onclick="closeResults()">↩️ Zurück</button>
       </div>
@@ -417,6 +416,7 @@ function showNWResults(rows,kiGeschaetzt,nichtGefunden){
   document.getElementById('result-nf').textContent=hinweis.trim();
   document.getElementById('result-totals').style.display='none';
   document.getElementById('result-box').classList.add('show');
+  setTimeout(()=>document.getElementById('kategorie-input').focus(),100);
 }
 
 // ─── Analyse: KI Bewertung (whole-meal prompt) ───────────────────────────────
@@ -481,6 +481,7 @@ async function analyzeKI(){
       <div class="result-item"><div class="result-val" style="color:#3b82f6">${totKH}g</div><div class="result-label">KH</div></div>`;
     tg.style.display='grid';
     document.getElementById('result-box').classList.add('show');
+    setTimeout(()=>document.getElementById('kategorie-input').focus(),100);
   }catch(e){alert('KI-Analyse fehlgeschlagen: '+e.message);}
   finally{btn.innerHTML=orig;btn.disabled=false;nwbtn.disabled=false;}
 }
