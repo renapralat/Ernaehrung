@@ -659,6 +659,8 @@ function getExportTage(){
 
 // Dezimalzahl mit Komma für deutsches Excel
 function deNum(v,d=1){return (+v||0).toFixed(d).replace('.',',');}
+// CSV-Textfeld in Anführungszeichen (schützt Semikolons, Kommas, Zeilenumbrüche)
+function csvQ(s){s=String(s==null?'':s);return '"'+s.replace(/"/g,'""')+'"';}
 
 function exportCSV(){
   const status=document.getElementById('export-status');
@@ -666,13 +668,14 @@ function exportCSV(){
   const gef=getExportTage();
   if(!gef.length){status.textContent='⚠️ Keine Einträge.';status.style.color='#f59e0b';return;}
   const tage={};gef.forEach(e=>{const d=e.datum.slice(0,10);if(!tage[d])tage[d]=[];tage[d].push(e);});
-  const zeilen=['﻿Datum;Kategorie;Lebensmittel;Kalorien (kcal);Eiweiß (g);Zucker (g);Kohlenhydrate (g)'];
-  Object.keys(tage).sort().forEach(datum=>{
+  // sep=; sagt Excel: Semikolon als Trennzeichen verwenden
+  const zeilen=['sep=;','Datum;Kategorie;Lebensmittel;Kalorien (kcal);Eiweiß (g);Zucker (g);Kohlenhydrate (g)'];
+  Object.keys(tage).sort((a,b)=>a<b?-1:a>b?1:0).forEach(datum=>{
     tage[datum].forEach(e=>{
-      zeilen.push([fmt(datum),e.kategorie||'',e.lebensmittel,Math.round(+e.kalorien||0),deNum(e.eiweiss),deNum(e.zucker),deNum(e.kohlenhydrate)].join(';'));
+      zeilen.push([csvQ(fmt(datum)),csvQ(e.kategorie||''),csvQ(e.lebensmittel),Math.round(+e.kalorien||0),deNum(e.eiweiss),deNum(e.zucker),deNum(e.kohlenhydrate)].join(';'));
     });
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
-    zeilen.push([fmt(datum),'','GESAMT',Math.round(sum('kalorien')),deNum(sum('eiweiss')),deNum(sum('zucker')),deNum(sum('kohlenhydrate'))].join(';'));
+    zeilen.push([csvQ(fmt(datum)),csvQ(''),csvQ('GESAMT'),Math.round(sum('kalorien')),deNum(sum('eiweiss')),deNum(sum('zucker')),deNum(sum('kohlenhydrate'))].join(';'));
   });
   const blob=new Blob([zeilen.join('\r\n')],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
@@ -702,7 +705,8 @@ function exportBrief(){
   if(von||bis)zeilen.push('Zeitraum: '+(von?fmt(von):'')+(von&&bis?' bis ':bis?'bis ':'')+( bis?fmt(bis):''),'');
   zeilen.push(briefZeile('Lebensmittel','kcal','Eiw.g','Zck.g','KH.g'));
   zeilen.push(linie);
-  Object.keys(tage).sort().forEach(datum=>{
+  // Aufsteigend sortieren: ältestes Datum zuerst
+  Object.keys(tage).sort((a,b)=>a<b?-1:a>b?1:0).forEach(datum=>{
     zeilen.push('');
     zeilen.push('── '+fmt(datum)+' '+'─'.repeat(Math.max(0,linie.length-5-fmt(datum).length)));
     tage[datum].forEach(e=>{
