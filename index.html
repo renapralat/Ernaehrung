@@ -64,10 +64,6 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
 .entry-card{padding:0.65rem 0.75rem;}
 .entry-card+.entry-card{border-top:1px solid #1e293b;}
 .entry-card-name{font-size:0.88rem;font-weight:600;margin-bottom:0.45rem;color:#f1f5f9;}
-.entry-card-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.25rem;margin-bottom:0.45rem;}
-.ecg-item{text-align:center;background:#0f172a;border-radius:6px;padding:0.3rem 0.2rem;}
-.ecg-val{font-size:0.95rem;font-weight:700;}
-.ecg-label{font-size:0.62rem;color:#64748b;margin-top:1px;}
 .entry-card-actions{display:flex;justify-content:space-between;align-items:center;}
 .btn-rep{background:rgba(96,165,250,0.12);border:1px solid rgba(96,165,250,0.3);color:#60a5fa;padding:0.28rem 0.7rem;font-size:0.78rem;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;}
 .btn-rep:hover{background:rgba(96,165,250,0.22);}
@@ -89,8 +85,6 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
 /* mic button active */
 .mikro-aktiv{background:#ef4444!important;color:#fff!important;border:2px solid #fca5a5!important;animation:mikropuls 1s ease-in-out infinite;}
 @keyframes mikropuls{0%,100%{opacity:1;}50%{opacity:0.6;}}
-/* brief textarea */
-#brief-output{width:100%;background:#0f172a;color:#f1f5f9;border:1px solid #334155;border-radius:8px;padding:0.75rem;font-family:'Courier New',Courier,monospace;font-size:0.78rem;resize:vertical;white-space:pre;overflow:auto;}
 #ki-token-input{font-family:monospace;font-size:0.8rem;}
 /* import drop zone */
 #import-drop{border:2px dashed #334155;border-radius:8px;padding:1rem;text-align:center;color:#64748b;font-size:0.85rem;cursor:pointer;margin-top:0.5rem;}
@@ -127,10 +121,9 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
       <input type="date" id="export-von" class="date-sm"/>
       <span class="dl-label">Bis</span>
       <input type="date" id="export-bis" class="date-sm"/>
-      <button class="btn-primary" onclick="exportCSV()">⬇️ CSV</button>
+      <button class="btn-primary" onclick="exportCSV()">⬇️ Tab/Text</button>
       <button class="btn-ghost" onclick="exportBrief()">📄 Brief</button>
     </div>
-    <textarea id="brief-output" style="display:none;min-height:160px;" readonly></textarea>
     <div class="status-msg" id="export-status"></div>
 
     <!-- Search with mic -->
@@ -235,7 +228,7 @@ function fmt(s){if(!s)return'';const[y,m,d]=s.slice(0,10).split('-');return d+'.
 async function laden(){
   setStatus('warn','Verbinde…');
   try{
-    const r=await fetch(URL_BASE+'?order=datum.desc',{headers:H});
+    const r=await fetch(URL_BASE+'?order=datum.desc,id.asc',{headers:H});
     if(!r.ok)throw new Error('HTTP '+r.status);
     eintraege=await r.json();
     setStatus('ok','Cloud verbunden ✓');
@@ -509,7 +502,7 @@ async function speichernEintrag(){
     const r=await fetch(URL_BASE,{method:'POST',headers:H,body:JSON.stringify(gesamt)});
     if(!r.ok)throw new Error('HTTP '+r.status);
     const saved=await r.json();
-    eintraege.unshift(saved[0]||{datum,...gesamt});
+    eintraege.push(saved[0]||{datum,...gesamt});
     aktualisiereBanner();renderEintraege();
     // Clear everything after save
     foods=[];pendingRows=[];renderFoodList();
@@ -579,14 +572,17 @@ function eintragKarte(e, datum){
   return '<div class="entry-card">'
     +'<div class="entry-card-name">🍽 '+(e.lebensmittel||'')+katBadge+'</div>'
     +zutatenHTML
-    +'<div class="entry-card-grid">'
-      +'<div class="ecg-item"><div class="ecg-val" style="color:#f59e0b">'+Math.round(+e.kalorien||0)+'</div><div class="ecg-label">kcal</div></div>'
-      +'<div class="ecg-item"><div class="ecg-val" style="color:#22c55e">'+(+e.eiweiss||0).toFixed(1)+'g</div><div class="ecg-label">Eiweiß</div></div>'
-      +'<div class="ecg-item"><div class="ecg-val" style="color:#ec4899">'+(+e.zucker||0).toFixed(1)+'g</div><div class="ecg-label">Zucker</div></div>'
-      +'<div class="ecg-item"><div class="ecg-val" style="color:#3b82f6">'+(+e.kohlenhydrate||0).toFixed(1)+'g</div><div class="ecg-label">KH</div></div>'
-    +'</div>'
     +'<div class="entry-card-actions">'
       +'<button class="btn-rep" onclick="wiederholenEintrag(\''+lmEsc+'\')">↩ Wiederholen</button>'
+      +'<span style="flex:1;text-align:center;font-size:0.72rem;display:flex;gap:0.3rem;justify-content:center;align-items:center;flex-wrap:wrap">'
+        +'<span style="color:#f59e0b">'+Math.round(+e.kalorien||0)+' kcal</span>'
+        +'<span style="color:#475569">|</span>'
+        +'<span style="color:#22c55e">'+(+e.eiweiss||0).toFixed(1)+'g</span>'
+        +'<span style="color:#475569">|</span>'
+        +'<span style="color:#ec4899">'+(+e.zucker||0).toFixed(1)+'g</span>'
+        +'<span style="color:#475569">|</span>'
+        +'<span style="color:#3b82f6">'+(+e.kohlenhydrate||0).toFixed(1)+'g</span>'
+      +'</span>'
       +'<button class="btn-del-sm" onclick="deleteEintrag(\''+e.id+'\',\''+datum+'\')">✕</button>'
     +'</div>'
   +'</div>';
@@ -607,19 +603,19 @@ function renderEintraege(){
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
     const kcal=Math.round(sum('kalorien')),eiw=sum('eiweiss').toFixed(1),zuk=sum('zucker').toFixed(1),kh=sum('kohlenhydrate').toFixed(1);
     html+='<div style="margin-bottom:0.75rem">'
-      // Day header
-      +'<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:8px 8px 0 0;padding:0.45rem 0.75rem">'
-        +'<div>'
-          +'<span style="font-weight:700;color:#93c5fd;font-size:0.85rem">📅 '+fmt(datum)+'</span>'
-        +'</div>'
+      // Day header – single row: big date | compact stats | trash
+      +'<div style="display:flex;align-items:center;gap:0.5rem;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:8px 8px 0 0;padding:0.45rem 0.75rem">'
+        +'<span style="font-weight:800;color:#93c5fd;font-size:1.05rem;white-space:nowrap">📅 '+fmt(datum)+'</span>'
+        +'<span style="flex:1;display:flex;gap:0.35rem;align-items:center;justify-content:flex-end;font-size:0.72rem;flex-wrap:wrap">'
+          +'<span style="color:#f59e0b">'+kcal+' kcal</span>'
+          +'<span style="color:#475569">|</span>'
+          +'<span style="color:#22c55e">'+eiw+'g Eiw</span>'
+          +'<span style="color:#475569">|</span>'
+          +'<span style="color:#ec4899">'+zuk+'g Zck</span>'
+          +'<span style="color:#475569">|</span>'
+          +'<span style="color:#3b82f6">'+kh+'g KH</span>'
+        +'</span>'
         +'<button class="btn-del-sm" onclick="deleteDay(\''+datum+'\')" title="Tag löschen">🗑️</button>'
-      +'</div>'
-      // Day totals bar
-      +'<div style="display:grid;grid-template-columns:repeat(4,1fr);background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.25);border-top:none;padding:0.3rem 0.5rem;text-align:center;">'
-        +'<div><span style="font-size:0.88rem;font-weight:700;color:#f59e0b">'+kcal+'</span><span style="font-size:0.62rem;color:#64748b"> kcal</span></div>'
-        +'<div><span style="font-size:0.88rem;font-weight:700;color:#22c55e">'+eiw+'g</span><span style="font-size:0.62rem;color:#64748b"> Eiw</span></div>'
-        +'<div><span style="font-size:0.88rem;font-weight:700;color:#ec4899">'+zuk+'g</span><span style="font-size:0.62rem;color:#64748b"> Zck</span></div>'
-        +'<div><span style="font-size:0.88rem;font-weight:700;color:#3b82f6">'+kh+'g</span><span style="font-size:0.62rem;color:#64748b"> KH</span></div>'
       +'</div>'
       // Entry cards
       +'<div style="border:1px solid rgba(59,130,246,0.25);border-top:none;border-radius:0 0 8px 8px;">'
@@ -679,7 +675,6 @@ function exportCSV(){
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
   a.href=url;a.download='ernaehrung'+(von?'_'+von:'')+(bis?'_bis_'+bis:'')+'.txt';
   a.click();URL.revokeObjectURL(url);
-  document.getElementById('brief-output').style.display='none';
   status.textContent='✅ Exportiert – in Excel öffnen und Tabulator als Trennzeichen wählen.';status.style.color='#22c55e';
 }
 
@@ -725,10 +720,7 @@ function exportBrief(){
   });
   zeilen.push('');zeilen.push(linie);
   const txt=zeilen.join('\n');
-  const out=document.getElementById('brief-output');
-  out.value=txt;out.style.display='block';
-  status.textContent='✅ Briefform – markieren und kopieren, oder als TXT:';status.style.color='#22c55e';
-  // Also offer download
+  status.textContent='✅ Briefform exportiert.';status.style.color='#22c55e';
   const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
   a.href=url;a.download='ernaehrung_brief'+(von?'_'+von:'')+(bis?'_bis_'+bis:'')+'.txt';
