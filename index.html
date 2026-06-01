@@ -659,8 +659,6 @@ function getExportTage(){
 
 // Dezimalzahl mit Komma für deutsches Excel
 function deNum(v,d=1){return (+v||0).toFixed(d).replace('.',',');}
-// CSV-Textfeld in Anführungszeichen (schützt Semikolons, Kommas, Zeilenumbrüche)
-function csvQ(s){s=String(s==null?'':s);return '"'+s.replace(/"/g,'""')+'"';}
 
 function exportCSV(){
   const status=document.getElementById('export-status');
@@ -668,21 +666,21 @@ function exportCSV(){
   const gef=getExportTage();
   if(!gef.length){status.textContent='⚠️ Keine Einträge.';status.style.color='#f59e0b';return;}
   const tage={};gef.forEach(e=>{const d=e.datum.slice(0,10);if(!tage[d])tage[d]=[];tage[d].push(e);});
-  // sep=; sagt Excel: Semikolon als Trennzeichen verwenden
-  const zeilen=['sep=;','Datum;Kategorie;Lebensmittel;Kalorien (kcal);Eiweiß (g);Zucker (g);Kohlenhydrate (g)'];
+  const T='\t';
+  const zeilen=['Datum\tKategorie\tLebensmittel\tKalorien (kcal)\tEiweiß (g)\tZucker (g)\tKohlenhydrate (g)'];
   Object.keys(tage).sort((a,b)=>a<b?-1:a>b?1:0).forEach(datum=>{
     tage[datum].forEach(e=>{
-      zeilen.push([csvQ(fmt(datum)),csvQ(e.kategorie||''),csvQ(e.lebensmittel),Math.round(+e.kalorien||0),deNum(e.eiweiss),deNum(e.zucker),deNum(e.kohlenhydrate)].join(';'));
+      zeilen.push([fmt(datum),e.kategorie||'',e.lebensmittel,Math.round(+e.kalorien||0),deNum(e.eiweiss),deNum(e.zucker),deNum(e.kohlenhydrate)].join(T));
     });
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
-    zeilen.push([csvQ(fmt(datum)),csvQ(''),csvQ('GESAMT'),Math.round(sum('kalorien')),deNum(sum('eiweiss')),deNum(sum('zucker')),deNum(sum('kohlenhydrate'))].join(';'));
+    zeilen.push([fmt(datum),'','GESAMT',Math.round(sum('kalorien')),deNum(sum('eiweiss')),deNum(sum('zucker')),deNum(sum('kohlenhydrate'))].join(T));
   });
-  const blob=new Blob([zeilen.join('\r\n')],{type:'text/csv;charset=utf-8;'});
+  const blob=new Blob(['﻿'+zeilen.join('\r\n')],{type:'text/plain;charset=utf-8;'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
-  a.href=url;a.download='ernaehrung'+(von?'_'+von:'')+(bis?'_bis_'+bis:'')+'.csv';
+  a.href=url;a.download='ernaehrung'+(von?'_'+von:'')+(bis?'_bis_'+bis:'')+'.txt';
   a.click();URL.revokeObjectURL(url);
   document.getElementById('brief-output').style.display='none';
-  status.textContent='✅ CSV exportiert.';status.style.color='#22c55e';
+  status.textContent='✅ Exportiert – in Excel öffnen und Tabulator als Trennzeichen wählen.';status.style.color='#22c55e';
 }
 
 function pad(s,n){s=String(s);while(s.length<n)s=' '+s;return s;}
