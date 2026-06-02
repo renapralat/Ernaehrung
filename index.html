@@ -711,7 +711,8 @@ function exportBrief(){
   zeilen.push('');
   Object.keys(tage).sort((a,b)=>a<b?-1:a>b?1:0).forEach(datum=>{
     zeilen.push(fmtMitTag(datum));
-    tage[datum].forEach(e=>{
+    const briefSortiert=[...tage[datum]].sort((a,b)=>katPrio(a)-katPrio(b));
+    briefSortiert.forEach(e=>{
       let zutaten=null;
       if(e.zutaten){try{zutaten=JSON.parse(e.zutaten);}catch(ex){}}
       const mehrere=zutaten&&zutaten.length>1;
