@@ -707,7 +707,7 @@ function exportBrief(){
   const zeilen=['ERNÄHRUNGSPROTOKOLL',''];
   if(von||bis)zeilen.push('Zeitraum: '+(von?fmt(von):'')+(von&&bis?' bis ':bis?'bis ':'')+( bis?fmt(bis):''),'');
   zeilen.push(hdr);
-  zeilen.push('─'.repeat(hdr.length));
+  zeilen.push('-'.repeat(hdr.length));
   zeilen.push('');
   Object.keys(tage).sort((a,b)=>a<b?-1:a>b?1:0).forEach(datum=>{
     zeilen.push(fmtMitTag(datum));
@@ -724,10 +724,9 @@ function exportBrief(){
     });
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
     const gkcal=Math.round(sum('kalorien')),geiw=sum('eiweiss').toFixed(1),gzck=sum('zucker').toFixed(1),gkh=sum('kohlenhydrate').toFixed(1);
-    zeilen.push('─'.repeat(hdr.length));
+    zeilen.push('-'.repeat(hdr.length));
     zeilen.push(briefZeile('GESAMT  '+fmtMitTag(datum),gkcal,geiw,gzck,gkh));
     zeilen.push(hdrKurz);
-    zeilen.push('');
   });
   const txt='﻿'+zeilen.join('\r\n');
   status.textContent='✅ Briefform exportiert.';status.style.color='#22c55e';
