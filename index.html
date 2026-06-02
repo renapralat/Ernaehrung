@@ -562,10 +562,10 @@ function eintragKarte(e, datum, suche){
       +zutaten.map(z=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:0.2rem 0.4rem;background:#0a1628;border-radius:4px;margin-bottom:2px;">'
         +'<span style="flex:1;font-size:0.78rem;color:#94a3b8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+z.lebensmittel+'</span>'
         +'<span style="display:flex;gap:0.5rem;font-size:0.72rem;flex-shrink:0;margin-left:0.4rem;">'
-          +'<span style="color:#f59e0b">'+Math.round(+z.kalorien||0)+' kcal</span>'
-          +'<span style="color:#22c55e">'+(+z.eiweiss||0).toFixed(1)+'g</span>'
-          +'<span style="color:#ec4899">'+(+z.zucker||0).toFixed(1)+'g</span>'
-          +'<span style="color:#3b82f6">'+(+z.kohlenhydrate||0).toFixed(1)+'g</span>'
+          +'<span style="color:#f59e0b">'+Math.round(+z.kalorien||0)+'</span>'
+          +'<span style="color:#22c55e">'+(+z.eiweiss||0).toFixed(1)+'</span>'
+          +'<span style="color:#ec4899">'+(+z.zucker||0).toFixed(1)+'</span>'
+          +'<span style="color:#3b82f6">'+(+z.kohlenhydrate||0).toFixed(1)+'</span>'
         +'</span>'
       +'</div>').join('')
     +'</div>';
@@ -723,7 +723,8 @@ function exportBrief(){
     });
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
     const gkcal=Math.round(sum('kalorien')),geiw=sum('eiweiss').toFixed(1),gzck=sum('zucker').toFixed(1),gkh=sum('kohlenhydrate').toFixed(1);
-    zeilen.push(briefZeile('GESAMT',gkcal,geiw,gzck,gkh));
+    zeilen.push('─'.repeat(hdr.length));
+    zeilen.push(briefZeile('GESAMT  '+fmtMitTag(datum),gkcal,geiw,gzck,gkh));
     zeilen.push(hdrKurz);
     zeilen.push('');
   });
