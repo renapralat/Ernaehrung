@@ -563,9 +563,9 @@ function eintragKarte(e, datum, suche){
         +'<span style="flex:1;font-size:0.78rem;color:#94a3b8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+z.lebensmittel+'</span>'
         +'<span style="display:flex;gap:0.5rem;font-size:0.72rem;flex-shrink:0;margin-left:0.4rem;">'
           +'<span style="color:#f59e0b">'+Math.round(+z.kalorien||0)+' kcal</span>'
-          +'<span style="color:#22c55e">'+(+z.eiweiss||0).toFixed(1)+'g Eiw</span>'
-          +'<span style="color:#ec4899">'+(+z.zucker||0).toFixed(1)+'g Zck</span>'
-          +'<span style="color:#3b82f6">'+(+z.kohlenhydrate||0).toFixed(1)+'g KH</span>'
+          +'<span style="color:#22c55e">'+(+z.eiweiss||0).toFixed(1)+'g</span>'
+          +'<span style="color:#ec4899">'+(+z.zucker||0).toFixed(1)+'g</span>'
+          +'<span style="color:#3b82f6">'+(+z.kohlenhydrate||0).toFixed(1)+'g</span>'
         +'</span>'
       +'</div>').join('')
     +'</div>';
@@ -579,11 +579,11 @@ function eintragKarte(e, datum, suche){
       +'<span style="flex:1;text-align:center;font-size:0.72rem;display:flex;gap:0.3rem;justify-content:center;align-items:center;flex-wrap:wrap">'
         +'<span style="color:#f59e0b">'+Math.round(+e.kalorien||0)+' kcal</span>'
         +'<span style="color:#475569">|</span>'
-        +'<span style="color:#22c55e">'+(+e.eiweiss||0).toFixed(1)+'g Eiw</span>'
+        +'<span style="color:#22c55e">'+(+e.eiweiss||0).toFixed(1)+'g</span>'
         +'<span style="color:#475569">|</span>'
-        +'<span style="color:#ec4899">'+(+e.zucker||0).toFixed(1)+'g Zck</span>'
+        +'<span style="color:#ec4899">'+(+e.zucker||0).toFixed(1)+'g</span>'
         +'<span style="color:#475569">|</span>'
-        +'<span style="color:#3b82f6">'+(+e.kohlenhydrate||0).toFixed(1)+'g KH</span>'
+        +'<span style="color:#3b82f6">'+(+e.kohlenhydrate||0).toFixed(1)+'g</span>'
       +'</span>'
       +'<button class="btn-del-sm" onclick="deleteEintrag(\''+e.id+'\',\''+datum+'\')">✕</button>'
     +'</div>'
@@ -722,7 +722,8 @@ function exportBrief(){
     });
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
     const gkcal=Math.round(sum('kalorien')),geiw=sum('eiweiss').toFixed(1),gzck=sum('zucker').toFixed(1),gkh=sum('kohlenhydrate').toFixed(1);
-    zeilen.push('GESAMT: '+gkcal+' kcal | Eiw '+geiw+'g | Zck '+gzck+'g | KH '+gkh+'g');
+    zeilen.push(briefZeile('GESAMT',gkcal,geiw,gzck,gkh));
+    zeilen.push(hdr);
     zeilen.push('');
   });
   const txt='﻿'+zeilen.join('\r\n');
