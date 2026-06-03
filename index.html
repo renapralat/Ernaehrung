@@ -356,7 +356,7 @@ async function callGithubKI(name){
       body:JSON.stringify({
         model:'gpt-4o-mini',
         messages:[{role:'user',content:'Nährwerte pro 100g für "'+name+'"? Antworte NUR mit JSON: {"kcal":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0} Nur Zahlen, keine Einheiten.'}],
-        temperature:0.1,max_tokens:80
+        temperature:0,max_tokens:80
       })
     });
     if(!r.ok)return null;
@@ -436,7 +436,7 @@ async function analyzeKI(){
     const resp=await fetch('https://models.inference.ai.azure.com/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body:JSON.stringify({model:'gpt-4o',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:600})
+      body:JSON.stringify({model:'gpt-4o',messages:[{role:'user',content:prompt}],temperature:0,max_tokens:600})
     });
     if(!resp.ok)throw new Error('HTTP '+resp.status);
     const d=await resp.json();
