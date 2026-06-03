@@ -100,12 +100,7 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
       <div style="display:flex;align-items:flex-start;gap:0.8rem">
         <div style="flex:0 0 auto">
           <div><span id="banner-kcal" style="font-size:1.05rem;font-weight:700;color:#f59e0b">0</span><span style="font-size:0.68rem;color:#f59e0b"> kcal</span></div>
-          <div style="display:flex;align-items:center;gap:0.35rem;margin-top:2px">
-            <span style="font-size:0.85rem">🏃</span>
-            <input type="number" id="banner-bewegung" min="0" step="10" placeholder="0"
-              style="width:55px;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:2px 4px;font-size:0.75rem"
-              onchange="setBewegungTag(heuteStr(),this.value)"/>
-            <span style="color:#475569;font-size:0.72rem">→</span>
+          <div style="margin-top:2px">
             <span id="banner-ampel" style="font-size:0.75rem"></span>
           </div>
         </div>
@@ -589,7 +584,6 @@ function aktualisiereBanner(){
     document.getElementById('banner-kh').textContent=sumH('kohlenhydrate').toFixed(1);
     document.getElementById('banner-zucker').textContent=sumH('zucker').toFixed(1);
     const bew=getBewegung(heute);
-    document.getElementById('banner-bewegung').value=bew||'';
     document.getElementById('banner-ampel').innerHTML=ampelNetto(sumH('kalorien')-bew,getZiel());
     const eiwN=sumH('eiweiss'),fatN=sumH('fett'),khN=sumH('kohlenhydrate');
     const mKcal=eiwN*4+fatN*9+khN*4;
