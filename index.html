@@ -105,13 +105,13 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
         <span><span id="banner-fett" style="font-size:1.05rem;font-weight:700;color:#a78bfa">0</span><span style="font-size:0.68rem;color:#a78bfa">g Fett</span></span>
       </div>
       <div style="display:flex;align-items:center;gap:0.4rem;margin-top:4px;flex-wrap:wrap">
-        <span style="font-size:0.72rem;color:#64748b">🏃 Bewegung:</span>
+        <span style="font-size:0.85rem">🏃</span>
         <input type="number" id="banner-bewegung" min="0" step="10" placeholder="0"
           style="width:65px;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:2px 5px;font-size:0.78rem"
           onchange="setBewegungTag(heuteStr(),this.value)"/>
-        <span style="font-size:0.72rem;color:#64748b">kcal</span>
         <span style="color:#475569;font-size:0.72rem">→</span>
         <span id="banner-ampel" style="font-size:0.78rem"></span>
+        <span id="banner-makros" style="font-size:0.72rem"></span>
       </div>
     </div>
   </div>
@@ -577,6 +577,16 @@ function aktualisiereBanner(){
     const bew=getBewegung(heute);
     document.getElementById('banner-bewegung').value=bew||'';
     document.getElementById('banner-ampel').innerHTML=ampelNetto(sumH('kalorien')-bew,getZiel());
+    const eiwN=sumH('eiweiss'),fatN=sumH('fett'),khN=sumH('kohlenhydrate');
+    const mKcal=eiwN*4+fatN*9+khN*4;
+    const mkEl=document.getElementById('banner-makros');
+    if(mKcal>0){
+      const pEiw=Math.round(eiwN*4/mKcal*100),pFat=Math.round(fatN*9/mKcal*100),pKH=Math.round(khN*4/mKcal*100);
+      mkEl.innerHTML='<span style="color:#475569">|</span>'
+        +'<span style="color:#22c55e"> Eiw '+pEiw+'%</span>'
+        +'<span style="color:#a78bfa"> Fett '+pFat+'%</span>'
+        +'<span style="color:#3b82f6"> KH '+pKH+'%</span>';
+    }else mkEl.innerHTML='';
     banner.style.display='block';
   }else{banner.style.display='none';}
 }
@@ -669,21 +679,17 @@ function renderEintraege(){
           +'</span>'
           +'<button class="btn-del-sm" onclick="deleteDay(\''+datum+'\')" title="Tag löschen">🗑️</button>'
         +'</div>'
-        +(macroKcal>0?'<div style="font-size:0.68rem;display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap">'
-          +'<span style="color:#64748b">Makros:</span>'
-          +'<span style="color:#22c55e;font-weight:600">Eiw '+pEiw+'%</span>'
-          +'<span style="color:#a78bfa;font-weight:600">Fett '+pFat+'%</span>'
-          +'<span style="color:#3b82f6;font-weight:600">KH '+pKH+'%</span>'
-          +'<span style="color:#475569">(Ziel 30/30/40)</span>'
-        +'</div>':'')
         +'<div style="font-size:0.68rem;display:flex;align-items:center;gap:0.35rem;flex-wrap:wrap">'
-          +'<span style="color:#64748b">🏃 Bewegung:</span>'
+          +'<span style="font-size:0.82rem">🏃</span>'
           +'<input type="number" value="'+(getBewegung(datum)||'')+'" min="0" step="10" placeholder="0"'
             +' style="width:58px;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:1px 4px;font-size:0.72rem"'
             +' onchange="setBewegungTag(\''+datum+'\',this.value)"/>'
-          +'<span style="color:#64748b">kcal</span>'
           +'<span style="color:#475569">→</span>'
           +'<span id="ampel-tag-'+datum+'">'+ampelNetto(kcal-getBewegung(datum),getZiel())+'</span>'
+          +(macroKcal>0?'<span style="color:#475569">|</span>'
+            +'<span style="color:#22c55e"> Eiw '+pEiw+'%</span>'
+            +'<span style="color:#a78bfa"> Fett '+pFat+'%</span>'
+            +'<span style="color:#3b82f6"> KH '+pKH+'%</span>':'')
         +'</div>'
       +'</div>'
       +'<div style="border:1px solid rgba(59,130,246,0.25);border-top:none;border-radius:0 0 8px 8px;">'
@@ -954,9 +960,9 @@ function setBewegungTag(datum,v){
 }
 function ampelNetto(netto,ziel){
   const n=Math.round(netto),diff=Math.round(netto-ziel);
-  if(netto<=ziel)return '<span style="color:#22c55e;font-weight:600">Netto '+n+' kcal 🟢</span><span style="color:#64748b"> · noch '+Math.round(ziel-netto)+' frei</span>';
-  if(diff<=200)return '<span style="color:#f59e0b;font-weight:600">Netto '+n+' kcal 🟡</span><span style="color:#64748b"> · +'+diff+' über Ziel</span>';
-  return '<span style="color:#ef4444;font-weight:600">Netto '+n+' kcal 🔴</span><span style="color:#64748b"> · +'+diff+' über Ziel</span>';
+  if(netto<=ziel)return '<span style="color:#22c55e;font-weight:600">Netto '+n+' 🟢</span><span style="color:#64748b"> '+diff+'</span>';
+  if(diff<=200)return '<span style="color:#f59e0b;font-weight:600">Netto '+n+' 🟡</span><span style="color:#64748b"> +'+diff+'</span>';
+  return '<span style="color:#ef4444;font-weight:600">Netto '+n+' 🔴</span><span style="color:#64748b"> +'+diff+'</span>';
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
