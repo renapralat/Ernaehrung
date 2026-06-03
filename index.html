@@ -97,33 +97,30 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
   <div id="heute-banner" style="display:none;position:sticky;top:0;z-index:10;background:rgba(15,23,42,0.96);border-bottom:1px solid #1e3a5f;padding:0.5rem 0;margin-bottom:0.75rem;backdrop-filter:blur(8px);">
     <div style="max-width:720px;margin:0 auto;padding:0 1rem">
       <div style="font-size:0.62rem;color:#64748b;margin-bottom:3px">Heute gesamt</div>
-      <div style="display:flex;flex-wrap:wrap;gap:0.2rem 1rem;align-items:flex-start">
-        <div>
+      <div style="display:flex;align-items:flex-start;gap:0.8rem">
+        <div style="flex:0 0 auto">
           <div><span id="banner-kcal" style="font-size:1.05rem;font-weight:700;color:#f59e0b">0</span><span style="font-size:0.68rem;color:#f59e0b"> kcal</span></div>
-          <div style="display:flex;align-items:center;gap:0.35rem;margin-top:2px">
-            <span style="font-size:0.85rem">🏃</span>
-            <input type="number" id="banner-bewegung" min="0" step="10" placeholder="0"
-              style="width:58px;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:2px 4px;font-size:0.78rem"
-              onchange="setBewegungTag(heuteStr(),this.value)"/>
-            <span style="color:#475569;font-size:0.72rem">→</span>
-            <span id="banner-ampel" style="font-size:0.78rem"></span>
+          <div style="margin-top:2px">
+            <span id="banner-ampel" style="font-size:0.75rem"></span>
           </div>
         </div>
-        <div style="text-align:right">
-          <div><span id="banner-eiweiss" style="font-size:1.05rem;font-weight:700;color:#22c55e">0</span><span style="font-size:0.68rem;color:#22c55e">g Eiw</span></div>
-          <div style="font-size:0.72rem;color:#22c55e;font-weight:600;min-height:1.1em"><span id="banner-eiw-pct"></span></div>
-        </div>
-        <div style="text-align:right">
-          <div><span id="banner-fett" style="font-size:1.05rem;font-weight:700;color:#a78bfa">0</span><span style="font-size:0.68rem;color:#a78bfa">g Fett</span></div>
-          <div style="font-size:0.72rem;color:#a78bfa;font-weight:600;min-height:1.1em"><span id="banner-fat-pct"></span></div>
-        </div>
-        <div style="text-align:right">
-          <div><span id="banner-kh" style="font-size:1.05rem;font-weight:700;color:#3b82f6">0</span><span style="font-size:0.68rem;color:#3b82f6">g KH</span></div>
-          <div style="font-size:0.72rem;color:#3b82f6;font-weight:600;min-height:1.1em"><span id="banner-kh-pct"></span></div>
-        </div>
-        <div style="text-align:right">
-          <div><span id="banner-zucker" style="font-size:1.05rem;font-weight:700;color:#ec4899">0</span><span style="font-size:0.68rem;color:#ec4899">g Zck</span></div>
-          <div style="min-height:1.1em"></div>
+        <div style="flex:1;min-width:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(62px,auto));gap:0.15rem 0.7rem">
+          <div style="text-align:right">
+            <div><span id="banner-eiweiss" style="font-size:1.05rem;font-weight:700;color:#22c55e">0</span><span style="font-size:0.68rem;color:#22c55e">g Eiw</span></div>
+            <div style="font-size:0.72rem;color:#22c55e;font-weight:600;min-height:1.1em"><span id="banner-eiw-pct"></span></div>
+          </div>
+          <div style="text-align:right">
+            <div><span id="banner-fett" style="font-size:1.05rem;font-weight:700;color:#a78bfa">0</span><span style="font-size:0.68rem;color:#a78bfa">g Fett</span></div>
+            <div style="font-size:0.72rem;color:#a78bfa;font-weight:600;min-height:1.1em"><span id="banner-fat-pct"></span></div>
+          </div>
+          <div style="text-align:right">
+            <div><span id="banner-kh" style="font-size:1.05rem;font-weight:700;color:#3b82f6">0</span><span style="font-size:0.68rem;color:#3b82f6">g KH</span></div>
+            <div style="font-size:0.72rem;color:#3b82f6;font-weight:600;min-height:1.1em"><span id="banner-kh-pct"></span></div>
+          </div>
+          <div style="text-align:right">
+            <div><span id="banner-zucker" style="font-size:1.05rem;font-weight:700;color:#ec4899">0</span><span style="font-size:0.68rem;color:#ec4899">g Zck</span></div>
+            <div style="min-height:1.1em"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -132,6 +129,18 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
   <div class="header">
     <div class="title">🍽️ Ernährungsprotokoll</div>
     <div class="subtitle">Nährwerterfassung via lokale DB · Open Food Facts · KI</div>
+    <div style="font-size:0.7rem;margin-top:4px;letter-spacing:0.01em;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap">
+      <span>Makroziel: <span style="color:#22c55e;font-weight:600">30% Eiw</span> <span style="color:#475569">·</span> <span style="color:#a78bfa;font-weight:600">30% Fett</span> <span style="color:#475569">·</span> <span style="color:#3b82f6;font-weight:600">40% KH</span></span>
+      <span style="color:#334155">|</span>
+      <span style="display:flex;align-items:center;gap:0.3rem">
+        <span style="color:#64748b">🎯</span>
+        <input type="number" id="ziel-input" min="500" max="5000" step="50"
+          style="width:55px;background:#1e293b;color:#f59e0b;border:1px solid #334155;border-radius:4px;padding:2px 5px;font-size:0.75rem;font-weight:700"
+          onkeydown="if(event.key==='Enter')setZiel(this.value)"/>
+        <span style="color:#f59e0b;font-weight:600">kcal</span>
+        <button style="background:none;border:1px solid #334155;border-radius:4px;color:#94a3b8;font-size:0.7rem;padding:1px 5px;cursor:pointer" onclick="setZiel(document.getElementById('ziel-input').value)">✓</button>
+      </span>
+    </div>
     <div id="cloud-status"><span class="dot warn" id="dot"></span><span id="cloud-text">Verbinde…</span></div>
   </div>
 
@@ -235,19 +244,6 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
     <button class="btn-ghost" style="width:100%;font-size:0.8rem" onclick="toggleTokenForm()">⚙️ Token verwalten</button>
   </div>
 
-  <!-- Kalorienziel -->
-  <div class="card">
-    <div class="card-title" style="margin-bottom:0.5rem">🎯 Kalorienziel</div>
-    <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
-      <span style="font-size:0.8rem;color:#94a3b8">Tagesziel:</span>
-      <input type="number" id="ziel-input" min="500" max="5000" step="50"
-        style="width:80px;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:4px 8px;font-size:0.9rem"
-        onkeydown="if(event.key==='Enter')setZiel(this.value)"/>
-      <span style="font-size:0.8rem;color:#94a3b8">kcal / Tag</span>
-      <button class="btn-ghost" style="font-size:0.8rem" onclick="setZiel(document.getElementById('ziel-input').value)">✓ Speichern</button>
-    </div>
-    <div style="font-size:0.72rem;color:#64748b;margin-top:0.4rem">Kalorienbudget für die Ampel-Anzeige. 🟢 unter Ziel · 🟡 bis +200 · 🔴 deutlich drüber.</div>
-  </div>
 </div>
 
 <script src="lebensmittel.js"></script>
@@ -588,7 +584,6 @@ function aktualisiereBanner(){
     document.getElementById('banner-kh').textContent=sumH('kohlenhydrate').toFixed(1);
     document.getElementById('banner-zucker').textContent=sumH('zucker').toFixed(1);
     const bew=getBewegung(heute);
-    document.getElementById('banner-bewegung').value=bew||'';
     document.getElementById('banner-ampel').innerHTML=ampelNetto(sumH('kalorien')-bew,getZiel());
     const eiwN=sumH('eiweiss'),fatN=sumH('fett'),khN=sumH('kohlenhydrate');
     const mKcal=eiwN*4+fatN*9+khN*4;
@@ -677,9 +672,9 @@ function renderEintraege(){
     erster=false;
     html+=sep+'<div style="margin-bottom:0.75rem">'
       +'<div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:8px 8px 0 0;padding:0.45rem 0.75rem">'
-        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.3rem">'
-          // Links: Datum + Bewegung/Netto
-          +'<div>'
+        +'<div style="display:flex;align-items:flex-start;gap:0.5rem">'
+          // Links: Datum+kcal und Bewegung/Netto — immer fixe Spalte
+          +'<div style="flex:0 0 auto">'
             +'<div style="display:flex;align-items:center;gap:0.4rem">'
               +'<span style="font-weight:800;color:#f59e0b;font-size:1.1rem">📅 '+hl(datumStr,suche)+'</span>'
               +'<span style="font-size:0.72rem;color:#f59e0b">'+kcal+' kcal</span>'
@@ -687,14 +682,14 @@ function renderEintraege(){
             +'<div style="display:flex;align-items:center;gap:0.3rem;font-size:0.68rem;margin-top:2px">'
               +'<span style="font-size:0.82rem">🏃</span>'
               +'<input type="number" value="'+(getBewegung(datum)||'')+'" min="0" step="10" placeholder="0"'
-                +' style="width:52px;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:1px 4px;font-size:0.72rem"'
+                +' style="width:50px;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:1px 4px;font-size:0.68rem"'
                 +' onchange="setBewegungTag(\''+datum+'\',this.value)"/>'
               +'<span style="color:#475569">→</span>'
               +'<span id="ampel-tag-'+datum+'">'+ampelNetto(kcal-getBewegung(datum),getZiel())+'</span>'
             +'</div>'
           +'</div>'
-          // Rechts: Nährwert-Spalten
-          +'<div style="display:flex;gap:0.6rem;align-items:flex-start">'
+          // Rechts: Nährwert-Auto-Grid, bricht bei Bedarf um
+          +'<div style="flex:1;min-width:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(55px,auto));gap:0.12rem 0.5rem">'
             +'<div style="text-align:right">'
               +'<div style="font-size:0.72rem;color:#22c55e">'+eiw+'g Eiw</div>'
               +'<div style="font-size:0.72rem;color:#22c55e;font-weight:600;min-height:1.1em">'+(macroKcal>0?pEiw+'%':'')+'</div>'
@@ -711,8 +706,8 @@ function renderEintraege(){
               +'<div style="font-size:0.72rem;color:#ec4899">'+zuk+'g Zck</div>'
               +'<div style="min-height:1.1em"></div>'
             +'</div>'
-            +'<button class="btn-del-sm" onclick="deleteDay(\''+datum+'\')" title="Tag löschen">🗑️</button>'
           +'</div>'
+          +'<button class="btn-del-sm" onclick="deleteDay(\''+datum+'\')" title="Tag löschen">🗑️</button>'
         +'</div>'
       +'</div>'
       +'<div style="border:1px solid rgba(59,130,246,0.25);border-top:none;border-radius:0 0 8px 8px;">'
