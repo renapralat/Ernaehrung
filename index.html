@@ -97,24 +97,34 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
   <div id="heute-banner" style="display:none;position:sticky;top:0;z-index:10;background:rgba(15,23,42,0.96);border-bottom:1px solid #1e3a5f;padding:0.5rem 0;margin-bottom:0.75rem;backdrop-filter:blur(8px);">
     <div style="max-width:720px;margin:0 auto;padding:0 1rem">
       <div style="font-size:0.62rem;color:#64748b;margin-bottom:3px">Heute gesamt</div>
-      <div style="display:grid;grid-template-columns:auto auto auto auto auto;column-gap:0.9rem;row-gap:0.18rem;align-items:center">
-        <span><span id="banner-kcal" style="font-size:1.05rem;font-weight:700;color:#f59e0b">0</span><span style="font-size:0.68rem;color:#f59e0b"> kcal</span></span>
-        <span style="text-align:right"><span id="banner-eiweiss" style="font-size:1.05rem;font-weight:700;color:#22c55e">0</span><span style="font-size:0.68rem;color:#22c55e">g Eiw</span></span>
-        <span style="text-align:right"><span id="banner-fett" style="font-size:1.05rem;font-weight:700;color:#a78bfa">0</span><span style="font-size:0.68rem;color:#a78bfa">g Fett</span></span>
-        <span style="text-align:right"><span id="banner-kh" style="font-size:1.05rem;font-weight:700;color:#3b82f6">0</span><span style="font-size:0.68rem;color:#3b82f6">g KH</span></span>
-        <span style="text-align:right"><span id="banner-zucker" style="font-size:1.05rem;font-weight:700;color:#ec4899">0</span><span style="font-size:0.68rem;color:#ec4899">g Zck</span></span>
-        <div style="display:flex;align-items:center;gap:0.35rem">
-          <span style="font-size:0.85rem">🏃</span>
-          <input type="number" id="banner-bewegung" min="0" step="10" placeholder="0"
-            style="width:58px;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:2px 4px;font-size:0.78rem"
-            onchange="setBewegungTag(heuteStr(),this.value)"/>
-          <span style="color:#475569;font-size:0.72rem">→</span>
-          <span id="banner-ampel" style="font-size:0.78rem"></span>
+      <div style="display:flex;flex-wrap:wrap;gap:0.2rem 1rem;align-items:flex-start">
+        <div>
+          <div><span id="banner-kcal" style="font-size:1.05rem;font-weight:700;color:#f59e0b">0</span><span style="font-size:0.68rem;color:#f59e0b"> kcal</span></div>
+          <div style="display:flex;align-items:center;gap:0.35rem;margin-top:2px">
+            <span style="font-size:0.85rem">🏃</span>
+            <input type="number" id="banner-bewegung" min="0" step="10" placeholder="0"
+              style="width:58px;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:2px 4px;font-size:0.78rem"
+              onchange="setBewegungTag(heuteStr(),this.value)"/>
+            <span style="color:#475569;font-size:0.72rem">→</span>
+            <span id="banner-ampel" style="font-size:0.78rem"></span>
+          </div>
         </div>
-        <span id="banner-eiw-pct" style="text-align:right;font-size:0.72rem;color:#22c55e;font-weight:600"></span>
-        <span id="banner-fat-pct" style="text-align:right;font-size:0.72rem;color:#a78bfa;font-weight:600"></span>
-        <span id="banner-kh-pct" style="text-align:right;font-size:0.72rem;color:#3b82f6;font-weight:600"></span>
-        <span></span>
+        <div style="text-align:right">
+          <div><span id="banner-eiweiss" style="font-size:1.05rem;font-weight:700;color:#22c55e">0</span><span style="font-size:0.68rem;color:#22c55e">g Eiw</span></div>
+          <div style="font-size:0.72rem;color:#22c55e;font-weight:600;min-height:1.1em"><span id="banner-eiw-pct"></span></div>
+        </div>
+        <div style="text-align:right">
+          <div><span id="banner-fett" style="font-size:1.05rem;font-weight:700;color:#a78bfa">0</span><span style="font-size:0.68rem;color:#a78bfa">g Fett</span></div>
+          <div style="font-size:0.72rem;color:#a78bfa;font-weight:600;min-height:1.1em"><span id="banner-fat-pct"></span></div>
+        </div>
+        <div style="text-align:right">
+          <div><span id="banner-kh" style="font-size:1.05rem;font-weight:700;color:#3b82f6">0</span><span style="font-size:0.68rem;color:#3b82f6">g KH</span></div>
+          <div style="font-size:0.72rem;color:#3b82f6;font-weight:600;min-height:1.1em"><span id="banner-kh-pct"></span></div>
+        </div>
+        <div style="text-align:right">
+          <div><span id="banner-zucker" style="font-size:1.05rem;font-weight:700;color:#ec4899">0</span><span style="font-size:0.68rem;color:#ec4899">g Zck</span></div>
+          <div style="min-height:1.1em"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -666,32 +676,44 @@ function renderEintraege(){
     const sep=erster?'':'<div style="border-top:1px solid #1e3a5f;margin:0.5rem 0 0.6rem"></div>';
     erster=false;
     html+=sep+'<div style="margin-bottom:0.75rem">'
-      +'<div style="display:grid;grid-template-columns:1fr auto auto auto auto 24px;column-gap:0.6rem;row-gap:0.2rem;align-items:center;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:8px 8px 0 0;padding:0.45rem 0.75rem">'
-        // Row 1: date+kcal · Eiw · Fett · KH · Zucker · del
-        +'<div style="display:flex;align-items:center;gap:0.4rem">'
-          +'<span style="font-weight:800;color:#f59e0b;font-size:1.1rem;white-space:nowrap">📅 '+hl(datumStr,suche)+'</span>'
-          +'<span style="font-size:0.72rem;color:#f59e0b;white-space:nowrap">'+kcal+' kcal</span>'
+      +'<div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:8px 8px 0 0;padding:0.45rem 0.75rem">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.3rem">'
+          // Links: Datum + Bewegung/Netto
+          +'<div>'
+            +'<div style="display:flex;align-items:center;gap:0.4rem">'
+              +'<span style="font-weight:800;color:#f59e0b;font-size:1.1rem">📅 '+hl(datumStr,suche)+'</span>'
+              +'<span style="font-size:0.72rem;color:#f59e0b">'+kcal+' kcal</span>'
+            +'</div>'
+            +'<div style="display:flex;align-items:center;gap:0.3rem;font-size:0.68rem;margin-top:2px">'
+              +'<span style="font-size:0.82rem">🏃</span>'
+              +'<input type="number" value="'+(getBewegung(datum)||'')+'" min="0" step="10" placeholder="0"'
+                +' style="width:52px;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:1px 4px;font-size:0.72rem"'
+                +' onchange="setBewegungTag(\''+datum+'\',this.value)"/>'
+              +'<span style="color:#475569">→</span>'
+              +'<span id="ampel-tag-'+datum+'">'+ampelNetto(kcal-getBewegung(datum),getZiel())+'</span>'
+            +'</div>'
+          +'</div>'
+          // Rechts: Nährwert-Spalten
+          +'<div style="display:flex;gap:0.6rem;align-items:flex-start">'
+            +'<div style="text-align:right">'
+              +'<div style="font-size:0.72rem;color:#22c55e">'+eiw+'g Eiw</div>'
+              +'<div style="font-size:0.72rem;color:#22c55e;font-weight:600;min-height:1.1em">'+(macroKcal>0?pEiw+'%':'')+'</div>'
+            +'</div>'
+            +'<div style="text-align:right">'
+              +'<div style="font-size:0.72rem;color:#a78bfa">'+fat+'g Fett</div>'
+              +'<div style="font-size:0.72rem;color:#a78bfa;font-weight:600;min-height:1.1em">'+(macroKcal>0?pFat+'%':'')+'</div>'
+            +'</div>'
+            +'<div style="text-align:right">'
+              +'<div style="font-size:0.72rem;color:#3b82f6">'+kh+'g KH</div>'
+              +'<div style="font-size:0.72rem;color:#3b82f6;font-weight:600;min-height:1.1em">'+(macroKcal>0?pKH+'%':'')+'</div>'
+            +'</div>'
+            +'<div style="text-align:right">'
+              +'<div style="font-size:0.72rem;color:#ec4899">'+zuk+'g Zck</div>'
+              +'<div style="min-height:1.1em"></div>'
+            +'</div>'
+            +'<button class="btn-del-sm" onclick="deleteDay(\''+datum+'\')" title="Tag löschen">🗑️</button>'
+          +'</div>'
         +'</div>'
-        +'<span style="text-align:right;font-size:0.72rem;color:#22c55e;white-space:nowrap">'+eiw+'g Eiw</span>'
-        +'<span style="text-align:right;font-size:0.72rem;color:#a78bfa;white-space:nowrap">'+fat+'g Fett</span>'
-        +'<span style="text-align:right;font-size:0.72rem;color:#3b82f6;white-space:nowrap">'+kh+'g KH</span>'
-        +'<span style="text-align:right;font-size:0.72rem;color:#ec4899;white-space:nowrap">'+zuk+'g Zck</span>'
-        +'<button class="btn-del-sm" onclick="deleteDay(\''+datum+'\')" title="Tag löschen">🗑️</button>'
-        // Row 2: bewegung+netto · Eiw% · Fett% · KH% · (leer) · (leer)
-        +'<div style="display:flex;align-items:center;gap:0.3rem;font-size:0.68rem">'
-          +'<span style="font-size:0.82rem">🏃</span>'
-          +'<input type="number" value="'+(getBewegung(datum)||'')+'" min="0" step="10" placeholder="0"'
-            +' style="width:52px;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:4px;padding:1px 4px;font-size:0.72rem"'
-            +' onchange="setBewegungTag(\''+datum+'\',this.value)"/>'
-          +'<span style="color:#475569">→</span>'
-          +'<span id="ampel-tag-'+datum+'">'+ampelNetto(kcal-getBewegung(datum),getZiel())+'</span>'
-        +'</div>'
-        +(macroKcal>0
-          ?'<span style="text-align:right;font-size:0.72rem;color:#22c55e;font-weight:600">'+pEiw+'%</span>'
-           +'<span style="text-align:right;font-size:0.72rem;color:#a78bfa;font-weight:600">'+pFat+'%</span>'
-           +'<span style="text-align:right;font-size:0.72rem;color:#3b82f6;font-weight:600">'+pKH+'%</span>'
-           +'<span></span><span></span>'
-          :'<span></span><span></span><span></span><span></span><span></span>')
       +'</div>'
       +'<div style="border:1px solid rgba(59,130,246,0.25);border-top:none;border-radius:0 0 8px 8px;">'
         +sortiert.map(e=>eintragKarte(e,datum,suche)).join('')
