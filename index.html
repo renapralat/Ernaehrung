@@ -619,23 +619,37 @@ function renderEintraege(){
     const sortiert=[...gefiltert].sort((a,b)=>katPrio(a)-katPrio(b));
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
     const kcal=Math.round(sum('kalorien')),eiw=sum('eiweiss').toFixed(1),zuk=sum('zucker').toFixed(1),kh=sum('kohlenhydrate').toFixed(1),fat=sum('fett').toFixed(1);
+    const eiwN=sum('eiweiss'),fatN=sum('fett'),khN=sum('kohlenhydrate');
+    const macroKcal=eiwN*4+fatN*9+khN*4;
+    const pEiw=macroKcal>0?Math.round(eiwN*4/macroKcal*100):0;
+    const pFat=macroKcal>0?Math.round(fatN*9/macroKcal*100):0;
+    const pKH =macroKcal>0?Math.round(khN*4/macroKcal*100):0;
     const sep=erster?'':'<div style="border-top:1px solid #1e3a5f;margin:0.5rem 0 0.6rem"></div>';
     erster=false;
     html+=sep+'<div style="margin-bottom:0.75rem">'
-      +'<div style="display:flex;align-items:center;gap:0.5rem;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:8px 8px 0 0;padding:0.45rem 0.75rem">'
-        +'<span style="font-weight:800;color:#f59e0b;font-size:1.1rem;white-space:nowrap">📅 '+hl(datumStr,suche)+'</span>'
-        +'<span style="flex:1;display:flex;gap:0.35rem;align-items:center;justify-content:flex-end;font-size:0.72rem;flex-wrap:wrap">'
-          +'<span style="color:#f59e0b">'+kcal+' kcal</span>'
-          +'<span style="color:#475569">|</span>'
-          +'<span style="color:#22c55e">'+eiw+'g Eiw</span>'
-          +'<span style="color:#475569">|</span>'
-          +'<span style="color:#ec4899">'+zuk+'g Zck</span>'
-          +'<span style="color:#475569">|</span>'
-          +'<span style="color:#3b82f6">'+kh+'g KH</span>'
-          +'<span style="color:#475569">|</span>'
-          +'<span style="color:#a78bfa">'+fat+'g Fett</span>'
-        +'</span>'
-        +'<button class="btn-del-sm" onclick="deleteDay(\''+datum+'\')" title="Tag löschen">🗑️</button>'
+      +'<div style="display:flex;flex-direction:column;gap:0.25rem;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:8px 8px 0 0;padding:0.45rem 0.75rem">'
+        +'<div style="display:flex;align-items:center;gap:0.5rem">'
+          +'<span style="font-weight:800;color:#f59e0b;font-size:1.1rem;white-space:nowrap">📅 '+hl(datumStr,suche)+'</span>'
+          +'<span style="flex:1;display:flex;gap:0.35rem;align-items:center;justify-content:flex-end;font-size:0.72rem;flex-wrap:wrap">'
+            +'<span style="color:#f59e0b">'+kcal+' kcal</span>'
+            +'<span style="color:#475569">|</span>'
+            +'<span style="color:#22c55e">'+eiw+'g Eiw</span>'
+            +'<span style="color:#475569">|</span>'
+            +'<span style="color:#ec4899">'+zuk+'g Zck</span>'
+            +'<span style="color:#475569">|</span>'
+            +'<span style="color:#3b82f6">'+kh+'g KH</span>'
+            +'<span style="color:#475569">|</span>'
+            +'<span style="color:#a78bfa">'+fat+'g Fett</span>'
+          +'</span>'
+          +'<button class="btn-del-sm" onclick="deleteDay(\''+datum+'\')" title="Tag löschen">🗑️</button>'
+        +'</div>'
+        +(macroKcal>0?'<div style="font-size:0.68rem;display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap">'
+          +'<span style="color:#64748b">Makros:</span>'
+          +'<span style="color:#22c55e;font-weight:600">Eiw '+pEiw+'%</span>'
+          +'<span style="color:#a78bfa;font-weight:600">Fett '+pFat+'%</span>'
+          +'<span style="color:#3b82f6;font-weight:600">KH '+pKH+'%</span>'
+          +'<span style="color:#475569">(Ziel 30/30/40)</span>'
+        +'</div>':'')
       +'</div>'
       +'<div style="border:1px solid rgba(59,130,246,0.25);border-top:none;border-radius:0 0 8px 8px;">'
         +sortiert.map(e=>eintragKarte(e,datum,suche)).join('')
