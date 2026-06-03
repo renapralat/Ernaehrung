@@ -134,8 +134,17 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
   <div class="header">
     <div class="title">🍽️ Ernährungsprotokoll</div>
     <div class="subtitle">Nährwerterfassung via lokale DB · Open Food Facts · KI</div>
-    <div style="font-size:0.7rem;margin-top:4px;letter-spacing:0.01em">
-      Makroziel: <span style="color:#22c55e;font-weight:600">30% Eiw</span> <span style="color:#475569">·</span> <span style="color:#a78bfa;font-weight:600">30% Fett</span> <span style="color:#475569">·</span> <span style="color:#3b82f6;font-weight:600">40% KH</span>
+    <div style="font-size:0.7rem;margin-top:4px;letter-spacing:0.01em;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap">
+      <span>Makroziel: <span style="color:#22c55e;font-weight:600">30% Eiw</span> <span style="color:#475569">·</span> <span style="color:#a78bfa;font-weight:600">30% Fett</span> <span style="color:#475569">·</span> <span style="color:#3b82f6;font-weight:600">40% KH</span></span>
+      <span style="color:#334155">|</span>
+      <span style="display:flex;align-items:center;gap:0.3rem">
+        <span style="color:#64748b">🎯</span>
+        <input type="number" id="ziel-input" min="500" max="5000" step="50"
+          style="width:55px;background:#1e293b;color:#f59e0b;border:1px solid #334155;border-radius:4px;padding:2px 5px;font-size:0.75rem;font-weight:700"
+          onkeydown="if(event.key==='Enter')setZiel(this.value)"/>
+        <span style="color:#f59e0b;font-weight:600">kcal</span>
+        <button style="background:none;border:1px solid #334155;border-radius:4px;color:#94a3b8;font-size:0.7rem;padding:1px 5px;cursor:pointer" onclick="setZiel(document.getElementById('ziel-input').value)">✓</button>
+      </span>
     </div>
     <div id="cloud-status"><span class="dot warn" id="dot"></span><span id="cloud-text">Verbinde…</span></div>
   </div>
@@ -240,19 +249,6 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
     <button class="btn-ghost" style="width:100%;font-size:0.8rem" onclick="toggleTokenForm()">⚙️ Token verwalten</button>
   </div>
 
-  <!-- Kalorienziel -->
-  <div class="card">
-    <div class="card-title" style="margin-bottom:0.5rem">🎯 Kalorienziel</div>
-    <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
-      <span style="font-size:0.8rem;color:#94a3b8">Tagesziel:</span>
-      <input type="number" id="ziel-input" min="500" max="5000" step="50"
-        style="width:80px;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:4px 8px;font-size:0.9rem"
-        onkeydown="if(event.key==='Enter')setZiel(this.value)"/>
-      <span style="font-size:0.8rem;color:#94a3b8">kcal / Tag</span>
-      <button class="btn-ghost" style="font-size:0.8rem" onclick="setZiel(document.getElementById('ziel-input').value)">✓ Speichern</button>
-    </div>
-    <div style="font-size:0.72rem;color:#64748b;margin-top:0.4rem">Kalorienbudget für die Ampel-Anzeige. 🟢 unter Ziel · 🟡 bis +200 · 🔴 deutlich drüber.</div>
-  </div>
 </div>
 
 <script src="lebensmittel.js"></script>
