@@ -243,6 +243,16 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
       <div style="font-size:0.72rem;color:#64748b;margin-bottom:0.65rem">
         GitHub → Einstellungen → Developer settings → Personal access tokens (Classic) → Generate. Keine Berechtigungen nötig. Nur lokal gespeichert.
       </div>
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
+        <span style="font-size:0.75rem;color:#94a3b8;white-space:nowrap">🧠 Modell:</span>
+        <select id="ki-model-select" onchange="setKiModel(this.value)"
+          style="flex:1;background:#0f172a;color:#f1f5f9;border:1px solid #334155;border-radius:6px;padding:0.3rem 0.5rem;font-size:0.8rem;font-family:inherit">
+          <option value="gpt-4o-mini">GPT-4o Mini (Standard)</option>
+          <option value="gpt-4o">GPT-4o (Beste Qualität)</option>
+          <option value="meta-llama-3.1-70b-instruct">Llama 3.1 70B</option>
+          <option value="meta-llama-3.1-8b-instruct">Llama 3.1 8B (Schnell)</option>
+        </select>
+      </div>
     </div>
     <button class="btn-ghost" style="width:100%;font-size:0.8rem" onclick="toggleTokenForm()">⚙️ Token verwalten</button>
   </div>
@@ -390,7 +400,7 @@ async function callGithubKI(name){
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
       body:JSON.stringify({
-        model:'gpt-4o-mini',
+        model:getKiModel(),
         messages:[{role:'user',content:'Nährwerte pro 100g für "'+name+'"? Antworte NUR mit JSON: {"kcal":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0,"fett":0} Nur Zahlen, keine Einheiten.'}],
         temperature:0,max_tokens:80
       })
@@ -473,7 +483,7 @@ async function analyzeKI(){
     const resp=await fetch('https://models.inference.ai.azure.com/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body:JSON.stringify({model:'gpt-4o',messages:[{role:'user',content:prompt}],temperature:0,max_tokens:600})
+      body:JSON.stringify({model:getKiModel(),messages:[{role:'user',content:prompt}],temperature:0,max_tokens:600})
     });
     if(!resp.ok)throw new Error('HTTP '+resp.status);
     const d=await resp.json();
@@ -942,6 +952,9 @@ function clearSuche(){document.getElementById('suche').value='';renderEintraege(
 // ─── Token management ─────────────────────────────────────────────────────────
 
 function loadToken(){return localStorage.getItem('github_ki_token')||'';}
+function getKiModel(){return localStorage.getItem('ki-model')||'gpt-4o-mini';}
+function setKiModel(v){localStorage.setItem('ki-model',v);}
+function initKiModelSelect(){const s=document.getElementById('ki-model-select');if(s)s.value=getKiModel();}
 function saveToken(){
   const t=document.getElementById('ki-token-input').value.trim();
   if(!t){alert('Bitte Token eingeben.');return;}
@@ -1010,6 +1023,7 @@ async function init(){
   document.getElementById('ziel-input').value=getZiel(heuteStr());
   if(localStorage.getItem('kalorien-ziel-'+heuteStr()))sperrZielInput();
   updateKiStatus();
+  initKiModelSelect();
   await laden();
 }
 init();
