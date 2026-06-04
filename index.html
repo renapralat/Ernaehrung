@@ -147,14 +147,18 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
   <!-- Main card: export + search + input + analyze -->
   <div class="card">
 
-    <!-- Download row (replaces Erfassen/Löschen) -->
-    <div class="dl-row">
-      <span class="dl-label">Von</span>
-      <input type="date" id="export-von" class="date-sm"/>
-      <span class="dl-label">Bis</span>
-      <input type="date" id="export-bis" class="date-sm"/>
-      <button class="btn-ghost" onclick="exportCSV()">⬇️ Tab/Text</button>
-      <button class="btn-ghost" onclick="exportBrief()">📄 Brief</button>
+    <!-- Download row -->
+    <div style="margin-bottom:0.65rem">
+      <div style="display:flex;gap:0.4rem;align-items:center;margin-bottom:0.4rem">
+        <span class="dl-label">Von</span>
+        <input type="date" id="export-von" style="flex:1;min-width:0;background:#0f172a;color:#f1f5f9;border:1px solid #334155;border-radius:8px;padding:0.45rem 0.5rem;font-family:inherit;font-size:0.8rem;color-scheme:dark;cursor:pointer"/>
+        <span class="dl-label">Bis</span>
+        <input type="date" id="export-bis" style="flex:1;min-width:0;background:#0f172a;color:#f1f5f9;border:1px solid #334155;border-radius:8px;padding:0.45rem 0.5rem;font-family:inherit;font-size:0.8rem;color-scheme:dark;cursor:pointer"/>
+      </div>
+      <div style="display:flex;gap:0.4rem">
+        <button class="btn-ghost" onclick="exportCSV()">⬇️ Tab/Text</button>
+        <button class="btn-ghost" onclick="exportBrief()">📄 Brief</button>
+      </div>
     </div>
     <div class="status-msg" id="export-status"></div>
 
@@ -978,9 +982,9 @@ function setBewegungTag(datum,v){
 }
 function ampelNetto(netto,ziel){
   const n=Math.round(netto),diff=Math.round(netto-ziel);
-  if(netto<=ziel)return '<span style="color:#22c55e;font-weight:600">Netto '+n+' 🟢</span><span style="color:#64748b"> '+diff+'</span>';
-  if(diff<=200)return '<span style="color:#f59e0b;font-weight:600">Netto '+n+' 🟡</span><span style="color:#64748b"> +'+diff+'</span>';
-  return '<span style="color:#ef4444;font-weight:600">Netto '+n+' 🔴</span><span style="color:#64748b"> +'+diff+'</span>';
+  if(netto<=ziel)return '<span style="color:#22c55e;font-weight:600">Netto '+n+' 🟢</span><span style="color:#60a5fa;font-weight:600"> '+diff+'</span>';
+  if(diff<=200)return '<span style="color:#f59e0b;font-weight:600">Netto '+n+' 🟡</span><span style="color:#60a5fa;font-weight:600"> +'+diff+'</span>';
+  return '<span style="color:#ef4444;font-weight:600">Netto '+n+' 🔴</span><span style="color:#60a5fa;font-weight:600"> +'+diff+'</span>';
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
