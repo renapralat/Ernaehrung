@@ -626,16 +626,16 @@ function eintragKarte(e, datum, suche){
   return '<div class="entry-card">'
     +'<div class="entry-card-name">🍽 '+hl(e.lebensmittel||'',suche)+katBadge+'</div>'
     +zutatenHTML
-    +'<div class="entry-card-actions">'
-      +'<button class="btn-rep" onclick="wiederholenEintrag(\''+lmEsc+'\')">↩ Wiederholen</button>'
-      +'<button class="btn-del-sm" onclick="deleteEintrag(\''+e.id+'\',\''+datum+'\')">✕</button>'
-    +'</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;text-align:center;font-size:0.72rem;margin-top:4px">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;text-align:center;font-size:0.72rem;margin-bottom:6px">'
       +'<span style="color:#f59e0b">'+Math.round(+e.kalorien||0)+' kcal</span>'
       +'<span style="color:#22c55e">'+(+e.eiweiss||0).toFixed(1)+'g Eiw</span>'
       +'<span style="color:#a78bfa">'+(+e.fett||0).toFixed(1)+'g Fett</span>'
       +'<span style="color:#3b82f6">'+(+e.kohlenhydrate||0).toFixed(1)+'g KH</span>'
       +'<span style="color:#ec4899">'+(+e.zucker||0).toFixed(1)+'g Zck</span>'
+    +'</div>'
+    +'<div class="entry-card-actions">'
+      +'<button class="btn-rep" onclick="wiederholenEintrag(\''+lmEsc+'\')">↩ Wiederholen</button>'
+      +'<button class="btn-del-sm" onclick="deleteEintrag(\''+e.id+'\',\''+datum+'\')">✕</button>'
     +'</div>'
   +'</div>';
 }
