@@ -135,10 +135,9 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
       <span style="display:flex;align-items:center;gap:0.3rem">
         <span style="color:#64748b">🎯</span>
         <input type="number" id="ziel-input" min="500" max="5000" step="50"
-          style="width:55px;background:#1e293b;color:#f59e0b;border:1px solid #334155;border-radius:4px;padding:2px 5px;font-size:0.75rem;font-weight:700"
-          onkeydown="if(event.key==='Enter')setZiel(this.value)"/>
+          style="width:55px;background:#1e293b;color:#f59e0b;border:1px solid #334155;border-radius:4px;padding:2px 5px;font-size:0.75rem;font-weight:700"/>
         <span style="color:#f59e0b;font-weight:600">kcal</span>
-        <button style="background:none;border:1px solid #334155;border-radius:4px;color:#94a3b8;font-size:0.7rem;padding:1px 5px;cursor:pointer" onclick="setZiel(document.getElementById('ziel-input').value)">✓</button>
+        <button id="ziel-btn" style="background:none;border:1px solid #334155;border-radius:4px;color:#94a3b8;font-size:0.7rem;padding:1px 5px;cursor:pointer" onclick="setZiel(document.getElementById('ziel-input').value)">✓</button>
       </span>
     </div>
     <div id="cloud-status"><span class="dot warn" id="dot"></span><span id="cloud-text">Verbinde…</span></div>
@@ -641,13 +640,6 @@ function eintragKarte(e, datum, suche){
       +'<button class="btn-rep" onclick="wiederholenEintrag(\''+lmEsc+'\')">↩ Wiederholen</button>'
       +'<button class="btn-del-sm" onclick="deleteEintrag(\''+e.id+'\',\''+datum+'\')">✕</button>'
     +'</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;text-align:center;font-size:0.72rem;margin-top:4px">'
-      +'<span style="color:#f59e0b">'+Math.round(+e.kalorien||0)+' kcal</span>'
-      +'<span style="color:#22c55e">'+(+e.eiweiss||0).toFixed(1)+'g Eiw</span>'
-      +'<span style="color:#a78bfa">'+(+e.fett||0).toFixed(1)+'g Fett</span>'
-      +'<span style="color:#3b82f6">'+(+e.kohlenhydrate||0).toFixed(1)+'g KH</span>'
-      +'<span style="color:#ec4899">'+(+e.zucker||0).toFixed(1)+'g Zck</span>'
-    +'</div>'
   +'</div>';
 }
 
@@ -695,7 +687,7 @@ function renderEintraege(){
             +' onchange="setBewegungTag(\''+datum+'\',this.value)"/>'
           +'<span style="color:#64748b;font-size:0.75rem">kcal</span>'
           +'<span style="color:#475569">→</span>'
-          +'<span id="ampel-tag-'+datum+'" style="font-size:0.8rem">'+ampelNetto(kcal-getBewegung(datum),getZiel())+'</span>'
+          +'<span id="ampel-tag-'+datum+'" style="font-size:0.8rem">'+ampelNetto(kcal-getBewegung(datum),getZiel(datum))+'</span>'
         +'</div>'
         // Zeile 3: Makros — 4 gleiche Spalten über volle Breite
         +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;text-align:center;font-size:0.72rem;margin-top:5px;padding-top:4px;border-top:1px solid rgba(59,130,246,0.15)">'
@@ -970,11 +962,24 @@ function updateKiStatus(){
 
 // ─── Kalorienziel & Bewegung ──────────────────────────────────────────────────
 
-function getZiel(){return +(localStorage.getItem('kalorien-ziel')||1200);}
+function getZiel(datum){
+  if(datum){const v=localStorage.getItem('kalorien-ziel-'+datum);if(v)return +v;}
+  return +(localStorage.getItem('kalorien-ziel')||1200);
+}
+function sperrZielInput(){
+  const inp=document.getElementById('ziel-input');
+  const btn=document.getElementById('ziel-btn');
+  if(inp){inp.disabled=true;inp.style.opacity='0.45';inp.title='Ziel heute bereits festgelegt';}
+  if(btn){btn.disabled=true;btn.style.opacity='0.45';btn.style.cursor='default';}
+}
 function setZiel(v){
+  const heute=heuteStr();
+  if(localStorage.getItem('kalorien-ziel-'+heute))return;
   const n=Math.max(500,Math.min(5000,+v||1200));
   localStorage.setItem('kalorien-ziel',n);
+  localStorage.setItem('kalorien-ziel-'+heute,n);
   document.getElementById('ziel-input').value=n;
+  sperrZielInput();
   aktualisiereBanner();
   renderEintraege();
 }
@@ -984,7 +989,7 @@ function setBewegungTag(datum,v){
   localStorage.setItem('bewegung-'+datum,bew);
   const tagesKcal=eintraege.filter(e=>e.datum&&e.datum.slice(0,10)===datum).reduce((a,e)=>a+(+e.kalorien||0),0);
   const el=document.getElementById('ampel-tag-'+datum);
-  if(el)el.innerHTML=ampelNetto(tagesKcal-bew,getZiel());
+  if(el)el.innerHTML=ampelNetto(tagesKcal-bew,getZiel(datum));
   if(datum===heuteStr())aktualisiereBanner();
 }
 function ampelNetto(netto,ziel){
@@ -1002,7 +1007,8 @@ async function init(){
   document.getElementById('datum').max=heute;
   document.getElementById('export-von').value=heute.slice(0,8)+'01';
   document.getElementById('export-bis').value=heute;
-  document.getElementById('ziel-input').value=getZiel();
+  document.getElementById('ziel-input').value=getZiel(heuteStr());
+  if(localStorage.getItem('kalorien-ziel-'+heuteStr()))sperrZielInput();
   updateKiStatus();
   await laden();
 }
