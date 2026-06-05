@@ -400,7 +400,7 @@ async function callGithubKI(name){
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
       body:JSON.stringify({
         model:getKiModel(),
-        messages:[{role:'user',content:'Nährwerte pro 100g für "'+name+'"? Antworte NUR mit JSON: {"kcal":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0,"fett":0} Nur Zahlen, keine Einheiten.'}],
+        messages:[{role:'user',content:'Nährwerte pro 100g für "'+name+'"? Nur wenn es ein echtes, bekanntes Lebensmittel ist. Wenn unbekannt, erfunden oder nicht existent, setze alle Werte auf 0. Antworte NUR mit JSON: {"kcal":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0,"fett":0} Nur Zahlen, keine Einheiten.'}],
         temperature:0,max_tokens:80
       })
     });
@@ -444,6 +444,7 @@ async function analyzeAndShow(){
 
 function showNWResults(rows,kiGeschaetzt,nichtGefunden){
   document.getElementById('ki-beschreibung').style.display='none';
+  document.getElementById('result-header').innerHTML='✅ Analysiert – <span style="font-size:0.75rem;color:#64748b">📊 Lokale DB / Open Food Facts</span>';
   const totKcal=rows.reduce((a,r)=>a+r.kalorien,0);
   const totEiw=rows.reduce((a,r)=>a+r.eiweiss,0);
   const totZck=rows.reduce((a,r)=>a+r.zucker,0);
@@ -478,6 +479,7 @@ async function analyzeKI(){
   try{
     const prompt='Du bist Ernährungsberaterin. Analysiere diese Mahlzeit für eine Person die auf Zucker (Diabetes) und Eiweiß (Alter) achtet.\n\nLebensmittel:\n'
       +foods.map((f,i)=>(i+1)+'. '+f).join('\n')
+      +'\n\nWichtig: Wenn ein Lebensmittel unbekannt, erfunden oder nicht existent ist, setze alle seine Werte auf 0. Erfinde keine Nährwerte.'
       +'\n\nAntworte NUR mit JSON (keine Backticks, kein Markdown):\n{"beschreibung":"1-2 Sätze Bewertung","einzeln":[{"name":"Name mit Menge","kalorien":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0,"fett":0}],"kalorien":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0,"fett":0}';
 
     const resp=await fetch('https://models.inference.ai.azure.com/chat/completions',{
@@ -513,6 +515,7 @@ async function analyzeKI(){
       +pendingRows.map(r=>`<tr><td>${r.lebensmittel}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td></tr>`).join('')
       +'</tbody></table>';
     document.getElementById('result-nf').textContent='';
+    document.getElementById('result-header').innerHTML='✅ Analysiert – <span style="font-size:0.75rem;color:#4ade80">🤖 KI-Analyse</span>';
 
     // Show totals grid
     const totKcal=Math.round(+ki.kalorien||0);
