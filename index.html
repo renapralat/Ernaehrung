@@ -56,9 +56,9 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
 /* KI assessment block */
 .ki-beschreibung{font-size:0.85rem;line-height:1.6;font-style:italic;color:#86efac;padding:0.6rem 0.75rem;background:rgba(74,222,128,0.05);border-radius:8px;border-left:2px solid #4ade80;margin-bottom:0.65rem;}
 /* entries table (still used in result-box) */
-.entries-table{width:100%;border-collapse:collapse;font-size:0.82rem;}
-.entries-table th{text-align:left;padding:0.4rem 0.5rem;color:#64748b;border-bottom:1px solid #334155;font-weight:600;}
-.entries-table td{padding:0.32rem 0.5rem;border-bottom:1px solid #1e293b;}
+.entries-table{width:100%;border-collapse:collapse;font-size:0.75rem;}
+.entries-table th{text-align:left;padding:0.25rem 0.35rem;color:#64748b;border-bottom:1px solid #334155;font-weight:600;}
+.entries-table td{padding:0.22rem 0.35rem;border-bottom:1px solid #1e293b;}
 .entries-table tr.total-row td{border-top:1px solid #334155;font-weight:700;color:#93c5fd;}
 /* entry cards in entries list */
 .entry-card{padding:0.65rem 0.75rem;}
@@ -450,7 +450,7 @@ function showNWResults(rows,kiGeschaetzt,nichtGefunden){
   const totKH=rows.reduce((a,r)=>a+r.kohlenhydrate,0);
   const totFett=rows.reduce((a,r)=>a+r.fett,0);
   document.getElementById('result-table-wrap').innerHTML=
-    '<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th style="text-align:right">Zucker</th><th style="text-align:right">KH</th><th style="text-align:right">Fett</th></tr></thead><tbody>'
+    '<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th style="text-align:right">Zck.</th><th style="text-align:right">KH</th><th style="text-align:right">Fett</th></tr></thead><tbody>'
     +rows.map(r=>`<tr><td>${r.lebensmittel}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td></tr>`).join('')
     +(rows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right"><strong>${totKcal}</strong></td><td style="text-align:right"><strong>${totEiw.toFixed(1)}g</strong></td><td style="text-align:right"><strong>${totZck.toFixed(1)}g</strong></td><td style="text-align:right"><strong>${totKH.toFixed(1)}g</strong></td><td style="text-align:right"><strong>${totFett.toFixed(1)}g</strong></td></tr>`:'')
     +'</tbody></table>';
@@ -508,7 +508,7 @@ async function analyzeKI(){
 
     // Show table
     document.getElementById('result-table-wrap').innerHTML=
-      '<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th style="text-align:right">Zucker</th><th style="text-align:right">KH</th><th style="text-align:right">Fett</th></tr></thead><tbody>'
+      '<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th style="text-align:right">Zck.</th><th style="text-align:right">KH</th><th style="text-align:right">Fett</th></tr></thead><tbody>'
       +pendingRows.map(r=>`<tr><td>${r.lebensmittel}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td></tr>`).join('')
       +'</tbody></table>';
     document.getElementById('result-nf').textContent='';
@@ -537,7 +537,7 @@ async function analyzeKI(){
 
 async function schnellSpeichern(){
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
-  await analyzeAndShow();
+  if(pendingRows.length<foods.length) await analyzeAndShow();
   if(pendingRows.length) await speichernEintrag();
 }
 async function speichernEintrag(){
