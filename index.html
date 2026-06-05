@@ -189,8 +189,8 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
 
     <!-- Analyze buttons -->
     <div class="analyze-row">
-      <button class="btn-primary" id="analyze-btn" onclick="analyzeAndShow()">📊 Nährwerte ermitteln</button>
-      <button class="btn-ki" id="ki-btn" onclick="analyzeKI()">🤖 +KI Bewertung</button>
+      <button class="btn-ki" id="ki-btn" onclick="analyzeKI()">🤖 KI Analyse</button>
+      <button class="btn-ghost" id="bewertung-btn" onclick="nurBewertung()">💬 Nur Bewertung</button>
     </div>
     <button class="btn-success" style="width:100%;margin-bottom:0.65rem" onclick="schnellSpeichern()">💾 Direkt speichern</button>
 
@@ -419,8 +419,8 @@ async function analyzeAndShow(){
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
   const btn=document.getElementById('analyze-btn');
   const kibtn=document.getElementById('ki-btn');
-  btn.disabled=true;kibtn.disabled=true;
-  const orig=btn.innerHTML;
+  if(btn){btn.disabled=true;}if(kibtn)kibtn.disabled=true;
+  const orig=kibtn?kibtn.innerHTML:'';
   try{
     pendingRows=[];pendingKIMode=false;
     const nichtGefunden=[],kiGeschaetzt=[];
@@ -439,7 +439,7 @@ async function analyzeAndShow(){
     }
     showNWResults(pendingRows,kiGeschaetzt,nichtGefunden);
   }catch(e){alert('Fehler: '+e.message);}
-  finally{btn.innerHTML=orig;btn.disabled=false;kibtn.disabled=false;}
+  finally{if(btn){btn.innerHTML=orig;btn.disabled=false;}if(kibtn){kibtn.innerHTML=orig;kibtn.disabled=false;}}
 }
 
 function showNWResults(rows,kiGeschaetzt,nichtGefunden){
@@ -468,12 +468,13 @@ function showNWResults(rows,kiGeschaetzt,nichtGefunden){
 async function analyzeKI(){
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
   const token=loadToken();
-  if(!token){alert('Für die KI-Bewertung wird ein GitHub-Token benötigt. Bitte unten eintragen.');return;}
   const btn=document.getElementById('ki-btn');
-  const nwbtn=document.getElementById('analyze-btn');
-  btn.disabled=true;nwbtn.disabled=true;
-  const orig=btn.innerHTML;
-  btn.innerHTML='<span class="loading"></span>KI analysiert…';
+  const orig=btn?btn.innerHTML:'';
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="loading"></span>KI…';}
+  if(!token){
+    if(btn){btn.innerHTML=orig;btn.disabled=false;}
+    await analyzeAndShow();return;
+  }
   try{
     const prompt='Du bist Ernährungsberaterin. Analysiere diese Mahlzeit für eine Person die auf Zucker (Diabetes) und Eiweiß (Alter) achtet.\n\nLebensmittel:\n'
       +foods.map((f,i)=>(i+1)+'. '+f).join('\n')
@@ -529,15 +530,45 @@ async function analyzeKI(){
     tg.style.display='grid';
     document.getElementById('result-box').classList.add('show');
     document.getElementById('kategorie-input').blur();
-  }catch(e){alert('KI-Analyse fehlgeschlagen: '+e.message);}
-  finally{btn.innerHTML=orig;btn.disabled=false;nwbtn.disabled=false;}
+  }catch(e){
+    if(btn){btn.innerHTML=orig;btn.disabled=false;}
+    const kbEl=document.getElementById('ki-beschreibung');
+    kbEl.textContent='⚠️ KI nicht verfügbar – Werte aus lokaler DB / Open Food Facts.';
+    kbEl.style.display='block';
+    await analyzeAndShow();
+  }
+  if(btn){btn.innerHTML=orig;btn.disabled=false;}
+}
+
+async function nurBewertung(){
+  if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
+  const token=loadToken();
+  if(!token){alert('Für die Bewertung wird ein GitHub-Token benötigt.');return;}
+  const btn=document.getElementById('bewertung-btn');
+  const orig=btn?btn.innerHTML:'';
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="loading"></span>…';}
+  try{
+    const prompt='Du bist Ernährungsberaterin. Bewerte diese Mahlzeit in 1-2 Sätzen für eine Person die auf Zucker (Diabetes) und Eiweiß (Alter) achtet.\n\nLebensmittel:\n'
+      +foods.map((f,i)=>(i+1)+'. '+f).join('\n')+'\n\nNur Bewertungstext, kein JSON.';
+    const resp=await fetch('https://models.inference.ai.azure.com/chat/completions',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({model:getKiModel(),messages:[{role:'user',content:prompt}],temperature:0,max_tokens:150})
+    });
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    const d=await resp.json();
+    const text=(d.choices?.[0]?.message?.content||'').trim();
+    const kbEl=document.getElementById('ki-beschreibung');
+    kbEl.textContent='💬 '+text;kbEl.style.display='block';
+    document.getElementById('result-box').classList.add('show');
+  }catch(e){alert('Bewertung fehlgeschlagen: '+e.message);}
+  finally{if(btn){btn.innerHTML=orig;btn.disabled=false;}}
 }
 
 // ─── Save & close ────────────────────────────────────────────────────────────
 
 async function schnellSpeichern(){
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
-  if(pendingRows.length<foods.length) await analyzeAndShow();
+  if(pendingRows.length<foods.length) await analyzeKI();
   if(pendingRows.length) await speichernEintrag();
 }
 async function speichernEintrag(){
@@ -556,7 +587,8 @@ async function speichernEintrag(){
       eiweiss: +pendingRows.reduce((a,r)=>a+r.eiweiss,0).toFixed(1),
       zucker: +pendingRows.reduce((a,r)=>a+r.zucker,0).toFixed(1),
       kohlenhydrate: +pendingRows.reduce((a,r)=>a+r.kohlenhydrate,0).toFixed(1),
-      fett: +pendingRows.reduce((a,r)=>a+(+r.fett||0),0).toFixed(1)
+      fett: +pendingRows.reduce((a,r)=>a+(+r.fett||0),0).toFixed(1),
+      ki_bewertet: !!pendingKIMode
     };
     const r=await fetch(URL_BASE,{method:'POST',headers:H,body:JSON.stringify(gesamt)});
     if(!r.ok)throw new Error('HTTP '+r.status);
@@ -640,8 +672,11 @@ function eintragKarte(e, datum, suche){
     +'</div>';
   }
   const katBadge=e.kategorie?'<span class="kat-badge">'+hl(e.kategorie,suche)+'</span>':'';
+  const kiBadge=e.ki_bewertet
+    ?'<span style="font-size:0.65rem;color:#4ade80;margin-left:0.3rem" title="KI-Analyse">🤖</span>'
+    :'<span style="font-size:0.65rem;color:#475569;margin-left:0.3rem;text-decoration:line-through" title="Keine KI-Analyse">🤖</span>';
   return '<div class="entry-card">'
-    +'<div class="entry-card-name">🍽 '+hl(e.lebensmittel||'',suche)+katBadge+'</div>'
+    +'<div class="entry-card-name">🍽 '+hl(e.lebensmittel||'',suche)+katBadge+kiBadge+'</div>'
     +zutatenHTML
     +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;text-align:center;font-size:0.72rem;margin-bottom:6px">'
       +'<span style="color:#f59e0b">'+Math.round(+e.kalorien||0)+' kcal</span>'
