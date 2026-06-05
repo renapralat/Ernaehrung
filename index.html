@@ -192,6 +192,7 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
       <button class="btn-primary" id="analyze-btn" onclick="analyzeAndShow()">📊 Nährwerte ermitteln</button>
       <button class="btn-ki" id="ki-btn" onclick="analyzeKI()">🤖 +KI Bewertung</button>
     </div>
+    <button class="btn-success" style="width:100%;margin-bottom:0.65rem" onclick="schnellSpeichern()">💾 Direkt speichern</button>
 
     <!-- Result box (no Tagessumme – shown in sticky banner above) -->
     <div class="result-box" id="result-box">
@@ -201,18 +202,18 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
       <div id="result-nf" style="font-size:0.75rem;color:#f59e0b;margin-bottom:0.4rem"></div>
       <div class="result-grid" id="result-totals" style="display:none;margin:0.5rem 0;"></div>
       <!-- Kategorie/Notiz direkt vor dem Speichern -->
-      <div class="icon-row" style="margin-top:0.6rem;margin-bottom:0.3rem;">
-        <span class="field-icon">🏷</span>
-        <input type="text" id="kategorie-input" class="flex-input" placeholder="Notiz/Kategorie: Mittag, Snack, Gaststätte…" oninput="updateChips()"/>
-        <button id="mikro-kat-btn" class="btn-ghost btn-icon-sq" onclick="toggleMikroKat()" title="Spracheingabe Notiz">🎤</button>
-        <button class="btn-ghost btn-icon-sq" onclick="setKategorie('')" title="Löschen">✕</button>
-      </div>
-      <div class="chip-row" style="margin-bottom:0.5rem;">
+      <div class="chip-row" style="margin-top:0.6rem;margin-bottom:0.4rem;">
         <button class="chip" onclick="setKategorie('Frühstück')">Frühstück</button>
         <button class="chip" onclick="setKategorie('Mittag')">Mittag</button>
         <button class="chip" onclick="setKategorie('Abendessen')">Abendessen</button>
         <button class="chip" onclick="setKategorie('Snack')">Snack</button>
         <button class="chip" onclick="setKategorie('Gaststätte')">Gaststätte</button>
+      </div>
+      <div class="icon-row" style="margin-bottom:0.3rem;">
+        <span class="field-icon">🏷</span>
+        <input type="text" id="kategorie-input" class="flex-input" placeholder="Notiz/Kategorie: Mittag, Snack, Gaststätte…" oninput="updateChips()"/>
+        <button id="mikro-kat-btn" class="btn-ghost btn-icon-sq" onclick="toggleMikroKat()" title="Spracheingabe Notiz">🎤</button>
+        <button class="btn-ghost btn-icon-sq" onclick="setKategorie('')" title="Löschen">✕</button>
       </div>
       <div style="display:flex;gap:0.5rem;">
         <button class="btn-success" style="flex:1" onclick="speichernEintrag()">💾 Speichern</button>
@@ -249,8 +250,6 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
           style="flex:1;background:#0f172a;color:#f1f5f9;border:1px solid #334155;border-radius:6px;padding:0.3rem 0.5rem;font-size:0.8rem;font-family:inherit">
           <option value="gpt-4o-mini">GPT-4o Mini (Standard)</option>
           <option value="gpt-4o">GPT-4o (Beste Qualität)</option>
-          <option value="meta-llama-3.1-70b-instruct">Llama 3.1 70B</option>
-          <option value="meta-llama-3.1-8b-instruct">Llama 3.1 8B (Schnell)</option>
         </select>
       </div>
     </div>
@@ -461,7 +460,7 @@ function showNWResults(rows,kiGeschaetzt,nichtGefunden){
   document.getElementById('result-nf').textContent=hinweis.trim();
   document.getElementById('result-totals').style.display='none';
   document.getElementById('result-box').classList.add('show');
-  setTimeout(()=>document.getElementById('kategorie-input').focus(),100);
+  document.getElementById('kategorie-input').blur();
 }
 
 // ─── Analyse: KI Bewertung (whole-meal prompt) ───────────────────────────────
@@ -529,13 +528,18 @@ async function analyzeKI(){
       <div class="result-item"><div class="result-val" style="color:#a78bfa">${totFettKI}g</div><div class="result-label">Fett</div></div>`;
     tg.style.display='grid';
     document.getElementById('result-box').classList.add('show');
-    setTimeout(()=>document.getElementById('kategorie-input').focus(),100);
+    document.getElementById('kategorie-input').blur();
   }catch(e){alert('KI-Analyse fehlgeschlagen: '+e.message);}
   finally{btn.innerHTML=orig;btn.disabled=false;nwbtn.disabled=false;}
 }
 
 // ─── Save & close ────────────────────────────────────────────────────────────
 
+async function schnellSpeichern(){
+  if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
+  await analyzeAndShow();
+  if(pendingRows.length) await speichernEintrag();
+}
 async function speichernEintrag(){
   if(!pendingRows||!pendingRows.length)return;
   const datum=document.getElementById('datum').value;
@@ -964,7 +968,12 @@ function saveToken(){
   document.getElementById('ki-token-form').style.display='none';
 }
 function deleteToken(){localStorage.removeItem('github_ki_token');document.getElementById('ki-token-input').value='';updateKiStatus();}
-function toggleTokenForm(){const f=document.getElementById('ki-token-form');f.style.display=f.style.display==='none'?'block':'none';}
+function toggleTokenForm(){
+  const f=document.getElementById('ki-token-form');
+  const open=f.style.display==='none';
+  f.style.display=open?'block':'none';
+  if(open){const t=loadToken();if(t)document.getElementById('ki-token-input').value=t;}
+}
 function updateKiStatus(){
   const t=loadToken();
   const badge=document.getElementById('ki-badge');
