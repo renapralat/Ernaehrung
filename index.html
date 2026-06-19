@@ -426,10 +426,15 @@ async function analyzeAndShow(){
     const nichtGefunden=[],kiGeschaetzt=[];
     for(const food of foods){
       const{name,grams}=parseFood(food);
-      btn.innerHTML='⏳ '+name+'…';
+      if(btn)btn.innerHTML='⏳ '+name+'…';
+      // Per-piece: if input is count pattern (e.g. "5 Kirschen") and DB has piece weight, use count×s
+      const _cM=food.match(/^(\d+(?:[.,]\d+)?)\s+[^\d]/);
+      const _hasUnit=/\b\d+\s*(g|ml|kg|l|gramm)\b/i.test(food);
+      const _dbE=sucheLokaleDB(name);
+      const actualGrams=(_cM&&!_hasUnit&&_dbE&&_dbE.s)?Math.round(parseFloat(_cM[1].replace(',','.'))*_dbE.s):grams;
       let n=await searchOpenFoodFacts(name);
-      if(!n){btn.innerHTML='🤖 '+name+'…';n=await callGithubKI(name);if(n)kiGeschaetzt.push(name);}
-      const f=grams/100;
+      if(!n){if(btn)btn.innerHTML='🤖 '+name+'…';n=await callGithubKI(name);if(n)kiGeschaetzt.push(name);}
+      const f=actualGrams/100;
       if(n){
         pendingRows.push({lebensmittel:food,kalorien:Math.round((+n['energy-kcal_100g']||0)*f),eiweiss:+((+n['proteins_100g']||0)*f).toFixed(1),zucker:+((+n['sugars_100g']||0)*f).toFixed(1),kohlenhydrate:+((+n['carbohydrates_100g']||0)*f).toFixed(1),fett:+((+n['fat_100g']||0)*f).toFixed(1)});
       }else{
