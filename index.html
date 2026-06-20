@@ -525,7 +525,9 @@ async function analyzeAndShow(){
       const _dbE=sucheLokaleDB(name);
       let actualGrams=grams;
       if(!_hasUnit&&!_hasMassUnit&&_dbE&&_dbE.s){
-        const cnt=extractCount(food);
+        let cnt=extractCount(food);
+        // Fallback: "Name 2 Portionen" oder "Name 3 Stücke" (Zahl nicht am Anfang)
+        if(cnt==null){const m2=food.match(/\b(\d+(?:[.,]\d+)?)\s+(?:portion(?:en)?|stücke?|messlöffel)/i);if(m2)cnt=parseFloat(m2[1].replace(',','.'));}
         if(cnt!=null)actualGrams=Math.round(cnt*_dbE.s);
       }
       const offResult=await searchOpenFoodFacts(name);
@@ -648,18 +650,39 @@ async function analyzeKI(){
     const ki=JSON.parse(m[0]);
 
     pendingKIMode=true;
-    // Basis-Werte von KI; sf/lys/arg aus lokaler DB anreichern (per kcal-Verhältnis)
+    // Nährwerte: lokale DB hat Vorrang (exakter); KI liefert Beschreibung + Werte für Unbekanntes
     pendingRows=(ki.einzeln||[]).map(e=>{
-      const dbE=sucheLokaleDB(e.name);
+      const{name:pName,grams:pGrams}=parseFood(e.name);
+      const dbE=sucheLokaleDB(pName)||sucheLokaleDB(e.name);
       let sf=null,lys=null,arg=null;
-      if(dbE&&dbE.k&&(+e.kalorien||0)>0){
-        const f=(+e.kalorien)/dbE.k;
+      let kcal,eiw,zck,kh,fett;
+      if(dbE){
+        // Gramm aus KI-Name berechnen; Stückgewicht (s-Feld) berücksichtigen
+        const _hasMU=/\b(teelöffel|tl|esslöffel|el|messlöffel|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|prise[n]?|schüsse?)\b/i.test(e.name);
+        let actualG=pGrams;
+        if(!_hasMU&&dbE.s){
+          let cnt=extractCount(e.name);
+          if(cnt==null){const m2=e.name.match(/\b(\d+(?:[.,]\d+)?)\s+(?:portion(?:en)?|stücke?|messlöffel)/i);if(m2)cnt=parseFloat(m2[1].replace(',','.'));}
+          if(cnt!=null)actualG=Math.round(cnt*dbE.s);
+        }
+        const f=actualG/100;
+        kcal=Math.round(dbE.k*f);
+        eiw=+((dbE.e||0)*f).toFixed(1);
+        zck=+((dbE.z||0)*f).toFixed(1);
+        kh=+((dbE.kh||0)*f).toFixed(1);
+        fett=+((dbE.f||0)*f).toFixed(1);
         if(dbE.sf!=null)sf=+(dbE.sf*f).toFixed(1);
         if(dbE.lys!=null)lys=Math.round(dbE.lys*f);
         if(dbE.arg!=null)arg=Math.round(dbE.arg*f);
+      }else{
+        // KI-Werte für unbekannte Lebensmittel
+        kcal=Math.round(+e.kalorien||0);
+        eiw=+(+e.eiweiss||0).toFixed(1);
+        zck=+(+e.zucker||0).toFixed(1);
+        kh=+(+e.kohlenhydrate||0).toFixed(1);
+        fett=+(+e.fett||0).toFixed(1);
       }
-      const hatDB=dbE!=null;
-      return{lebensmittel:e.name,kalorien:Math.round(+e.kalorien||0),eiweiss:+(+e.eiweiss||0).toFixed(1),zucker:+(+e.zucker||0).toFixed(1),kohlenhydrate:+(+e.kohlenhydrate||0).toFixed(1),fett:+(+e.fett||0).toFixed(1),sf,lys,arg,quelle:hatDB?'KI+DB':'KI'};
+      return{lebensmittel:e.name,kalorien:kcal,eiweiss:eiw,zucker:zck,kohlenhydrate:kh,fett,sf,lys,arg,quelle:dbE?'DB':'KI'};
     });
 
     // Show beschreibung
@@ -680,7 +703,7 @@ async function analyzeKI(){
         const sfC=hasSFki?`<td style="text-align:right;color:#fb923c">${r.sf!=null?r.sf.toFixed(1)+'g':'–'}</td>`:'';
         const lysC=hasLyski?`<td style="text-align:right;color:#e879f9">${r.lys!=null?r.lys+'mg':'–'}</td>`:'';
         const argC=hasArgki?`<td style="text-align:right;color:#e879f9">${r.arg!=null?r.arg+'mg':'–'}</td>`:'';
-        const qBadge=r.quelle==='KI+DB'?'<span style="font-size:0.6rem;color:#4ade80;margin-left:3px" title="KI-Werte + eigene DB-Extras">🤖📋</span>':'<span style="font-size:0.6rem;color:#f59e0b;margin-left:3px" title="KI-Schätzung">🤖</span>';
+        const qBadge=quelleBadge(r.quelle);
         return `<tr><td>${r.lebensmittel}${qBadge}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td>${sfC}${lysC}${argC}</tr>`;
       }).join('')
       +'</tbody></table>'
@@ -688,12 +711,12 @@ async function analyzeKI(){
     document.getElementById('result-nf').innerHTML=lokaleBewertung(pendingRows);
     document.getElementById('result-header').innerHTML='✅ Analysiert – <span style="font-size:0.75rem;color:#4ade80">🤖 KI-Analyse</span>';
 
-    // Show totals grid
-    const totKcal=Math.round(+ki.kalorien||0);
-    const totEiw=(+ki.eiweiss||0).toFixed(1);
-    const totZck=(+ki.zucker||0).toFixed(1);
-    const totKH=(+ki.kohlenhydrate||0).toFixed(1);
-    const totFettKI=(+ki.fett||0).toFixed(1);
+    // Show totals grid (aus pendingRows berechnen, da DB-Werte KI-Werte überschreiben können)
+    const totKcal=pendingRows.reduce((a,r)=>a+r.kalorien,0);
+    const totEiw=pendingRows.reduce((a,r)=>a+r.eiweiss,0).toFixed(1);
+    const totZck=pendingRows.reduce((a,r)=>a+r.zucker,0).toFixed(1);
+    const totKH=pendingRows.reduce((a,r)=>a+r.kohlenhydrate,0).toFixed(1);
+    const totFettKI=pendingRows.reduce((a,r)=>a+r.fett,0).toFixed(1);
     const tg=document.getElementById('result-totals');
     tg.innerHTML=`
       <div class="result-item"><div class="result-val" style="color:#f59e0b">${totKcal}</div><div class="result-label">kcal gesamt</div></div>
