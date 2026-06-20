@@ -473,12 +473,12 @@ async function fetchMitTimeout(url,ms){
 
 async function searchOpenFoodFacts(name){
   const lokal=sucheLokaleDB(name);
-  if(lokal)return{'energy-kcal_100g':lokal.k,'proteins_100g':lokal.e,'sugars_100g':lokal.z,'carbohydrates_100g':lokal.kh,'fat_100g':lokal.f||0};
+  if(lokal)return{data:{'energy-kcal_100g':lokal.k,'proteins_100g':lokal.e,'sugars_100g':lokal.z,'carbohydrates_100g':lokal.kh,'fat_100g':lokal.f||0},quelle:'DB'};
   const q='&search_simple=1&action=process&json=1&fields=product_name,nutriments&page_size=1';
   const urlDE='https://de.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(name)+q;
   const urlWelt='https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(name)+q;
-  try{const r=await fetchMitTimeout(urlDE,5000);const d=await r.json();if(d.products&&d.products.length>0&&d.products[0].nutriments)return d.products[0].nutriments;}catch(e){}
-  try{const r=await fetchMitTimeout(urlWelt,5000);const d=await r.json();if(d.products&&d.products.length>0&&d.products[0].nutriments)return d.products[0].nutriments;}catch(e){}
+  try{const r=await fetchMitTimeout(urlDE,5000);const d=await r.json();if(d.products&&d.products.length>0&&d.products[0].nutriments)return{data:d.products[0].nutriments,quelle:'OFF'};}catch(e){}
+  try{const r=await fetchMitTimeout(urlWelt,5000);const d=await r.json();if(d.products&&d.products.length>0&&d.products[0].nutriments)return{data:d.products[0].nutriments,quelle:'OFF'};}catch(e){}
   return null;
 }
 
@@ -527,19 +527,28 @@ async function analyzeAndShow(){
         const cnt=extractCount(food);
         if(cnt!=null)actualGrams=Math.round(cnt*_dbE.s);
       }
-      let n=await searchOpenFoodFacts(name);
-      if(!n){if(btn)btn.innerHTML='🤖 '+name+'…';n=await callGithubKI(name);if(n)kiGeschaetzt.push(name);}
+      const offResult=await searchOpenFoodFacts(name);
+      let n=offResult?.data||null;
+      let quelle=offResult?.quelle||null;
+      if(!n){if(btn)btn.innerHTML='🤖 '+name+'…';n=await callGithubKI(name);if(n){kiGeschaetzt.push(name);quelle='KI';}}
       const f=actualGrams/100;
       if(n){
-        pendingRows.push({lebensmittel:food,kalorien:Math.round((+n['energy-kcal_100g']||0)*f),eiweiss:+((+n['proteins_100g']||0)*f).toFixed(1),zucker:+((+n['sugars_100g']||0)*f).toFixed(1),kohlenhydrate:+((+n['carbohydrates_100g']||0)*f).toFixed(1),fett:+((+n['fat_100g']||0)*f).toFixed(1),sf:(_dbE&&_dbE.sf!=null)?+(_dbE.sf*f).toFixed(1):null,lys:(_dbE&&_dbE.lys!=null)?Math.round(_dbE.lys*f):null,arg:(_dbE&&_dbE.arg!=null)?Math.round(_dbE.arg*f):null});
+        pendingRows.push({lebensmittel:food,kalorien:Math.round((+n['energy-kcal_100g']||0)*f),eiweiss:+((+n['proteins_100g']||0)*f).toFixed(1),zucker:+((+n['sugars_100g']||0)*f).toFixed(1),kohlenhydrate:+((+n['carbohydrates_100g']||0)*f).toFixed(1),fett:+((+n['fat_100g']||0)*f).toFixed(1),sf:(_dbE&&_dbE.sf!=null)?+(_dbE.sf*f).toFixed(1):null,lys:(_dbE&&_dbE.lys!=null)?Math.round(_dbE.lys*f):null,arg:(_dbE&&_dbE.arg!=null)?Math.round(_dbE.arg*f):null,quelle:quelle||'?'});
       }else{
         nichtGefunden.push(food);
-        pendingRows.push({lebensmittel:food,kalorien:0,eiweiss:0,zucker:0,kohlenhydrate:0,fett:0,sf:null,lys:null,arg:null});
+        pendingRows.push({lebensmittel:food,kalorien:0,eiweiss:0,zucker:0,kohlenhydrate:0,fett:0,sf:null,lys:null,arg:null,quelle:'?'});
       }
     }
     showNWResults(pendingRows,kiGeschaetzt,nichtGefunden);
   }catch(e){alert('Fehler: '+e.message);}
   finally{if(btn){btn.innerHTML=orig;btn.disabled=false;}if(kibtn){kibtn.innerHTML=orig;kibtn.disabled=false;}}
+}
+
+function quelleBadge(q){
+  if(q==='DB') return '<span style="font-size:0.6rem;color:#22c55e;margin-left:3px;vertical-align:middle" title="Eigene Datenbank">📋</span>';
+  if(q==='OFF')return '<span style="font-size:0.6rem;color:#3b82f6;margin-left:3px;vertical-align:middle" title="Open Food Facts">🌐</span>';
+  if(q==='KI') return '<span style="font-size:0.6rem;color:#f59e0b;margin-left:3px;vertical-align:middle" title="KI-Schätzung">🤖</span>';
+  return '';
 }
 
 function lokaleBewertung(rows){
@@ -594,12 +603,12 @@ function showNWResults(rows,kiGeschaetzt,nichtGefunden){
       const sfCell=hasSF?`<td style="text-align:right;color:#fb923c">${r.sf!=null?r.sf.toFixed(1)+'g':'–'}</td>`:'';
       const lysCell=hasLys?`<td style="text-align:right;color:#e879f9">${r.lys!=null?r.lys+'mg':'–'}</td>`:'';
       const argCell=hasArg?`<td style="text-align:right;color:#e879f9">${r.arg!=null?r.arg+'mg':'–'}</td>`:'';
-      return `<tr><td>${r.lebensmittel}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td>${sfCell}${lysCell}${argCell}</tr>`;
+      return `<tr><td>${r.lebensmittel}${quelleBadge(r.quelle)}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td>${sfCell}${lysCell}${argCell}</tr>`;
     }).join('')
     +(rows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right"><strong>${totKcal}</strong></td><td style="text-align:right"><strong>${totEiw.toFixed(1)}g</strong></td><td style="text-align:right"><strong>${totZck.toFixed(1)}g</strong></td><td style="text-align:right"><strong>${totKH.toFixed(1)}g</strong></td><td style="text-align:right"><strong>${totFett.toFixed(1)}g</strong></td>${sfTot}${lysTot}${argTot}</tr>`:'')
-    +'</tbody></table>';
+    +'</tbody></table>'
+    +'<div style="font-size:0.65rem;color:#475569;margin-top:3px">📋 Eigene DB &nbsp;🌐 Open Food Facts &nbsp;🤖 KI-Schätzung</div>';
   let hinweis='';
-  if(kiGeschaetzt.length)hinweis+='🤖 KI-Schätzung: '+kiGeschaetzt.join(', ')+' – bitte prüfen. ';
   if(nichtGefunden.length)hinweis+='⚠️ Nicht gefunden (0 kcal): '+nichtGefunden.join(', ');
   document.getElementById('result-nf').innerHTML=(hinweis?'<div style="margin-bottom:0.25rem">'+hinweis.trim()+'</div>':'')+lokaleBewertung(rows);
   document.getElementById('result-totals').style.display='none';
@@ -648,7 +657,8 @@ async function analyzeKI(){
         if(dbE.lys!=null)lys=Math.round(dbE.lys*f);
         if(dbE.arg!=null)arg=Math.round(dbE.arg*f);
       }
-      return{lebensmittel:e.name,kalorien:Math.round(+e.kalorien||0),eiweiss:+(+e.eiweiss||0).toFixed(1),zucker:+(+e.zucker||0).toFixed(1),kohlenhydrate:+(+e.kohlenhydrate||0).toFixed(1),fett:+(+e.fett||0).toFixed(1),sf,lys,arg};
+      const hatDB=dbE!=null;
+      return{lebensmittel:e.name,kalorien:Math.round(+e.kalorien||0),eiweiss:+(+e.eiweiss||0).toFixed(1),zucker:+(+e.zucker||0).toFixed(1),kohlenhydrate:+(+e.kohlenhydrate||0).toFixed(1),fett:+(+e.fett||0).toFixed(1),sf,lys,arg,quelle:hatDB?'KI+DB':'KI'};
     });
 
     // Show beschreibung
@@ -669,9 +679,11 @@ async function analyzeKI(){
         const sfC=hasSFki?`<td style="text-align:right;color:#fb923c">${r.sf!=null?r.sf.toFixed(1)+'g':'–'}</td>`:'';
         const lysC=hasLyski?`<td style="text-align:right;color:#e879f9">${r.lys!=null?r.lys+'mg':'–'}</td>`:'';
         const argC=hasArgki?`<td style="text-align:right;color:#e879f9">${r.arg!=null?r.arg+'mg':'–'}</td>`:'';
-        return `<tr><td>${r.lebensmittel}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td>${sfC}${lysC}${argC}</tr>`;
+        const qBadge=r.quelle==='KI+DB'?'<span style="font-size:0.6rem;color:#4ade80;margin-left:3px" title="KI-Werte + eigene DB-Extras">🤖📋</span>':'<span style="font-size:0.6rem;color:#f59e0b;margin-left:3px" title="KI-Schätzung">🤖</span>';
+        return `<tr><td>${r.lebensmittel}${qBadge}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td>${sfC}${lysC}${argC}</tr>`;
       }).join('')
-      +'</tbody></table>';
+      +'</tbody></table>'
+      +'<div style="font-size:0.65rem;color:#475569;margin-top:3px">📋 Eigene DB &nbsp;🌐 Open Food Facts &nbsp;🤖 KI-Schätzung</div>';
     document.getElementById('result-nf').innerHTML=lokaleBewertung(pendingRows);
     document.getElementById('result-header').innerHTML='✅ Analysiert – <span style="font-size:0.75rem;color:#4ade80">🤖 KI-Analyse</span>';
 
@@ -827,7 +839,7 @@ function eintragKarte(e, datum, suche){
   if(zutaten&&zutaten.length>1){
     zutatenHTML='<div style="margin:0.35rem 0;">'
       +zutaten.map(z=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:0.2rem 0.4rem;background:#0a1628;border-radius:4px;margin-bottom:2px;">'
-        +'<span style="flex:1;font-size:0.78rem;color:#94a3b8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+z.lebensmittel+'</span>'
+        +'<span style="flex:1;font-size:0.78rem;color:#94a3b8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+z.lebensmittel+quelleBadge(z.quelle)+'</span>'
         +'<span style="display:flex;gap:0.5rem;font-size:0.72rem;flex-shrink:0;margin-left:0.4rem;">'
           +'<span style="color:#f59e0b">'+Math.round(+z.kalorien||0)+'</span>'
           +'<span style="color:#22c55e">'+(+z.eiweiss||0).toFixed(1)+'</span>'
