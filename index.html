@@ -298,14 +298,15 @@ function teileEingabe(val){
 
 function sucheDBVorschlaege(q){
   if(typeof DB==='undefined'||!q||q.length<1)return[];
-  // Zahl-/Wort-Präfix entfernen, damit "5 Kirschen" → "Kirschen" sucht
   let s=q.trim();
-  s=s.replace(/^\d+(?:[.,]\d+)?\s+/,'');
+  s=s.replace(/^\d+(?:[.,]\d+)?\s*/,'');                    // "20 ", "20g", "0.5 " → Zahl weg
+  s=s.replace(/^(?:g|ml|kg|l|gramm|gram|liter)\s+/i,'');   // Einheit direkt nach Zahl
   s=s.replace(/^(halb[e]?[snrm]?)\s+/i,'');
   s=s.replace(/^viertel\s+/i,'');
-  s=s.replace(/^(zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|zwölf)\s+/i,'');
+  s=s.replace(/^(elf|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|zwölf|zwanzig|dreißig|dreissig|vierzig|fünfzig)\s+/i,'');
   s=s.replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/i,'');
-  s=s.replace(/^(?:portion(?:en)?|stücke?|messlöffel|scheibe[n]?)\s+/i,'');
+  s=s.replace(/^(?:portion(?:en)?|stücke?|messlöffel|esslöffel|teelöffel|tl\s|el\s|scheibe[n]?|tasse[n]?|glas|gläser|kelle[n]?|becher|handvoll|prise[n]?|schüsse?)\s+/i,'');
+  s=s.replace(/^(?:gramm|gram)\s+/i,'');                     // falls noch ein Einheitswort übrig
   s=s.toLowerCase().trim();
   if(!s)return[];
   // Stamm: deutsche Plural-Endungen abschneiden für Fuzzy-Matching
@@ -373,8 +374,8 @@ function extractCount(text){
   let t=text.trim();
   t=t.replace(/^(halb[e]?[snrm]?)\s+/i,'0.5 ');
   t=t.replace(/^viertel\s+/i,'0.25 ');
-  const ZAHL={zwei:2,drei:3,vier:4,fünf:5,sechs:6,sieben:7,acht:8,neun:9,zehn:10,zwölf:12};
-  t=t.replace(/^(zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|zwölf)\s+/i,(_,w)=>ZAHL[w.toLowerCase()]+' ');
+  const ZAHL={elf:11,zwei:2,drei:3,vier:4,fünf:5,sechs:6,sieben:7,acht:8,neun:9,zehn:10,zwölf:12,zwanzig:20,dreißig:30,dreissig:30,vierzig:40,fünfzig:50};
+  t=t.replace(/^(elf|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|zwölf|zwanzig|dreißig|dreissig|vierzig|fünfzig)\s+/i,(_,w)=>ZAHL[w.toLowerCase()]+' ');
   t=t.replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/i,'1 ');
   const m=t.match(/^(\d+(?:[.,]\d+)?)\s/);
   return m?parseFloat(m[1].replace(',','.')):null;
@@ -437,8 +438,8 @@ const MASS={
 function parseFood(text){
   text=text.replace(/^(halb[e]?[snr]?)\s+/i,'0.5 ');
   text=text.replace(/^viertel\s+/i,'0.25 ');
-  const ZAHL={zwei:2,drei:3,vier:4,fünf:5,sechs:6,sieben:7,acht:8,neun:9,zehn:10,zwölf:12};
-  text=text.replace(/^(zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|zwölf)\s+/i,(_,w)=>ZAHL[w.toLowerCase()]+' ');
+  const ZAHL={elf:11,zwei:2,drei:3,vier:4,fünf:5,sechs:6,sieben:7,acht:8,neun:9,zehn:10,zwölf:12,zwanzig:20,dreißig:30,dreissig:30,vierzig:40,fünfzig:50};
+  text=text.replace(/^(elf|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|zwölf|zwanzig|dreißig|dreissig|vierzig|fünfzig)\s+/i,(_,w)=>ZAHL[w.toLowerCase()]+' ');
   text=text.replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/i,'');
   const mMass=text.match(/^(\d+(?:[.,]\d+)?)\s+(?:gehäufte?|gestrichene?|große?|kleine?|gute?)?\s*(teelöffel|esslöffel|tl|el|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|portion(?:en)?|prise[n]?|schüsse?|stücke?)\s+(.+)$/i);
   if(mMass){const anzahl=parseFloat(mMass[1].replace(',','.'));const gramsProEinheit=MASS[mMass[2].toLowerCase()]||15;return{name:mMass[3].trim(),grams:anzahl*gramsProEinheit};}
@@ -607,7 +608,7 @@ function showNWResults(rows,kiGeschaetzt,nichtGefunden){
     }).join('')
     +(rows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right"><strong>${totKcal}</strong></td><td style="text-align:right"><strong>${totEiw.toFixed(1)}g</strong></td><td style="text-align:right"><strong>${totZck.toFixed(1)}g</strong></td><td style="text-align:right"><strong>${totKH.toFixed(1)}g</strong></td><td style="text-align:right"><strong>${totFett.toFixed(1)}g</strong></td>${sfTot}${lysTot}${argTot}</tr>`:'')
     +'</tbody></table>'
-    +'<div style="font-size:0.65rem;color:#475569;margin-top:3px">📋 Eigene DB &nbsp;🌐 Open Food Facts &nbsp;🤖 KI-Schätzung</div>';
+    +'<div style="font-size:0.65rem;color:#475569;margin-top:3px">Quelle: 📋 eigene DB → 🌐 Open Food Facts → 🤖 KI (Reihenfolge der Suche)</div>';
   let hinweis='';
   if(nichtGefunden.length)hinweis+='⚠️ Nicht gefunden (0 kcal): '+nichtGefunden.join(', ');
   document.getElementById('result-nf').innerHTML=(hinweis?'<div style="margin-bottom:0.25rem">'+hinweis.trim()+'</div>':'')+lokaleBewertung(rows);
@@ -683,7 +684,7 @@ async function analyzeKI(){
         return `<tr><td>${r.lebensmittel}${qBadge}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td>${sfC}${lysC}${argC}</tr>`;
       }).join('')
       +'</tbody></table>'
-      +'<div style="font-size:0.65rem;color:#475569;margin-top:3px">📋 Eigene DB &nbsp;🌐 Open Food Facts &nbsp;🤖 KI-Schätzung</div>';
+      +'<div style="font-size:0.65rem;color:#475569;margin-top:3px">Quelle: 📋 eigene DB → 🌐 Open Food Facts → 🤖 KI (Reihenfolge der Suche)</div>';
     document.getElementById('result-nf').innerHTML=lokaleBewertung(pendingRows);
     document.getElementById('result-header').innerHTML='✅ Analysiert – <span style="font-size:0.75rem;color:#4ade80">🤖 KI-Analyse</span>';
 
@@ -1225,8 +1226,8 @@ function updateKiStatus(){
   const t=loadToken();
   const badge=document.getElementById('ki-badge');
   const txt=document.getElementById('ki-status-text');
-  if(t){badge.className='dot ok';txt.textContent='KI-Analyse aktiv – unbekannte Lebensmittel + KI-Bewertung verfügbar.';txt.style.color='#22c55e';}
-  else{badge.className='dot warn';txt.textContent='Kein Token – nur lokale DB + Open Food Facts. KI-Bewertung nicht verfügbar.';txt.style.color='#f59e0b';}
+  if(t){badge.className='dot ok';txt.textContent='Suche: 📋 eigene DB → 🌐 Open Food Facts → 🤖 KI (Token aktiv)';txt.style.color='#22c55e';}
+  else{badge.className='dot warn';txt.textContent='Suche: 📋 eigene DB → 🌐 Open Food Facts (kein KI-Token)';txt.style.color='#f59e0b';}
 }
 
 // ─── Kalorienziel & Bewegung ──────────────────────────────────────────────────
