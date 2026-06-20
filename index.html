@@ -878,20 +878,36 @@ function eintragKarte(e, datum, suche){
   if(e.zutaten){try{zutaten=JSON.parse(e.zutaten);}catch(ex){}}
   let zutatenHTML='';
   if(zutaten&&zutaten.length>1){
-    zutatenHTML='<div style="margin:0.35rem 0;">'
-      +zutaten.map(z=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:0.2rem 0.4rem;background:#0a1628;border-radius:4px;margin-bottom:2px;">'
-        +'<span style="flex:1;font-size:0.78rem;color:#94a3b8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+z.lebensmittel+quelleBadge(z.quelle)+'</span>'
-        +'<span style="font-size:0.7rem;flex-shrink:0;margin-left:0.5rem;color:#475569;text-align:right">'
-          +'<span style="color:#f59e0b">'+Math.round(+z.kalorien||0)+'</span>'
-          +' <span style="color:#22c55e">'+(+z.eiweiss||0).toFixed(1)+'</span>'
-          +' <span style="color:#a78bfa">'+(+z.fett||0).toFixed(1)+'</span>'
-          +' <span style="color:#3b82f6">'+(+z.kohlenhydrate||0).toFixed(1)+'</span>'
-          +' <span style="color:#ec4899">'+(+z.zucker||0).toFixed(1)+'</span>'
-          +(z.sf!=null?' <span style="color:#fb923c">'+( +z.sf).toFixed(1)+'FS</span>':'')
-          +((+z.lys||0)>0?' <span style="color:#e879f9">'+z.lys+'L</span>':'')
-          +((+z.arg||0)>0?' <span style="color:#e879f9">'+z.arg+'A</span>':'')
-        +'</span>'
-      +'</div>').join('')
+    const zHasSF=zutaten.some(z=>z.sf!=null);
+    const zHasLys=zutaten.some(z=>(+z.lys||0)>0);
+    const zHasArg=zutaten.some(z=>(+z.arg||0)>0);
+    zutatenHTML='<div style="margin:0.35rem 0;overflow-x:auto">'
+      +'<table class="entries-table"><thead><tr>'
+        +'<th>Lebensmittel</th>'
+        +'<th style="text-align:right">kcal</th>'
+        +'<th style="text-align:right">Eiw.</th>'
+        +'<th style="text-align:right">Zck.</th>'
+        +'<th style="text-align:right">KH</th>'
+        +'<th style="text-align:right">Fett</th>'
+        +(zHasSF?'<th style="text-align:right;color:#fb923c">ges.FS</th>':'')
+        +(zHasLys?'<th style="text-align:right;color:#e879f9">Lys.</th>':'')
+        +(zHasArg?'<th style="text-align:right;color:#e879f9">Argn.</th>':'')
+      +'</tr></thead><tbody>'
+      +zutaten.map(z=>{
+        const zSF=zHasSF?'<td style="text-align:right;color:#fb923c">'+(z.sf!=null?(+z.sf).toFixed(1)+'g':'–')+'</td>':'';
+        const zLys=zHasLys?'<td style="text-align:right;color:#e879f9">'+((+z.lys||0)>0?z.lys+'mg':'–')+'</td>':'';
+        const zArg=zHasArg?'<td style="text-align:right;color:#e879f9">'+((+z.arg||0)>0?z.arg+'mg':'–')+'</td>':'';
+        return '<tr>'
+          +'<td>'+z.lebensmittel+quelleBadge(z.quelle)+'</td>'
+          +'<td style="text-align:right">'+Math.round(+z.kalorien||0)+'</td>'
+          +'<td style="text-align:right">'+(+z.eiweiss||0).toFixed(1)+'g</td>'
+          +'<td style="text-align:right">'+(+z.zucker||0).toFixed(1)+'g</td>'
+          +'<td style="text-align:right">'+(+z.kohlenhydrate||0).toFixed(1)+'g</td>'
+          +'<td style="text-align:right">'+(+z.fett||0).toFixed(1)+'g</td>'
+          +zSF+zLys+zArg
+        +'</tr>';
+      }).join('')
+      +'</tbody></table>'
     +'</div>';
   }
   const katBadge=e.kategorie?'<span class="kat-badge">'+hl(e.kategorie,suche)+'</span>':'';
