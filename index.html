@@ -179,7 +179,7 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
     <!-- Food input with mic (icon only, no label) -->
     <div class="icon-row">
       <span class="field-icon">🥗</span>
-      <input type="text" id="lebensmittel-input" class="flex-input" placeholder="z.B. Joghurt 150g, Haferflocken 50g" onkeydown="if(event.key==='Enter'){schliessVorschlaege();addFood();}" oninput="zeigeDBVorschlaege(this.value)" onblur="setTimeout(schliessVorschlaege,180)" autocomplete="off"/>
+      <input type="text" id="lebensmittel-input" class="flex-input" placeholder="z.B. Joghurt 150g, Haferflocken 50g" onkeydown="if(event.key==='Enter'){schliessVorschlaege();addFood();}" oninput="zeigeDBVorschlaege(this.value)" onblur="setTimeout(schliessVorschlaege,320)" autocomplete="off"/>
       <button id="mikro-btn" class="btn-ghost btn-icon-sq" onclick="toggleMikro()" title="Spracheingabe">🎤</button>
       <button class="btn-ghost btn-icon-sq" onclick="clearLebensmittelInput()" title="Löschen">✕</button>
       <button class="btn-ghost btn-icon-sq" onclick="addFood()" title="Hinzufügen">+</button>
@@ -346,7 +346,7 @@ function zeigeDBVorschlaege(q){
   box.innerHTML=_dbVorschlaegeListe.map((x,i)=>
     '<div data-idx="'+i+'" '
     +'style="padding:0.45rem 0.75rem;cursor:pointer;border-bottom:1px solid #1e3a5f;display:flex;justify-content:space-between;align-items:center" '
-    +'onmousedown="event.preventDefault()" onclick="waehlVorschlagIdx('+i+')">'
+    +'onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()" onclick="waehlVorschlagIdx('+i+')" ontouchend="waehlVorschlagIdx('+i+')">'
     +'<span style="color:#e2e8f0;font-size:0.85rem">'+x.n+'</span>'
     +'<span style="color:#64748b;font-size:0.72rem;margin-left:0.5rem;white-space:nowrap">'+portionsHinweis(x)+'</span>'
     +'</div>'
@@ -1098,13 +1098,15 @@ function startMikro(){
         if(ev.results[i].isFinal)final+=t; else interim+=t;
       }
       inp.value=(gesprochenText+(interim?' '+interim:'')).trim();
+      zeigeDBVorschlaege(inp.value);
       if(final){
         if(/\bstopp?\b/i.test(final)){
           gesprochenText=(gesprochenText+' '+final.replace(/\s*\bstopp?\b\s*/gi,' ').trim()).trim();
-          inp.value=gesprochenText;stopMikro();addFood();return;
+          inp.value=gesprochenText;schliessVorschlaege();stopMikro();addFood();return;
         }
         gesprochenText=(gesprochenText+' '+final).trim();
         inp.value=gesprochenText;
+        zeigeDBVorschlaege(inp.value);
       }
     },
     function(){if(mikroAktiv){setTimeout(()=>{if(mikroAktiv){erkennung=initSpeech(erkennung.onresult,erkennung.onend);if(erkennung)try{erkennung.start();}catch(e){}}},100);}}
