@@ -436,15 +436,41 @@ async function analyzeAndShow(){
       if(!n){if(btn)btn.innerHTML='🤖 '+name+'…';n=await callGithubKI(name);if(n)kiGeschaetzt.push(name);}
       const f=actualGrams/100;
       if(n){
-        pendingRows.push({lebensmittel:food,kalorien:Math.round((+n['energy-kcal_100g']||0)*f),eiweiss:+((+n['proteins_100g']||0)*f).toFixed(1),zucker:+((+n['sugars_100g']||0)*f).toFixed(1),kohlenhydrate:+((+n['carbohydrates_100g']||0)*f).toFixed(1),fett:+((+n['fat_100g']||0)*f).toFixed(1)});
+        pendingRows.push({lebensmittel:food,kalorien:Math.round((+n['energy-kcal_100g']||0)*f),eiweiss:+((+n['proteins_100g']||0)*f).toFixed(1),zucker:+((+n['sugars_100g']||0)*f).toFixed(1),kohlenhydrate:+((+n['carbohydrates_100g']||0)*f).toFixed(1),fett:+((+n['fat_100g']||0)*f).toFixed(1),sf:(_dbE&&_dbE.sf!=null)?+(_dbE.sf*f).toFixed(1):null,lys:(_dbE&&_dbE.lys!=null)?Math.round(_dbE.lys*f):null,arg:(_dbE&&_dbE.arg!=null)?Math.round(_dbE.arg*f):null});
       }else{
         nichtGefunden.push(food);
-        pendingRows.push({lebensmittel:food,kalorien:0,eiweiss:0,zucker:0,kohlenhydrate:0,fett:0});
+        pendingRows.push({lebensmittel:food,kalorien:0,eiweiss:0,zucker:0,kohlenhydrate:0,fett:0,sf:null,lys:null,arg:null});
       }
     }
     showNWResults(pendingRows,kiGeschaetzt,nichtGefunden);
   }catch(e){alert('Fehler: '+e.message);}
   finally{if(btn){btn.innerHTML=orig;btn.disabled=false;}if(kibtn){kibtn.innerHTML=orig;kibtn.disabled=false;}}
+}
+
+function lokaleBewertung(rows){
+  const totEiw=rows.reduce((a,r)=>a+(+r.eiweiss||0),0);
+  const totZck=rows.reduce((a,r)=>a+(+r.zucker||0),0);
+  const totFett=rows.reduce((a,r)=>a+(+r.fett||0),0);
+  const totKH=rows.reduce((a,r)=>a+(+r.kohlenhydrate||0),0);
+  const totSF=rows.reduce((a,r)=>a+(+r.sf||0),0);
+  const hasSF=rows.some(r=>r.sf!=null);
+  const macroKcal=totEiw*4+totFett*9+totKH*4;
+  const fatPct=macroKcal>0?Math.round(totFett*9/macroKcal*100):0;
+  const msgs=[];
+  if(totZck>10)msgs.push('<span style="color:#f87171">⚠️ Zucker '+totZck.toFixed(1)+'g (&gt;10g)</span>');
+  if(totEiw<10)msgs.push('<span style="color:#f87171">⚠️ Eiweiß nur '+totEiw.toFixed(1)+'g (&lt;10g)</span>');
+  else if(totEiw>=20)msgs.push('<span style="color:#4ade80">✅ Eiweiß '+totEiw.toFixed(1)+'g (≥20g)</span>');
+  if(hasSF&&totSF>6)msgs.push('<span style="color:#fb923c">⚠️ Ges.Fettsäuren '+totSF.toFixed(1)+'g (&gt;6g)</span>');
+  if(fatPct>35)msgs.push('<span style="color:#f87171">⚠️ Fettanteil '+fatPct+'% (&gt;35%)</span>');
+  const haslysarg=rows.some(r=>r.lys!=null||r.arg!=null);
+  if(haslysarg){
+    const totLys=rows.reduce((a,r)=>a+(+r.lys||0),0);
+    const totArg=rows.reduce((a,r)=>a+(+r.arg||0),0);
+    if(totArg>totLys)msgs.push('<span style="color:#e879f9">⚠️ Arg '+totArg+'mg &gt; Lys '+totLys+'mg (ungünstig)</span>');
+    else if(totLys>0)msgs.push('<span style="color:#e879f9">✅ Lys '+totLys+'mg / Arg '+totArg+'mg</span>');
+  }
+  if(!msgs.length)msgs.push('<span style="color:#4ade80">✅ Keine Auffälligkeiten</span>');
+  return '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem;font-size:0.78rem">'+msgs.join('')+'</div>';
 }
 
 function showNWResults(rows,kiGeschaetzt,nichtGefunden){
@@ -455,15 +481,32 @@ function showNWResults(rows,kiGeschaetzt,nichtGefunden){
   const totZck=rows.reduce((a,r)=>a+r.zucker,0);
   const totKH=rows.reduce((a,r)=>a+r.kohlenhydrate,0);
   const totFett=rows.reduce((a,r)=>a+r.fett,0);
+  const hasSF=rows.some(r=>r.sf!=null);
+  const hasLys=rows.some(r=>r.lys!=null);
+  const hasArg=rows.some(r=>r.arg!=null);
+  const totSF=rows.reduce((a,r)=>a+(+r.sf||0),0);
+  const totLys=rows.reduce((a,r)=>a+(+r.lys||0),0);
+  const totArg=rows.reduce((a,r)=>a+(+r.arg||0),0);
+  const sfHead=hasSF?'<th style="text-align:right;color:#fb923c">ges.FS</th>':'';
+  const lysHead=hasLys?'<th style="text-align:right;color:#e879f9">Lys</th>':'';
+  const argHead=hasArg?'<th style="text-align:right;color:#e879f9">Arg</th>':'';
+  const sfTot=hasSF?`<td style="text-align:right;color:#fb923c"><strong>${totSF.toFixed(1)}g</strong></td>`:'';
+  const lysTot=hasLys?`<td style="text-align:right;color:#e879f9"><strong>${totLys}mg</strong></td>`:'';
+  const argTot=hasArg?`<td style="text-align:right;color:#e879f9"><strong>${totArg}mg</strong></td>`:'';
   document.getElementById('result-table-wrap').innerHTML=
-    '<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th style="text-align:right">Zck.</th><th style="text-align:right">KH</th><th style="text-align:right">Fett</th></tr></thead><tbody>'
-    +rows.map(r=>`<tr><td>${r.lebensmittel}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td></tr>`).join('')
-    +(rows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right"><strong>${totKcal}</strong></td><td style="text-align:right"><strong>${totEiw.toFixed(1)}g</strong></td><td style="text-align:right"><strong>${totZck.toFixed(1)}g</strong></td><td style="text-align:right"><strong>${totKH.toFixed(1)}g</strong></td><td style="text-align:right"><strong>${totFett.toFixed(1)}g</strong></td></tr>`:'')
+    '<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th style="text-align:right">Zck.</th><th style="text-align:right">KH</th><th style="text-align:right">Fett</th>'+sfHead+lysHead+argHead+'</tr></thead><tbody>'
+    +rows.map(r=>{
+      const sfCell=hasSF?`<td style="text-align:right;color:#fb923c">${r.sf!=null?r.sf.toFixed(1)+'g':'–'}</td>`:'';
+      const lysCell=hasLys?`<td style="text-align:right;color:#e879f9">${r.lys!=null?r.lys+'mg':'–'}</td>`:'';
+      const argCell=hasArg?`<td style="text-align:right;color:#e879f9">${r.arg!=null?r.arg+'mg':'–'}</td>`:'';
+      return `<tr><td>${r.lebensmittel}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td>${sfCell}${lysCell}${argCell}</tr>`;
+    }).join('')
+    +(rows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right"><strong>${totKcal}</strong></td><td style="text-align:right"><strong>${totEiw.toFixed(1)}g</strong></td><td style="text-align:right"><strong>${totZck.toFixed(1)}g</strong></td><td style="text-align:right"><strong>${totKH.toFixed(1)}g</strong></td><td style="text-align:right"><strong>${totFett.toFixed(1)}g</strong></td>${sfTot}${lysTot}${argTot}</tr>`:'')
     +'</tbody></table>';
   let hinweis='';
   if(kiGeschaetzt.length)hinweis+='🤖 KI-Schätzung: '+kiGeschaetzt.join(', ')+' – bitte prüfen. ';
   if(nichtGefunden.length)hinweis+='⚠️ Nicht gefunden (0 kcal): '+nichtGefunden.join(', ');
-  document.getElementById('result-nf').textContent=hinweis.trim();
+  document.getElementById('result-nf').innerHTML=(hinweis?'<div style="margin-bottom:0.25rem">'+hinweis.trim()+'</div>':'')+lokaleBewertung(rows);
   document.getElementById('result-totals').style.display='none';
   document.getElementById('result-box').classList.add('show');
   document.getElementById('kategorie-input').blur();
@@ -586,6 +629,9 @@ async function speichernEintrag(){
   try{
     // Ganze Mahlzeit als EIN Eintrag speichern
     const kategorieVal=document.getElementById('kategorie-input').value.trim();
+    const _hasSF=pendingRows.some(r=>r.sf!=null);
+    const _hasLys=pendingRows.some(r=>r.lys!=null);
+    const _hasArg=pendingRows.some(r=>r.arg!=null);
     const gesamt={
       datum,
       lebensmittel: foods.join(', '),
@@ -596,7 +642,10 @@ async function speichernEintrag(){
       zucker: +pendingRows.reduce((a,r)=>a+r.zucker,0).toFixed(1),
       kohlenhydrate: +pendingRows.reduce((a,r)=>a+r.kohlenhydrate,0).toFixed(1),
       fett: +pendingRows.reduce((a,r)=>a+(+r.fett||0),0).toFixed(1),
-      ki_bewertet: !!pendingKIMode
+      ki_bewertet: !!pendingKIMode,
+      gesaettigt: _hasSF?+pendingRows.reduce((a,r)=>a+(+r.sf||0),0).toFixed(1):null,
+      lysin: _hasLys?Math.round(pendingRows.reduce((a,r)=>a+(+r.lys||0),0)):null,
+      arginin: _hasArg?Math.round(pendingRows.reduce((a,r)=>a+(+r.arg||0),0)):null
     };
     const r=await fetch(URL_BASE,{method:'POST',headers:H,body:JSON.stringify(gesamt)});
     if(!r.ok)throw new Error('HTTP '+r.status);
@@ -686,13 +735,20 @@ function eintragKarte(e, datum, suche){
   return '<div class="entry-card">'
     +'<div class="entry-card-name">🍽 '+hl(e.lebensmittel||'',suche)+katBadge+kiBadge+'</div>'
     +zutatenHTML
-    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;text-align:center;font-size:0.72rem;margin-bottom:6px">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;text-align:center;font-size:0.72rem;margin-bottom:4px">'
       +'<span style="color:#f59e0b">'+Math.round(+e.kalorien||0)+' kcal</span>'
       +'<span style="color:#22c55e">'+(+e.eiweiss||0).toFixed(1)+'g Eiw</span>'
       +'<span style="color:#a78bfa">'+(+e.fett||0).toFixed(1)+'g Fett</span>'
       +'<span style="color:#3b82f6">'+(+e.kohlenhydrate||0).toFixed(1)+'g KH</span>'
       +'<span style="color:#ec4899">'+(+e.zucker||0).toFixed(1)+'g Zck</span>'
     +'</div>'
+    +(((+e.gesaettigt||0)>0||(+e.lysin||0)>0||(+e.arginin||0)>0)?
+      '<div style="display:flex;gap:0.6rem;font-size:0.7rem;padding:0 4px;margin-bottom:4px;flex-wrap:wrap">'
+        +((+e.gesaettigt||0)>0?'<span style="color:#fb923c">ges.FS: '+(+e.gesaettigt).toFixed(1)+'g</span>':'')
+        +((+e.lysin||0)>0?'<span style="color:#e879f9">Lys: '+(+e.lysin)+'mg</span>':'')
+        +((+e.arginin||0)>0?'<span style="color:#e879f9">Arg: '+(+e.arginin)+'mg</span>':'')
+      +'</div>'
+    :'')
     +'<div class="entry-card-actions">'
       +'<button class="btn-rep" onclick="wiederholenEintrag(\''+lmEsc+'\')">↩ Wiederholen</button>'
       +'<button class="btn-del-sm" onclick="deleteEintrag(\''+e.id+'\',\''+datum+'\')">✕</button>'
@@ -719,6 +775,10 @@ function renderEintraege(){
     const sortiert=[...gefiltert].sort((a,b)=>katPrio(a)-katPrio(b));
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
     const kcal=Math.round(sum('kalorien')),eiw=sum('eiweiss').toFixed(1),zuk=sum('zucker').toFixed(1),kh=sum('kohlenhydrate').toFixed(1),fat=sum('fett').toFixed(1);
+    const sfTag=sum('gesaettigt'),lysTag=Math.round(sum('lysin')),argTag=Math.round(sum('arginin'));
+    const hasSFTag=tage[datum].some(e=>e.gesaettigt!=null);
+    const hasLysTag=tage[datum].some(e=>e.lysin!=null);
+    const hasArgTag=tage[datum].some(e=>e.arginin!=null);
     const eiwN=sum('eiweiss'),fatN=sum('fett'),khN=sum('kohlenhydrate');
     const macroKcal=eiwN*4+fatN*9+khN*4;
     const pEiw=macroKcal>0?Math.round(eiwN*4/macroKcal*100):0;
@@ -753,6 +813,13 @@ function renderEintraege(){
           +'<div><div style="color:#3b82f6">'+kh+'g KH</div><div style="color:#3b82f6;font-weight:600;min-height:1em">'+(macroKcal>0?pKH+'%<span style="color:#475569;font-weight:400"> /40%</span>':'')+'</div></div>'
           +'<div><div style="color:#ec4899">'+zuk+'g Zck</div><div style="min-height:1em"></div></div>'
         +'</div>'
+        +((hasSFTag||hasLysTag||hasArgTag)?
+          '<div style="display:flex;gap:0.6rem;flex-wrap:wrap;font-size:0.7rem;margin-top:4px;padding-top:3px;border-top:1px solid rgba(59,130,246,0.1)">'
+            +(hasSFTag?'<span style="color:#fb923c">ges.FS: '+sfTag.toFixed(1)+'g</span>':'')
+            +(hasLysTag?'<span style="color:#e879f9">Lys: '+lysTag+'mg</span>':'')
+            +(hasArgTag?'<span style="color:#e879f9">Arg: '+argTag+'mg</span>':'')
+          +'</div>'
+        :'')
       +'</div>'
       +'<div style="border:1px solid rgba(59,130,246,0.25);border-top:none;border-radius:0 0 8px 8px;">'
         +sortiert.map(e=>eintragKarte(e,datum,suche)).join('')
