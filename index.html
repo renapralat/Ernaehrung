@@ -424,6 +424,7 @@ function renderFoodList(){
 const MASS={
   'teelöffel':5,'tl':5,
   'esslöffel':15,'el':15,
+  'messlöffel':30,'messlöffeln':30,
   'tasse':200,'tassen':200,
   'kelle':150,'kellen':150,
   'glas':200,'gläser':200,
@@ -458,9 +459,11 @@ function parseFood(text){
 function sucheLokaleDB(name){
   if(typeof DB==='undefined')return null;
   const s=name.toLowerCase().trim().replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/,'');
+  const sw=s.split(/\s+/)[0]; // erstes Wort für Prefix-Fallback
   return DB.find(x=>x.n.toLowerCase()===s)
     ||DB.find(x=>{const n=x.n.toLowerCase();return n.length>=4&&(s.startsWith(n)||n.startsWith(s));})
     ||DB.find(x=>{const n=x.n.toLowerCase();return n.length>=4&&s.includes(n);})
+    ||DB.find(x=>{const n=x.n.toLowerCase();return sw.length>=5&&n.startsWith(sw);}) // "Proteino 25+" → "Proteinoform 25+"
     ||null;
 }
 
@@ -518,10 +521,12 @@ async function analyzeAndShow(){
       const{name,grams}=parseFood(food);
       if(btn)btn.innerHTML='⏳ '+name+'…';
       // Per-piece: wenn DB-Eintrag s-Feld hat, extrahiere Anzahl aus Freitext (auch "halbe", "eine" etc.)
+      // NICHT bei echten Maßeinheiten (Esslöffel, Messlöffel usw.) – da zählt die Einheit selbst
       const _hasUnit=/\b\d+\s*(g|ml|kg|l|gramm)\b/i.test(food);
+      const _hasMassUnit=/\b(teelöffel|tl|esslöffel|el|messlöffel|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|prise[n]?|schüsse?)\b/i.test(food);
       const _dbE=sucheLokaleDB(name);
       let actualGrams=grams;
-      if(!_hasUnit&&_dbE&&_dbE.s){
+      if(!_hasUnit&&!_hasMassUnit&&_dbE&&_dbE.s){
         const cnt=extractCount(food);
         if(cnt!=null)actualGrams=Math.round(cnt*_dbE.s);
       }
