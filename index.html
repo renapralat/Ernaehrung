@@ -731,16 +731,17 @@ async function analyzeKI(){
     const totLyski=pendingRows.reduce((a,r)=>a+(+r.lys||0),0);
     const totArgki=pendingRows.reduce((a,r)=>a+(+r.arg||0),0);
     const tg=document.getElementById('result-totals');
-    tg.innerHTML=`
-      <div class="result-item"><div class="result-val" style="color:#f59e0b">${totKcal}</div><div class="result-label">kcal</div></div>
-      <div class="result-item"><div class="result-val" style="color:#22c55e">${totEiw}g</div><div class="result-label">Eiweiß</div></div>
-      <div class="result-item"><div class="result-val" style="color:#ec4899">${totZck}g</div><div class="result-label">Zucker</div></div>
-      <div class="result-item"><div class="result-val" style="color:#3b82f6">${totKH}g</div><div class="result-label">KH</div></div>
-      <div class="result-item"><div class="result-val" style="color:#a78bfa">${totFettKI}g</div><div class="result-label">Fett</div></div>`
-      +(hasSFki?`<div class="result-item"><div class="result-val" style="color:#fb923c">${totSFki.toFixed(1)}g</div><div class="result-label">ges.FS</div></div>`:'')
-      +(hasLyski?`<div class="result-item"><div class="result-val" style="color:#e879f9">${totLyski}mg</div><div class="result-label">Lysin</div></div>`:'')
-      +(hasArgki?`<div class="result-item"><div class="result-val" style="color:#e879f9">${totArgki}mg</div><div class="result-label">Arginin</div></div>`:'')+'';
-    tg.style.display='grid';
+    tg.innerHTML='<div style="font-size:0.78rem;font-weight:600;color:#475569;line-height:2;padding:0.15rem 0">'
+      +`<span style="color:#f59e0b">${totKcal}kcal</span>`
+      +` · <span style="color:#22c55e">${totEiw}g Eiw</span>`
+      +` · <span style="color:#a78bfa">${totFettKI}g Fett</span>`
+      +` · <span style="color:#3b82f6">${totKH}g KH</span>`
+      +` · <span style="color:#ec4899">${totZck}g Zck</span>`
+      +(hasSFki?` · <span style="color:#fb923c">FS:${totSFki.toFixed(1)}g</span>`:'')
+      +(hasLyski?` · <span style="color:#e879f9">Lys:${totLyski}mg</span>`:'')
+      +(hasArgki?` · <span style="color:#e879f9">Arg:${totArgki}mg</span>`:'')
+      +'</div>';
+    tg.style.display='block';
     document.getElementById('result-box').classList.add('show');
     document.getElementById('kategorie-input').blur();
   }catch(e){
@@ -878,33 +879,24 @@ function eintragKarte(e, datum, suche){
   let zutatenHTML='';
   if(zutaten&&zutaten.length>1){
     zutatenHTML='<div style="margin:0.35rem 0;">'
-      +zutaten.map(z=>'<div style="padding:0.2rem 0.4rem;background:#0a1628;border-radius:4px;margin-bottom:2px;">'
-        +'<div style="display:flex;justify-content:space-between;align-items:center;">'
-          +'<span style="flex:1;font-size:0.78rem;color:#94a3b8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+z.lebensmittel+quelleBadge(z.quelle)+'</span>'
-          +'<span style="display:flex;gap:0.4rem;font-size:0.7rem;flex-shrink:0;margin-left:0.4rem;">'
-            +'<span style="color:#f59e0b">'+Math.round(+z.kalorien||0)+'</span>'
-            +'<span style="color:#22c55e">'+(+z.eiweiss||0).toFixed(1)+'</span>'
-            +'<span style="color:#a78bfa">'+(+z.fett||0).toFixed(1)+'</span>'
-            +'<span style="color:#3b82f6">'+(+z.kohlenhydrate||0).toFixed(1)+'</span>'
-            +'<span style="color:#ec4899">'+(+z.zucker||0).toFixed(1)+'</span>'
-          +'</span>'
-        +'</div>'
-        +((z.sf!=null||(+z.lys||0)>0||(+z.arg||0)>0)?
-          '<div style="display:flex;gap:0.5rem;font-size:0.68rem;color:#64748b;padding-left:2px;margin-top:1px;">'
-            +(z.sf!=null?'<span style="color:#fb923c">FS:'+(+z.sf).toFixed(1)+'g</span>':'')
-            +((+z.lys||0)>0?'<span style="color:#e879f9">Lys:'+(+z.lys)+'mg</span>':'')
-            +((+z.arg||0)>0?'<span style="color:#e879f9">Arg:'+(+z.arg)+'mg</span>':'')
-          +'</div>'
-        :'')
+      +zutaten.map(z=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:0.2rem 0.4rem;background:#0a1628;border-radius:4px;margin-bottom:2px;">'
+        +'<span style="flex:1;font-size:0.78rem;color:#94a3b8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+z.lebensmittel+quelleBadge(z.quelle)+'</span>'
+        +'<span style="font-size:0.7rem;flex-shrink:0;margin-left:0.5rem;color:#475569;text-align:right">'
+          +'<span style="color:#f59e0b">'+Math.round(+z.kalorien||0)+'</span>'
+          +' <span style="color:#22c55e">'+(+z.eiweiss||0).toFixed(1)+'</span>'
+          +' <span style="color:#a78bfa">'+(+z.fett||0).toFixed(1)+'</span>'
+          +' <span style="color:#3b82f6">'+(+z.kohlenhydrate||0).toFixed(1)+'</span>'
+          +' <span style="color:#ec4899">'+(+z.zucker||0).toFixed(1)+'</span>'
+          +(z.sf!=null?' <span style="color:#fb923c">'+( +z.sf).toFixed(1)+'FS</span>':'')
+          +((+z.lys||0)>0?' <span style="color:#e879f9">'+z.lys+'L</span>':'')
+          +((+z.arg||0)>0?' <span style="color:#e879f9">'+z.arg+'A</span>':'')
+        +'</span>'
       +'</div>').join('')
     +'</div>';
   }
   const katBadge=e.kategorie?'<span class="kat-badge">'+hl(e.kategorie,suche)+'</span>':'';
-  const kiBadge=e.ki_bewertet
-    ?'<span style="font-size:0.65rem;color:#4ade80;margin-left:0.3rem" title="KI-Analyse">🤖</span>'
-    :'<span style="font-size:0.65rem;color:#475569;margin-left:0.3rem" title="Keine KI-Analyse">❌</span>';
   return '<div class="entry-card">'
-    +'<div class="entry-card-name">🍽 '+hl(e.lebensmittel||'',suche)+katBadge+kiBadge+'</div>'
+    +'<div class="entry-card-name">🍽 '+hl(e.lebensmittel||'',suche)+katBadge+'</div>'
     +zutatenHTML
     +'<div style="font-size:0.72rem;margin-bottom:4px;color:#475569;line-height:1.8">'
       +'<span style="color:#f59e0b">'+Math.round(+e.kalorien||0)+'kcal</span>'
