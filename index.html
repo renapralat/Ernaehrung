@@ -595,8 +595,8 @@ function showNWResults(rows,kiGeschaetzt,nichtGefunden){
   const totLys=rows.reduce((a,r)=>a+(+r.lys||0),0);
   const totArg=rows.reduce((a,r)=>a+(+r.arg||0),0);
   const sfHead=hasSF?'<th style="text-align:right;color:#fb923c">ges.FS</th>':'';
-  const lysHead=hasLys?'<th style="text-align:right;color:#e879f9">Lys</th>':'';
-  const argHead=hasArg?'<th style="text-align:right;color:#e879f9">Arg</th>':'';
+  const lysHead=hasLys?'<th style="text-align:right;color:#e879f9" title="Lysin">Lys.</th>':'';
+  const argHead=hasArg?'<th style="text-align:right;color:#e879f9" title="Arginin">Argn.</th>':'';
   const sfTot=hasSF?`<td style="text-align:right;color:#fb923c"><strong>${totSF.toFixed(1)}g</strong></td>`:'';
   const lysTot=hasLys?`<td style="text-align:right;color:#e879f9"><strong>${totLys}mg</strong></td>`:'';
   const argTot=hasArg?`<td style="text-align:right;color:#e879f9"><strong>${totArg}mg</strong></td>`:'';
@@ -695,8 +695,8 @@ async function analyzeKI(){
     const hasLyski=pendingRows.some(r=>r.lys!=null);
     const hasArgki=pendingRows.some(r=>r.arg!=null);
     const sfHki=hasSFki?'<th style="text-align:right;color:#fb923c">ges.FS</th>':'';
-    const lysHki=hasLyski?'<th style="text-align:right;color:#e879f9">Lys</th>':'';
-    const argHki=hasArgki?'<th style="text-align:right;color:#e879f9">Arg</th>':'';
+    const lysHki=hasLyski?'<th style="text-align:right;color:#e879f9" title="Lysin">Lys.</th>':'';
+    const argHki=hasArgki?'<th style="text-align:right;color:#e879f9" title="Arginin">Argn.</th>':'';
     document.getElementById('result-table-wrap').innerHTML=
       '<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th style="text-align:right">Zck.</th><th style="text-align:right">KH</th><th style="text-align:right">Fett</th>'+sfHki+lysHki+argHki+'</tr></thead><tbody>'
       +pendingRows.map(r=>{
@@ -707,7 +707,7 @@ async function analyzeKI(){
         return `<tr><td>${r.lebensmittel}${qBadge}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td>${sfC}${lysC}${argC}</tr>`;
       }).join('')
       +'</tbody></table>'
-      +'<div style="font-size:0.65rem;color:#475569;margin-top:3px">Quelle: 📋 eigene DB → 🌐 Open Food Facts → 🤖 KI (Reihenfolge der Suche)</div>';
+      +'';
     document.getElementById('result-nf').innerHTML=lokaleBewertung(pendingRows);
     document.getElementById('result-header').innerHTML='✅ Analysiert – <span style="font-size:0.75rem;color:#4ade80">🤖 KI-Analyse</span>';
 
@@ -891,8 +891,8 @@ function eintragKarte(e, datum, suche){
     +(((+e.gesaettigt||0)>0||(+e.lysin||0)>0||(+e.arginin||0)>0)?
       '<div style="display:flex;gap:0.6rem;font-size:0.7rem;padding:0 4px;margin-bottom:4px;flex-wrap:wrap">'
         +((+e.gesaettigt||0)>0?'<span style="color:#fb923c">ges.FS: '+(+e.gesaettigt).toFixed(1)+'g</span>':'')
-        +((+e.lysin||0)>0?'<span style="color:#e879f9">Lys: '+(+e.lysin)+'mg</span>':'')
-        +((+e.arginin||0)>0?'<span style="color:#e879f9">Arg: '+(+e.arginin)+'mg</span>':'')
+        +((+e.lysin||0)>0?'<span style="color:#e879f9">Lysin: '+(+e.lysin)+'mg</span>':'')
+        +((+e.arginin||0)>0?'<span style="color:#e879f9">Arginin: '+(+e.arginin)+'mg</span>':'')
       +'</div>'
     :'')
     +'<div class="entry-card-actions">'
@@ -962,8 +962,8 @@ function renderEintraege(){
         +((hasSFTag||hasLysTag||hasArgTag)?
           '<div style="display:flex;gap:0.6rem;flex-wrap:wrap;font-size:0.7rem;margin-top:4px;padding-top:3px;border-top:1px solid rgba(59,130,246,0.1)">'
             +(hasSFTag?'<span style="color:#fb923c">ges.FS: '+sfTag.toFixed(1)+'g</span>':'')
-            +(hasLysTag?'<span style="color:#e879f9">Lys: '+lysTag+'mg</span>':'')
-            +(hasArgTag?'<span style="color:#e879f9">Arg: '+argTag+'mg</span>':'')
+            +(hasLysTag?'<span style="color:#e879f9">Lysin: '+lysTag+'mg</span>':'')
+            +(hasArgTag?'<span style="color:#e879f9">Arginin: '+argTag+'mg</span>':'')
           +'</div>'
         :'')
       +'</div>'
