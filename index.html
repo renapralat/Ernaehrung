@@ -573,8 +573,11 @@ function lokaleBewertung(rows){
   if(haslysarg){
     const totLys=rows.reduce((a,r)=>a+(+r.lys||0),0);
     const totArg=rows.reduce((a,r)=>a+(+r.arg||0),0);
-    if(totArg>totLys)msgs.push('<span style="color:#e879f9">⚠️ Arg '+totArg+'mg &gt; Lys '+totLys+'mg (ungünstig)</span>');
-    else if(totLys>0)msgs.push('<span style="color:#e879f9">✅ Lys '+totLys+'mg / Arg '+totArg+'mg</span>');
+    if(totLys>0||totArg>0){
+      const ratio=totArg>0?(totLys/totArg).toFixed(2):'–';
+      if(totArg>totLys)msgs.push('<span style="color:#e879f9">⚠️ Lys '+totLys+'mg / Arg '+totArg+'mg (Verhältnis '+ratio+' &lt; 1 – ungünstig)</span>');
+      else msgs.push('<span style="color:#e879f9">✅ Lys '+totLys+'mg / Arg '+totArg+'mg (Verhältnis '+ratio+')</span>');
+    }
   }
   if(!msgs.length)msgs.push('<span style="color:#4ade80">✅ Keine Auffälligkeiten</span>');
   return '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem;font-size:0.78rem">'+msgs.join('')+'</div>';
@@ -717,13 +720,19 @@ async function analyzeKI(){
     const totZck=pendingRows.reduce((a,r)=>a+r.zucker,0).toFixed(1);
     const totKH=pendingRows.reduce((a,r)=>a+r.kohlenhydrate,0).toFixed(1);
     const totFettKI=pendingRows.reduce((a,r)=>a+r.fett,0).toFixed(1);
+    const totSFki=pendingRows.reduce((a,r)=>a+(+r.sf||0),0);
+    const totLyski=pendingRows.reduce((a,r)=>a+(+r.lys||0),0);
+    const totArgki=pendingRows.reduce((a,r)=>a+(+r.arg||0),0);
     const tg=document.getElementById('result-totals');
     tg.innerHTML=`
-      <div class="result-item"><div class="result-val" style="color:#f59e0b">${totKcal}</div><div class="result-label">kcal gesamt</div></div>
+      <div class="result-item"><div class="result-val" style="color:#f59e0b">${totKcal}</div><div class="result-label">kcal</div></div>
       <div class="result-item"><div class="result-val" style="color:#22c55e">${totEiw}g</div><div class="result-label">Eiweiß</div></div>
       <div class="result-item"><div class="result-val" style="color:#ec4899">${totZck}g</div><div class="result-label">Zucker</div></div>
       <div class="result-item"><div class="result-val" style="color:#3b82f6">${totKH}g</div><div class="result-label">KH</div></div>
-      <div class="result-item"><div class="result-val" style="color:#a78bfa">${totFettKI}g</div><div class="result-label">Fett</div></div>`;
+      <div class="result-item"><div class="result-val" style="color:#a78bfa">${totFettKI}g</div><div class="result-label">Fett</div></div>`
+      +(hasSFki?`<div class="result-item"><div class="result-val" style="color:#fb923c">${totSFki.toFixed(1)}g</div><div class="result-label">ges.FS</div></div>`:'')
+      +(hasLyski?`<div class="result-item"><div class="result-val" style="color:#e879f9">${totLyski}mg</div><div class="result-label">Lysin</div></div>`:'')
+      +(hasArgki?`<div class="result-item"><div class="result-val" style="color:#e879f9">${totArgki}mg</div><div class="result-label">Arginin</div></div>`:'')+'';
     tg.style.display='grid';
     document.getElementById('result-box').classList.add('show');
     document.getElementById('kategorie-input').blur();
@@ -862,15 +871,24 @@ function eintragKarte(e, datum, suche){
   let zutatenHTML='';
   if(zutaten&&zutaten.length>1){
     zutatenHTML='<div style="margin:0.35rem 0;">'
-      +zutaten.map(z=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:0.2rem 0.4rem;background:#0a1628;border-radius:4px;margin-bottom:2px;">'
-        +'<span style="flex:1;font-size:0.78rem;color:#94a3b8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+z.lebensmittel+quelleBadge(z.quelle)+'</span>'
-        +'<span style="display:flex;gap:0.5rem;font-size:0.72rem;flex-shrink:0;margin-left:0.4rem;">'
-          +'<span style="color:#f59e0b">'+Math.round(+z.kalorien||0)+'</span>'
-          +'<span style="color:#22c55e">'+(+z.eiweiss||0).toFixed(1)+'</span>'
-          +'<span style="color:#a78bfa">'+(+z.fett||0).toFixed(1)+'</span>'
-          +'<span style="color:#3b82f6">'+(+z.kohlenhydrate||0).toFixed(1)+'</span>'
-          +'<span style="color:#ec4899">'+(+z.zucker||0).toFixed(1)+'</span>'
-        +'</span>'
+      +zutaten.map(z=>'<div style="padding:0.2rem 0.4rem;background:#0a1628;border-radius:4px;margin-bottom:2px;">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;">'
+          +'<span style="flex:1;font-size:0.78rem;color:#94a3b8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+z.lebensmittel+quelleBadge(z.quelle)+'</span>'
+          +'<span style="display:flex;gap:0.4rem;font-size:0.7rem;flex-shrink:0;margin-left:0.4rem;">'
+            +'<span style="color:#f59e0b">'+Math.round(+z.kalorien||0)+'</span>'
+            +'<span style="color:#22c55e">'+(+z.eiweiss||0).toFixed(1)+'</span>'
+            +'<span style="color:#a78bfa">'+(+z.fett||0).toFixed(1)+'</span>'
+            +'<span style="color:#3b82f6">'+(+z.kohlenhydrate||0).toFixed(1)+'</span>'
+            +'<span style="color:#ec4899">'+(+z.zucker||0).toFixed(1)+'</span>'
+          +'</span>'
+        +'</div>'
+        +((z.sf!=null||(+z.lys||0)>0||(+z.arg||0)>0)?
+          '<div style="display:flex;gap:0.5rem;font-size:0.68rem;color:#64748b;padding-left:2px;margin-top:1px;">'
+            +(z.sf!=null?'<span style="color:#fb923c">FS:'+(+z.sf).toFixed(1)+'g</span>':'')
+            +((+z.lys||0)>0?'<span style="color:#e879f9">Lys:'+(+z.lys)+'mg</span>':'')
+            +((+z.arg||0)>0?'<span style="color:#e879f9">Arg:'+(+z.arg)+'mg</span>':'')
+          +'</div>'
+        :'')
       +'</div>').join('')
     +'</div>';
   }
