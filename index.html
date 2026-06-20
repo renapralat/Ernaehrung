@@ -178,11 +178,14 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
     <!-- Food input with mic (icon only, no label) -->
     <div class="icon-row">
       <span class="field-icon">🥗</span>
-      <input type="text" id="lebensmittel-input" class="flex-input" placeholder="z.B. Joghurt 150g, Haferflocken 50g" onkeydown="if(event.key==='Enter')addFood()"/>
+      <input type="text" id="lebensmittel-input" class="flex-input" placeholder="z.B. Joghurt 150g, Haferflocken 50g" onkeydown="if(event.key==='Enter'){schliessVorschlaege();addFood();}" oninput="zeigeDBVorschlaege(this.value)" onblur="setTimeout(schliessVorschlaege,180)" autocomplete="off"/>
       <button id="mikro-btn" class="btn-ghost btn-icon-sq" onclick="toggleMikro()" title="Spracheingabe">🎤</button>
       <button class="btn-ghost btn-icon-sq" onclick="clearLebensmittelInput()" title="Löschen">✕</button>
       <button class="btn-ghost btn-icon-sq" onclick="addFood()" title="Hinzufügen">+</button>
     </div>
+
+    <!-- DB-Autocomplete -->
+    <div id="db-vorschlaege" style="display:none;background:#1e293b;border:1px solid #334155;border-radius:8px;margin-top:2px;overflow:hidden;max-height:260px;overflow-y:auto;z-index:50"></div>
 
     <!-- Food list -->
     <ul class="food-list" id="food-list"></ul>
@@ -291,6 +294,74 @@ function teileEingabe(val){
   const teile=val.split(/\s+(?:und|mit|sowie|außerdem|plus|an)\s+|[,&]\s*/i);
   const fuell=/\b(?:dazu|noch|auch|bitte|etwas|mal|dann|je|jeweils|einfach|noch dazu)\b\s*/gi;
   return teile.map(s=>s.replace(fuell,'').replace(/\s+/g,' ').trim()).filter(Boolean);
+}
+
+// ─── DB-Autocomplete ────────────────────────────────────────────────────────
+
+function sucheDBVorschlaege(q){
+  if(typeof DB==='undefined'||!q||q.length<1)return[];
+  const s=q.toLowerCase().trim();
+  const words=s.split(/\s+/).filter(w=>w.length>=2);
+  const score=x=>{
+    const n=x.n.toLowerCase();
+    if(n===s)return 3;
+    if(n.startsWith(s))return 2;
+    if(words.length>0&&words.every(w=>n.includes(w)))return 1;
+    if(n.includes(s))return 1;
+    return 0;
+  };
+  return DB.map(x=>({x,sc:score(x)})).filter(o=>o.sc>0).sort((a,b)=>b.sc-a.sc).slice(0,8).map(o=>o.x);
+}
+
+function portionsHinweis(x){
+  if(x.s){
+    if(x.n.toLowerCase().includes('messlöffel')||x.n.toLowerCase().includes('portion')||x.n.toLowerCase().includes('protein'))
+      return '1 Portion = '+x.s+'g';
+    return '1 Stück = '+x.s+'g';
+  }
+  return '→ Gramm eingeben';
+}
+
+
+let _dbVorschlaegeListe=[];
+function zeigeDBVorschlaege(q){
+  const box=document.getElementById('db-vorschlaege');
+  _dbVorschlaegeListe=sucheDBVorschlaege(q);
+  if(!_dbVorschlaegeListe.length){box.style.display='none';return;}
+  box.innerHTML=_dbVorschlaegeListe.map((x,i)=>
+    '<div data-idx="'+i+'" '
+    +'style="padding:0.45rem 0.75rem;cursor:pointer;border-bottom:1px solid #1e3a5f;display:flex;justify-content:space-between;align-items:center" '
+    +'onmousedown="event.preventDefault()" onclick="waehlVorschlagIdx('+i+')">'
+    +'<span style="color:#e2e8f0;font-size:0.85rem">'+x.n+'</span>'
+    +'<span style="color:#64748b;font-size:0.72rem;margin-left:0.5rem;white-space:nowrap">'+portionsHinweis(x)+'</span>'
+    +'</div>'
+  ).join('');
+  box.style.display='block';
+}
+
+function waehlVorschlagIdx(i){
+  const x=_dbVorschlaegeListe[i];if(!x)return;
+  const inp=document.getElementById('lebensmittel-input');
+  inp.value=(x.s?'1 ':'')+x.n;
+  schliessVorschlaege();
+  inp.focus();
+}
+
+function schliessVorschlaege(){
+  document.getElementById('db-vorschlaege').style.display='none';
+}
+
+// ─── Stück-Anzahl aus Freitext extrahieren (für s-Feld-Berechnung) ──────────
+
+function extractCount(text){
+  let t=text.trim();
+  t=t.replace(/^(halb[e]?[snrm]?)\s+/i,'0.5 ');
+  t=t.replace(/^viertel\s+/i,'0.25 ');
+  const ZAHL={zwei:2,drei:3,vier:4,fünf:5,sechs:6,sieben:7,acht:8,neun:9,zehn:10,zwölf:12};
+  t=t.replace(/^(zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|zwölf)\s+/i,(_,w)=>ZAHL[w.toLowerCase()]+' ');
+  t=t.replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/i,'1 ');
+  const m=t.match(/^(\d+(?:[.,]\d+)?)\s/);
+  return m?parseFloat(m[1].replace(',','.')):null;
 }
 
 function addFood(){
@@ -427,11 +498,14 @@ async function analyzeAndShow(){
     for(const food of foods){
       const{name,grams}=parseFood(food);
       if(btn)btn.innerHTML='⏳ '+name+'…';
-      // Per-piece: if input is count pattern (e.g. "5 Kirschen") and DB has piece weight, use count×s
-      const _cM=food.match(/^(\d+(?:[.,]\d+)?)\s+[^\d]/);
+      // Per-piece: wenn DB-Eintrag s-Feld hat, extrahiere Anzahl aus Freitext (auch "halbe", "eine" etc.)
       const _hasUnit=/\b\d+\s*(g|ml|kg|l|gramm)\b/i.test(food);
       const _dbE=sucheLokaleDB(name);
-      const actualGrams=(_cM&&!_hasUnit&&_dbE&&_dbE.s)?Math.round(parseFloat(_cM[1].replace(',','.'))*_dbE.s):grams;
+      let actualGrams=grams;
+      if(!_hasUnit&&_dbE&&_dbE.s){
+        const cnt=extractCount(food);
+        if(cnt!=null)actualGrams=Math.round(cnt*_dbE.s);
+      }
       let n=await searchOpenFoodFacts(name);
       if(!n){if(btn)btn.innerHTML='🤖 '+name+'…';n=await callGithubKI(name);if(n)kiGeschaetzt.push(name);}
       const f=actualGrams/100;
@@ -525,10 +599,10 @@ async function analyzeKI(){
     await analyzeAndShow();return;
   }
   try{
-    const prompt='Du bist Ernährungsberaterin. Analysiere diese Mahlzeit für eine Person die auf Zucker (Diabetes) und Eiweiß (Alter) achtet.\n\nLebensmittel:\n'
+    const prompt='Du bist Ernährungsberaterin. Analysiere diese Mahlzeit für eine Person (70 Jahre, Diabetes → Zucker minimieren, erhöhtes Cholesterin → gesättigte Fettsäuren beachten, Ziel: 80g Eiweiß/Tag).\n\nLebensmittel:\n'
       +foods.map((f,i)=>(i+1)+'. '+f).join('\n')
       +'\n\nWichtig: Wenn ein Lebensmittel unbekannt, erfunden oder nicht existent ist, setze alle seine Werte auf 0. Erfinde keine Nährwerte.'
-      +'\n\nAntworte NUR mit JSON (keine Backticks, kein Markdown):\n{"beschreibung":"1-2 Sätze Bewertung","einzeln":[{"name":"Name mit Menge","kalorien":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0,"fett":0}],"kalorien":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0,"fett":0}';
+      +'\n\nAntworte NUR mit JSON (keine Backticks, kein Markdown):\n{"beschreibung":"1-2 Sätze Bewertung (Zucker, Eiweiß, gesättigte Fettsäuren erwähnen wenn relevant)","einzeln":[{"name":"Name mit Menge","kalorien":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0,"fett":0}],"kalorien":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0,"fett":0}';
 
     const resp=await fetch('https://models.inference.ai.azure.com/chat/completions',{
       method:'POST',
@@ -543,26 +617,41 @@ async function analyzeKI(){
     const ki=JSON.parse(m[0]);
 
     pendingKIMode=true;
-    pendingRows=(ki.einzeln||[]).map(e=>({
-      lebensmittel:e.name,
-      kalorien:Math.round(+e.kalorien||0),
-      eiweiss:+(+e.eiweiss||0).toFixed(1),
-      zucker:+(+e.zucker||0).toFixed(1),
-      kohlenhydrate:+(+e.kohlenhydrate||0).toFixed(1),
-      fett:+(+e.fett||0).toFixed(1)
-    }));
+    // Basis-Werte von KI; sf/lys/arg aus lokaler DB anreichern (per kcal-Verhältnis)
+    pendingRows=(ki.einzeln||[]).map(e=>{
+      const dbE=sucheLokaleDB(e.name);
+      let sf=null,lys=null,arg=null;
+      if(dbE&&dbE.k&&(+e.kalorien||0)>0){
+        const f=(+e.kalorien)/dbE.k;
+        if(dbE.sf!=null)sf=+(dbE.sf*f).toFixed(1);
+        if(dbE.lys!=null)lys=Math.round(dbE.lys*f);
+        if(dbE.arg!=null)arg=Math.round(dbE.arg*f);
+      }
+      return{lebensmittel:e.name,kalorien:Math.round(+e.kalorien||0),eiweiss:+(+e.eiweiss||0).toFixed(1),zucker:+(+e.zucker||0).toFixed(1),kohlenhydrate:+(+e.kohlenhydrate||0).toFixed(1),fett:+(+e.fett||0).toFixed(1),sf,lys,arg};
+    });
 
     // Show beschreibung
     const kbEl=document.getElementById('ki-beschreibung');
     if(ki.beschreibung){kbEl.textContent='💬 '+ki.beschreibung;kbEl.style.display='block';}
     else kbEl.style.display='none';
 
-    // Show table
+    // Show table (inkl. sf/lys/arg-Spalten falls vorhanden)
+    const hasSFki=pendingRows.some(r=>r.sf!=null);
+    const hasLyski=pendingRows.some(r=>r.lys!=null);
+    const hasArgki=pendingRows.some(r=>r.arg!=null);
+    const sfHki=hasSFki?'<th style="text-align:right;color:#fb923c">ges.FS</th>':'';
+    const lysHki=hasLyski?'<th style="text-align:right;color:#e879f9">Lys</th>':'';
+    const argHki=hasArgki?'<th style="text-align:right;color:#e879f9">Arg</th>':'';
     document.getElementById('result-table-wrap').innerHTML=
-      '<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th style="text-align:right">Zck.</th><th style="text-align:right">KH</th><th style="text-align:right">Fett</th></tr></thead><tbody>'
-      +pendingRows.map(r=>`<tr><td>${r.lebensmittel}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td></tr>`).join('')
+      '<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right">kcal</th><th style="text-align:right">Eiw.</th><th style="text-align:right">Zck.</th><th style="text-align:right">KH</th><th style="text-align:right">Fett</th>'+sfHki+lysHki+argHki+'</tr></thead><tbody>'
+      +pendingRows.map(r=>{
+        const sfC=hasSFki?`<td style="text-align:right;color:#fb923c">${r.sf!=null?r.sf.toFixed(1)+'g':'–'}</td>`:'';
+        const lysC=hasLyski?`<td style="text-align:right;color:#e879f9">${r.lys!=null?r.lys+'mg':'–'}</td>`:'';
+        const argC=hasArgki?`<td style="text-align:right;color:#e879f9">${r.arg!=null?r.arg+'mg':'–'}</td>`:'';
+        return `<tr><td>${r.lebensmittel}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td>${sfC}${lysC}${argC}</tr>`;
+      }).join('')
       +'</tbody></table>';
-    document.getElementById('result-nf').textContent='';
+    document.getElementById('result-nf').innerHTML=lokaleBewertung(pendingRows);
     document.getElementById('result-header').innerHTML='✅ Analysiert – <span style="font-size:0.75rem;color:#4ade80">🤖 KI-Analyse</span>';
 
     // Show totals grid

@@ -306,6 +306,7 @@ const DB = [
 
   // Protein-Shakes (Portionsangabe als Zubereitung)
   { n:"Proteinoform 25+",         k:389, e:72.0, z: 0.5, kh: 2.5, f: 7.4, sf: 1.6, lys:4611, arg:6411, s: 35 },
+  { n:"Sports Factory Protein",   k:380, e:76.0, z: 1.5, kh: 4.0, f: 5.0, sf: 1.5, lys:5800, arg:5200, s: 30 },
   { n:"Protein Shake Hazelnut",   k:367, e:82.0, z: 4.1, kh: 5.9, f: 1.0, sf: 0.6, lys:5980, arg:5490, s: 30 },
   { n:"Bio Protein Shake Raab",   k:385, e:78.0, z: 0.2, kh: 3.5, f: 6.1, sf: 1.6, lys:5480, arg:6120, s: 20 },
   { n:"Multipower Whey Schoko",   k:373, e:73.3, z: 3.7, kh: 5.3, f: 3.5, sf: 2.2, lys:6960, arg:2050, s: 30 },
