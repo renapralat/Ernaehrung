@@ -29,6 +29,7 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
 .btn-icon-sq{padding:0.55rem 0.7rem;flex:0 0 auto;}
 /* icon-row: field icon + input + buttons */
 .icon-row{display:flex;gap:0.4rem;align-items:center;margin-bottom:0.5rem;}
+#db-vorschlaege div:hover{background:#334155;}
 .field-icon{font-size:1.1rem;flex:0 0 auto;width:1.6rem;text-align:center;}
 .flex-input{flex:1;min-width:0;}
 /* download row */
@@ -300,13 +301,27 @@ function teileEingabe(val){
 
 function sucheDBVorschlaege(q){
   if(typeof DB==='undefined'||!q||q.length<1)return[];
-  const s=q.toLowerCase().trim();
-  const words=s.split(/\s+/).filter(w=>w.length>=2);
+  // Zahl-/Wort-Präfix entfernen, damit "5 Kirschen" → "Kirschen" sucht
+  let s=q.trim();
+  s=s.replace(/^\d+(?:[.,]\d+)?\s+/,'');
+  s=s.replace(/^(halb[e]?[snrm]?)\s+/i,'');
+  s=s.replace(/^viertel\s+/i,'');
+  s=s.replace(/^(zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|zwölf)\s+/i,'');
+  s=s.replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/i,'');
+  s=s.replace(/^(?:portion(?:en)?|stücke?|messlöffel|scheibe[n]?)\s+/i,'');
+  s=s.toLowerCase().trim();
+  if(!s)return[];
+  // Stamm: deutsche Plural-Endungen abschneiden für Fuzzy-Matching
+  let stem=s;
+  if(s.endsWith('nen'))stem=s.slice(0,-2);
+  else if(s.endsWith('en'))stem=s.slice(0,-2);
+  else if(s.endsWith('n')&&s.length>3)stem=s.slice(0,-1);
+  else if(s.endsWith('s')&&s.length>3)stem=s.slice(0,-1);
   const score=x=>{
     const n=x.n.toLowerCase();
-    if(n===s)return 3;
-    if(n.startsWith(s))return 2;
-    if(words.length>0&&words.every(w=>n.includes(w)))return 1;
+    if(n===s)return 4;
+    if(n.startsWith(s)||s.startsWith(n))return 3;
+    if(stem!==s&&(n.startsWith(stem)||n.includes(stem)))return 2;
     if(n.includes(s))return 1;
     return 0;
   };
@@ -342,7 +357,11 @@ function zeigeDBVorschlaege(q){
 function waehlVorschlagIdx(i){
   const x=_dbVorschlaegeListe[i];if(!x)return;
   const inp=document.getElementById('lebensmittel-input');
-  inp.value=(x.s?'1 ':'')+x.n;
+  const cnt=extractCount(inp.value);   // Anzahl aus Eingabe erhalten ("5 Kirschen" → 5)
+  let prefix='';
+  if(cnt!=null)prefix=cnt+' ';        // vorhandene Anzahl übernehmen
+  else if(x.s)prefix='1 ';            // Default: 1 Stück wenn Stückgewicht vorhanden
+  inp.value=prefix+x.n;
   schliessVorschlaege();
   inp.focus();
 }
@@ -971,13 +990,13 @@ function exportCSV(){
   if(!gef.length){status.textContent='⚠️ Keine Einträge.';status.style.color='#f59e0b';return;}
   const tage={};gef.forEach(e=>{const d=e.datum.slice(0,10);if(!tage[d])tage[d]=[];tage[d].push(e);});
   const T='\t';
-  const zeilen=['Datum\tKategorie\tLebensmittel\tKalorien (kcal)\tEiweiß (g)\tZucker (g)\tKohlenhydrate (g)\tFett (g)'];
+  const zeilen=['Datum\tKategorie\tLebensmittel\tKalorien (kcal)\tEiweiß (g)\tZucker (g)\tKohlenhydrate (g)\tFett (g)\tGes.Fettsäuren (g)\tLysin (mg)\tArginin (mg)'];
   Object.keys(tage).sort((a,b)=>a<b?-1:a>b?1:0).forEach(datum=>{
     tage[datum].forEach(e=>{
-      zeilen.push([fmt(datum),e.kategorie||'',e.lebensmittel,Math.round(+e.kalorien||0),deNum(e.eiweiss),deNum(e.zucker),deNum(e.kohlenhydrate),deNum(e.fett)].join(T));
+      zeilen.push([fmt(datum),e.kategorie||'',e.lebensmittel,Math.round(+e.kalorien||0),deNum(e.eiweiss),deNum(e.zucker),deNum(e.kohlenhydrate),deNum(e.fett),e.gesaettigt!=null?deNum(e.gesaettigt):'',e.lysin!=null?Math.round(+e.lysin):'',e.arginin!=null?Math.round(+e.arginin):''].join(T));
     });
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
-    zeilen.push([fmt(datum),'','GESAMT',Math.round(sum('kalorien')),deNum(sum('eiweiss')),deNum(sum('zucker')),deNum(sum('kohlenhydrate')),deNum(sum('fett'))].join(T));
+    zeilen.push([fmt(datum),'','GESAMT',Math.round(sum('kalorien')),deNum(sum('eiweiss')),deNum(sum('zucker')),deNum(sum('kohlenhydrate')),deNum(sum('fett')),deNum(sum('gesaettigt')),Math.round(sum('lysin')),Math.round(sum('arginin'))].join(T));
   });
   const blob=new Blob(['﻿'+zeilen.join('\r\n')],{type:'text/plain;charset=utf-8;'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
@@ -989,13 +1008,17 @@ function exportCSV(){
 function pad(s,n){s=String(s);while(s.length<n)s=' '+s;return s;}
 function padR(s,n){s=String(s);while(s.length<n)s=s+' ';return s;}
 
-// Spaltenbreiten für Briefform (Courier, A4-optimiert)
-const BF={name:46,kcal:6,eiw:7,zck:7,kh:7,fat:7};
-function briefZeile(name,kcal,eiw,zck,kh,fat){
-  return padR(String(name).slice(0,BF.name),BF.name)+pad(String(kcal),BF.kcal)+pad(String(eiw),BF.eiw)+pad(String(zck),BF.zck)+pad(String(kh),BF.kh)+pad(String(fat),BF.fat);
+// Spaltenbreiten für Briefform (Courier)
+const BF={name:42,kcal:6,eiw:7,zck:7,kh:7,fat:7,sf:7,lys:7,arg:7};
+function briefVals(kcal,eiw,zck,kh,fat,sf,lys,arg){
+  return pad(String(kcal),BF.kcal)+pad(String(eiw),BF.eiw)+pad(String(zck),BF.zck)+pad(String(kh),BF.kh)+pad(String(fat),BF.fat)
+    +pad(sf!=null&&sf!==''?String(sf):'-',BF.sf)+pad(lys!=null&&lys!==''?String(lys):'-',BF.lys)+pad(arg!=null&&arg!==''?String(arg):'-',BF.arg);
+}
+function briefZeile(name,kcal,eiw,zck,kh,fat,sf,lys,arg){
+  return padR(String(name).slice(0,BF.name),BF.name)+briefVals(kcal,eiw,zck,kh,fat,sf,lys,arg);
 }
 function wrapText(text,width){if(text.length<=width)return[text];const ws=text.split(' ');const ls=[];let c='';for(const w of ws){const n=c?c+' '+w:w;if(n.length<=width){c=n;}else{if(c)ls.push(c);c=w;}}if(c)ls.push(c);return ls.length?ls:[text.slice(0,width)];}
-function briefZeileWrap(indent,name,kcal,eiw,zck,kh,fat){const nw=BF.name-indent.length;const vals=pad(String(kcal),BF.kcal)+pad(String(eiw),BF.eiw)+pad(String(zck),BF.zck)+pad(String(kh),BF.kh)+pad(String(fat),BF.fat);const ls=wrapText(String(name),nw);const out=[];for(let i=0;i<ls.length-1;i++)out.push(indent+ls[i]);const last=ls[ls.length-1]||'';out.push(indent+padR(last,nw)+vals);return out.join('\n');}
+function briefZeileWrap(indent,name,kcal,eiw,zck,kh,fat,sf,lys,arg){const nw=BF.name-indent.length;const vals=briefVals(kcal,eiw,zck,kh,fat,sf,lys,arg);const ls=wrapText(String(name),nw);const out=[];for(let i=0;i<ls.length-1;i++)out.push(indent+ls[i]);const last=ls[ls.length-1]||'';out.push(indent+padR(last,nw)+vals);return out.join('\n');}
 
 function exportBrief(){
   const status=document.getElementById('export-status');
@@ -1003,8 +1026,8 @@ function exportBrief(){
   const gef=getExportTage();
   if(!gef.length){status.textContent='⚠️ Keine Einträge.';status.style.color='#f59e0b';return;}
   const tage={};gef.forEach(e=>{const d=e.datum.slice(0,10);if(!tage[d])tage[d]=[];tage[d].push(e);});
-  const hdr=briefZeile('Lebensmittel','kcal','Eiw.g','Zck.g','KH.g','Fett.g');
-  const hdrKurz=padR('',BF.name)+pad('kcal',BF.kcal)+pad('Eiw.g',BF.eiw)+pad('Zck.g',BF.zck)+pad('KH.g',BF.kh)+pad('Fett.g',BF.fat);
+  const hdr=briefZeile('Lebensmittel','kcal','Eiw.g','Zck.g','KH.g','Fett.g','ges.FS','Lys.mg','Arg.mg');
+  const hdrKurz=padR('',BF.name)+pad('kcal',BF.kcal)+pad('Eiw.g',BF.eiw)+pad('Zck.g',BF.zck)+pad('KH.g',BF.kh)+pad('Fett.g',BF.fat)+pad('ges.FS',BF.sf)+pad('Lys.mg',BF.lys)+pad('Arg.mg',BF.arg);
   const zeilen=['ERNÄHRUNGSPROTOKOLL',''];
   if(von||bis)zeilen.push('Zeitraum: '+(von?fmt(von):'')+(von&&bis?' bis ':bis?'bis ':'')+( bis?fmt(bis):''),'');
   zeilen.push(hdr);
@@ -1018,15 +1041,24 @@ function exportBrief(){
       if(e.zutaten){try{zutaten=JSON.parse(e.zutaten);}catch(ex){}}
       const mehrere=zutaten&&zutaten.length>1;
       const hauptLabel=mehrere&&e.kategorie?e.kategorie:(e.lebensmittel||'');
-      zeilen.push(briefZeileWrap('  ',hauptLabel,Math.round(+e.kalorien||0),(+e.eiweiss||0).toFixed(1),(+e.zucker||0).toFixed(1),(+e.kohlenhydrate||0).toFixed(1),(+e.fett||0).toFixed(1)));
+      const esf=e.gesaettigt!=null?(+e.gesaettigt).toFixed(1):'';
+      const elys=e.lysin!=null?Math.round(+e.lysin):'';
+      const earg=e.arginin!=null?Math.round(+e.arginin):'';
+      zeilen.push(briefZeileWrap('  ',hauptLabel,Math.round(+e.kalorien||0),(+e.eiweiss||0).toFixed(1),(+e.zucker||0).toFixed(1),(+e.kohlenhydrate||0).toFixed(1),(+e.fett||0).toFixed(1),esf,elys,earg));
       if(mehrere){
-        zutaten.forEach(z=>zeilen.push(briefZeileWrap('    ',z.lebensmittel||'',Math.round(+z.kalorien||0),(+z.eiweiss||0).toFixed(1),(+z.zucker||0).toFixed(1),(+z.kohlenhydrate||0).toFixed(1),(+z.fett||0).toFixed(1))));
+        zutaten.forEach(z=>{
+          const zsf=z.sf!=null?(+z.sf).toFixed(1):'';
+          const zlys=z.lys!=null?Math.round(+z.lys):'';
+          const zarg=z.arg!=null?Math.round(+z.arg):'';
+          zeilen.push(briefZeileWrap('    ',z.lebensmittel||'',Math.round(+z.kalorien||0),(+z.eiweiss||0).toFixed(1),(+z.zucker||0).toFixed(1),(+z.kohlenhydrate||0).toFixed(1),(+z.fett||0).toFixed(1),zsf,zlys,zarg));
+        });
       }
     });
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
     const gkcal=Math.round(sum('kalorien')),geiw=sum('eiweiss').toFixed(1),gzck=sum('zucker').toFixed(1),gkh=sum('kohlenhydrate').toFixed(1),gfat=sum('fett').toFixed(1);
+    const gsf=sum('gesaettigt').toFixed(1),glys=Math.round(sum('lysin')),garg=Math.round(sum('arginin'));
     zeilen.push('-'.repeat(hdr.length));
-    zeilen.push(briefZeile('GESAMT  '+fmtMitTag(datum),gkcal,geiw,gzck,gkh,gfat));
+    zeilen.push(briefZeile('GESAMT  '+fmtMitTag(datum),gkcal,geiw,gzck,gkh,gfat,gsf,glys,garg));
     zeilen.push(hdrKurz);
   });
   const txt='﻿'+zeilen.join('\r\n');
