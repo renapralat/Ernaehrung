@@ -906,20 +906,16 @@ function eintragKarte(e, datum, suche){
   return '<div class="entry-card">'
     +'<div class="entry-card-name">🍽 '+hl(e.lebensmittel||'',suche)+katBadge+kiBadge+'</div>'
     +zutatenHTML
-    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;text-align:center;font-size:0.72rem;margin-bottom:4px">'
-      +'<span style="color:#f59e0b">'+Math.round(+e.kalorien||0)+' kcal</span>'
-      +'<span style="color:#22c55e">'+(+e.eiweiss||0).toFixed(1)+'g Eiw</span>'
-      +'<span style="color:#a78bfa">'+(+e.fett||0).toFixed(1)+'g Fett</span>'
-      +'<span style="color:#3b82f6">'+(+e.kohlenhydrate||0).toFixed(1)+'g KH</span>'
-      +'<span style="color:#ec4899">'+(+e.zucker||0).toFixed(1)+'g Zck</span>'
+    +'<div style="font-size:0.72rem;margin-bottom:4px;color:#475569;line-height:1.8">'
+      +'<span style="color:#f59e0b">'+Math.round(+e.kalorien||0)+'kcal</span>'
+      +' · <span style="color:#22c55e">'+(+e.eiweiss||0).toFixed(1)+'g Eiw</span>'
+      +' · <span style="color:#a78bfa">'+(+e.fett||0).toFixed(1)+'g Fett</span>'
+      +' · <span style="color:#3b82f6">'+(+e.kohlenhydrate||0).toFixed(1)+'g KH</span>'
+      +' · <span style="color:#ec4899">'+(+e.zucker||0).toFixed(1)+'g Zck</span>'
+      +((+e.gesaettigt||0)>0?' · <span style="color:#fb923c">FS:'+(+e.gesaettigt).toFixed(1)+'g</span>':'')
+      +((+e.lysin||0)>0?' · <span style="color:#e879f9">Lys:'+(+e.lysin)+'mg</span>':'')
+      +((+e.arginin||0)>0?' · <span style="color:#e879f9">Arg:'+(+e.arginin)+'mg</span>':'')
     +'</div>'
-    +(((+e.gesaettigt||0)>0||(+e.lysin||0)>0||(+e.arginin||0)>0)?
-      '<div style="display:flex;gap:0.6rem;font-size:0.7rem;padding:0 4px;margin-bottom:4px;flex-wrap:wrap">'
-        +((+e.gesaettigt||0)>0?'<span style="color:#fb923c">ges.FS: '+(+e.gesaettigt).toFixed(1)+'g</span>':'')
-        +((+e.lysin||0)>0?'<span style="color:#e879f9">Lysin: '+(+e.lysin)+'mg</span>':'')
-        +((+e.arginin||0)>0?'<span style="color:#e879f9">Arginin: '+(+e.arginin)+'mg</span>':'')
-      +'</div>'
-    :'')
     +'<div class="entry-card-actions">'
       +'<button class="btn-rep" onclick="wiederholenEintrag(\''+lmEsc+'\')">↩ Wiederholen</button>'
       +'<button class="btn-del-sm" onclick="deleteEintrag(\''+e.id+'\',\''+datum+'\')">✕</button>'
@@ -977,20 +973,16 @@ function renderEintraege(){
           +'<span style="color:#475569">→</span>'
           +'<span id="ampel-tag-'+datum+'" style="font-size:0.8rem">'+ampelNetto(kcal-getBewegung(datum),getZiel(datum))+'</span>'
         +'</div>'
-        // Zeile 3: Makros — 4 gleiche Spalten über volle Breite
-        +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;text-align:center;font-size:0.72rem;margin-top:5px;padding-top:4px;border-top:1px solid rgba(59,130,246,0.15)">'
-          +'<div><div style="color:#22c55e">'+eiw+'g Eiw</div><div style="color:#22c55e;font-weight:600;min-height:1em">'+(macroKcal>0?pEiw+'%<span style="color:#475569;font-weight:400"> /30%</span>':'')+'</div></div>'
-          +'<div><div style="color:#a78bfa">'+fat+'g Fett</div><div style="color:#a78bfa;font-weight:600;min-height:1em">'+(macroKcal>0?pFat+'%<span style="color:#475569;font-weight:400"> /30%</span>':'')+'</div></div>'
-          +'<div><div style="color:#3b82f6">'+kh+'g KH</div><div style="color:#3b82f6;font-weight:600;min-height:1em">'+(macroKcal>0?pKH+'%<span style="color:#475569;font-weight:400"> /40%</span>':'')+'</div></div>'
-          +'<div><div style="color:#ec4899">'+zuk+'g Zck</div><div style="min-height:1em"></div></div>'
+        // Makros + SF/Lys/Arg — alles in einer Zeile
+        +'<div style="font-size:0.72rem;margin-top:5px;padding-top:4px;border-top:1px solid rgba(59,130,246,0.15);color:#475569;line-height:1.8">'
+          +'<span style="color:#22c55e">'+eiw+'g Eiw</span>'+(macroKcal>0?' <span style="color:#22c55e;font-weight:700;font-size:0.65rem">'+pEiw+'%</span>':'')
+          +' · <span style="color:#a78bfa">'+fat+'g Fett</span>'+(macroKcal>0?' <span style="color:#a78bfa;font-weight:700;font-size:0.65rem">'+pFat+'%</span>':'')
+          +' · <span style="color:#3b82f6">'+kh+'g KH</span>'+(macroKcal>0?' <span style="color:#3b82f6;font-weight:700;font-size:0.65rem">'+pKH+'%</span>':'')
+          +' · <span style="color:#ec4899">'+zuk+'g Zck</span>'
+          +(hasSFTag?' · <span style="color:#fb923c">FS:'+sfTag.toFixed(1)+'g</span>':'')
+          +(hasLysTag?' · <span style="color:#e879f9">Lys:'+lysTag+'mg</span>':'')
+          +(hasArgTag?' · <span style="color:#e879f9">Arg:'+argTag+'mg</span>':'')
         +'</div>'
-        +((hasSFTag||hasLysTag||hasArgTag)?
-          '<div style="display:flex;gap:0.6rem;flex-wrap:wrap;font-size:0.7rem;margin-top:4px;padding-top:3px;border-top:1px solid rgba(59,130,246,0.1)">'
-            +(hasSFTag?'<span style="color:#fb923c">ges.FS: '+sfTag.toFixed(1)+'g</span>':'')
-            +(hasLysTag?'<span style="color:#e879f9">Lysin: '+lysTag+'mg</span>':'')
-            +(hasArgTag?'<span style="color:#e879f9">Arginin: '+argTag+'mg</span>':'')
-          +'</div>'
-        :'')
       +'</div>'
       +'<div style="border:1px solid rgba(59,130,246,0.25);border-top:none;border-radius:0 0 8px 8px;">'
         +sortiert.map(e=>eintragKarte(e,datum,suche)).join('')
