@@ -222,7 +222,7 @@ const DB = [
   { n:"Cappuccino Tchibo",        k: 47, e: 2.2, z: 3.1, kh: 3.2, f: 1.6, sf: 1.0, lys: 170, arg:  70 },
 
   // Riegel & Waffeln
-  { n:"Protein Riegel Rossmann",  k:389, e:31.1, z: 3.1, kh:30.0, f:11.6, sf: 6.2, lys:1733, arg:1356, s: 45 },
+  { n:"Proteinkick Rossmann",      k:479, e:28.0, z: 2.3, kh:20.0, f:16.0, sf: 7.3, lys:1200, arg:2000, s: 25 },  // Nussmischung, nicht Riegel
   { n:"Maiswaffel Rossmann",      k:386, e: 7.1, z: 1.4, kh:80.0, f: 2.9, sf: 0.6, lys: 214, arg: 357, s:  7 },
 
   // Milchprodukte Edeka Eigenmarke
@@ -306,7 +306,7 @@ const DB = [
 
   // Protein-Shakes (Portionsangabe als Zubereitung)
   { n:"Proteinoform 25+",         k:389, e:72.0, z: 0.5, kh: 2.5, f: 7.4, sf: 1.6, lys:4611, arg:6411, s: 35 },
-  { n:"Sports Factory Protein",   k:380, e:76.0, z: 1.5, kh: 4.0, f: 5.0, sf: 1.5, lys:5800, arg:5200, s: 30 },
+  { n:"Sports Factory Protein",   k:365, e:80.0, z: 0.5, kh: 4.2, f: 2.5, sf: 0.8, lys:5800, arg:5200, s: 25 },  // Vegan Hazelnut, 1 Messlöffel=25g
   { n:"Protein Shake Hazelnut",   k:367, e:82.0, z: 4.1, kh: 5.9, f: 1.0, sf: 0.6, lys:5980, arg:5490, s: 30 },
   { n:"Bio Protein Shake Raab",   k:385, e:78.0, z: 0.2, kh: 3.5, f: 6.1, sf: 1.6, lys:5480, arg:6120, s: 20 },
   { n:"Multipower Whey Schoko",   k:373, e:73.3, z: 3.7, kh: 5.3, f: 3.5, sf: 2.2, lys:6960, arg:2050, s: 30 },
