@@ -144,6 +144,30 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
     <div id="cloud-status"><span class="dot warn" id="dot"></span><span id="cloud-text">Verbinde…</span></div>
   </div>
 
+  <!-- KI-Token + Modell (oben, immer sichtbar) -->
+  <div class="card" style="padding:0.65rem 1rem">
+    <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+      <span id="ki-badge" class="dot warn" style="flex-shrink:0"></span>
+      <span id="ki-status-text" style="font-size:0.75rem;color:#f59e0b;flex:1;min-width:120px">Kein Token – nur lokale DB</span>
+      <select id="ki-model-select" onchange="setKiModel(this.value)"
+        style="background:#0f172a;color:#f1f5f9;border:1px solid #334155;border-radius:6px;padding:0.25rem 0.4rem;font-size:0.75rem;font-family:inherit;flex-shrink:0">
+        <option value="gpt-4o-mini">GPT-4o Mini</option>
+        <option value="gpt-4o">GPT-4o</option>
+      </select>
+      <button class="btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.6rem;flex-shrink:0" onclick="toggleTokenForm()">⚙️ Token</button>
+    </div>
+    <div id="ki-token-form" style="display:none;margin-top:0.5rem">
+      <div style="display:flex;gap:0.4rem;margin-bottom:0.4rem">
+        <input type="password" id="ki-token-input" class="flex-input" placeholder="github_pat_…"/>
+        <button class="btn-primary" onclick="saveToken()">Speichern</button>
+        <button class="btn-ghost" onclick="deleteToken()">Löschen</button>
+      </div>
+      <div style="font-size:0.7rem;color:#64748b">
+        GitHub → Settings → Developer settings → Personal access tokens (Classic) → Generate. Keine Berechtigungen nötig.
+      </div>
+    </div>
+  </div>
+
   <!-- Main card: export + search + input + analyze -->
   <div class="card">
 
@@ -232,33 +256,6 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
   </div>
 
 
-  <!-- KI / GitHub Token -->
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
-      <div class="card-title" style="margin-bottom:0">🤖 KI-Analyse</div>
-      <span id="ki-badge" class="dot warn"></span>
-    </div>
-    <div id="ki-status-text" style="font-size:0.75rem;color:#f59e0b;margin-bottom:0.65rem">Kein Token – nur lokale DB + Open Food Facts</div>
-    <div id="ki-token-form" style="display:none">
-      <div style="display:flex;gap:0.4rem;margin-bottom:0.5rem;">
-        <input type="password" id="ki-token-input" class="flex-input" placeholder="github_pat_…"/>
-        <button class="btn-primary" onclick="saveToken()">Speichern</button>
-        <button class="btn-ghost" onclick="deleteToken()">Löschen</button>
-      </div>
-      <div style="font-size:0.72rem;color:#64748b;margin-bottom:0.65rem">
-        GitHub → Einstellungen → Developer settings → Personal access tokens (Classic) → Generate. Keine Berechtigungen nötig. Nur lokal gespeichert.
-      </div>
-      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
-        <span style="font-size:0.75rem;color:#94a3b8;white-space:nowrap">🧠 Modell:</span>
-        <select id="ki-model-select" onchange="setKiModel(this.value)"
-          style="flex:1;background:#0f172a;color:#f1f5f9;border:1px solid #334155;border-radius:6px;padding:0.3rem 0.5rem;font-size:0.8rem;font-family:inherit">
-          <option value="gpt-4o-mini">GPT-4o Mini (Standard)</option>
-          <option value="gpt-4o">GPT-4o (Beste Qualität)</option>
-        </select>
-      </div>
-    </div>
-    <button class="btn-ghost" style="width:100%;font-size:0.8rem" onclick="toggleTokenForm()">⚙️ Token verwalten</button>
-  </div>
 
 </div>
 
