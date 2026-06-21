@@ -294,7 +294,7 @@ function teileEingabe(val){
   // "mit" nicht splitten wenn direkt eine Zahl folgt ("mit 0,1% Fett", "mit 3,5%")
   // Dezimalkomma schützen: "0,1" nicht als Listentrennzeichen werten
   let teile=val.split(/\s+(?:und|sowie|außerdem|plus|an|mit(?!\s+\d))\s+|(?<!\d),(?!\d)\s*|&\s*/i);
-  const ZAHL_P='ein[e]?[nm]?|halb[e]?[snrm]?|viertel|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf|dreizehn|vierzehn|fünfzehn|sechzehn|siebzehn|achtzehn|neunzehn|zwanzig|drei(?:ßig|ssig)|vierzig|fünfzig|sechzig|siebzig|achtzig|neunzig|einhundert|hundertfünfzig|zweihundert(?:fünfzig)?|dreihundert|vierhundert|fünfhundert|hundert|\\d+(?:[.,]\\d+)?';
+  const ZAHL_P='ein[e]?[nm]?|halb[e]?[snrm]?|viertel|achtel|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf|dreizehn|vierzehn|fünfzehn|sechzehn|siebzehn|achtzehn|neunzehn|zwanzig|drei(?:ßig|ssig)|vierzig|fünfzig|sechzig|siebzig|achtzig|neunzig|einhundert|hundertfünfzig|zweihundert(?:fünfzig)?|dreihundert|vierhundert|fünfhundert|hundert|\\d+(?:[.,]\\d+)?';
   const MASS_P='teelöffel|tl|esslöffel|el|messlöffel|tassen?|kellen?|gläser|glas|becher|scheiben?|handvoll|prisen?|schüsse?|portionen?|stücke?';
   const ADJ_P='mittlere?[nrms]?|kleine?[nrms]?|große?[nrms]?|gute?[nrms]?|frische?[nrms]?|reife?[nrms]?|gehäufte?[nrms]?|gestrichene?[nrms]?|halbe?[nrms]?';
   // Sekundär-Split: drei Muster, die den Start eines neuen Lebensmittels mitten im Text erkennen
@@ -384,8 +384,10 @@ function waehlVorschlagIdx(i){
   const inp=document.getElementById('lebensmittel-input');
   const v=inp.value.trim();
   // Zahlwörter → Ziffern normalisieren
-  const _Z={zwei:2,drei:3,vier:4,fünf:5,sechs:6,sieben:7,acht:8,neun:9,zehn:10,elf:11,zwölf:12,dreizehn:13,vierzehn:14,fünfzehn:15,sechzehn:16,siebzehn:17,achtzehn:18,neunzehn:19,zwanzig:20,'dreißig':30,dreissig:30,vierzig:40,'fünfzig':50,sechzig:60,siebzig:70,achtzig:80,neunzig:90,einhundert:100,'hundertfünfzig':150,zweihundert:200,dreihundert:300,vierhundert:400,'fünfhundert':500,hundert:100};
-  let vn=v.replace(/^(halb[e]?[snrm]?|viertel|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf|dreizehn|vierzehn|fünfzehn|sechzehn|siebzehn|achtzehn|neunzehn|zwanzig|drei(?:ßig|ssig)|vierzig|fünfzig|sechzig|siebzig|achtzig|neunzig|einhundert|hundertfünfzig|zweihundert|dreihundert|vierhundert|fünfhundert|hundert)\s+/i,(_,w)=>(_Z[w.toLowerCase()]||1)+' ');
+  const _Z={halb:0.5,halbe:0.5,halben:0.5,halber:0.5,halbes:0.5,halbem:0.5,viertel:0.25,achtel:0.125,
+    zwei:2,drei:3,vier:4,fünf:5,sechs:6,sieben:7,acht:8,neun:9,zehn:10,elf:11,zwölf:12,dreizehn:13,vierzehn:14,fünfzehn:15,sechzehn:16,siebzehn:17,achtzehn:18,neunzehn:19,zwanzig:20,'dreißig':30,dreissig:30,vierzig:40,'fünfzig':50,sechzig:60,siebzig:70,achtzig:80,neunzig:90,einhundert:100,'hundertfünfzig':150,zweihundert:200,dreihundert:300,vierhundert:400,'fünfhundert':500,hundert:100};
+  let vn=v.replace(/^(\d+)\s*\/\s*(\d+)\s+/,(_,n,d)=>(+n/+d)+' ');
+  vn=vn.replace(/^(halb[e]?[snrm]?|viertel|achtel|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf|dreizehn|vierzehn|fünfzehn|sechzehn|siebzehn|achtzehn|neunzehn|zwanzig|drei(?:ßig|ssig)|vierzig|fünfzig|sechzig|siebzig|achtzig|neunzig|einhundert|hundertfünfzig|zweihundert|dreihundert|vierhundert|fünfhundert|hundert)\s+/i,(_,w)=>(_Z[w.toLowerCase()]||1)+' ');
   vn=vn.replace(/^(?:ein[e]?[nm]?)\s+/i,'1 ');
   const WEIGHT_U='g|ml|kg|l|gramm|gram|gr';
   const MASS_U='teelöffel|tl|esslöffel|el|messlöffel|tassen?|kellen?|gläser|glas|becher|scheiben?|handvoll|prisen?|schüsse?|portionen?|stücke?';
@@ -414,8 +416,10 @@ function schliessVorschlaege(){
 
 function extractCount(text){
   let t=text.trim();
+  t=t.replace(/^(\d+)\s*\/\s*(\d+)\s+/,(_,n,d)=>(+n/+d)+' ');  // 1/8 → 0.125
   t=t.replace(/^(halb[e]?[snrm]?)\s+/i,'0.5 ');
   t=t.replace(/^viertel\s+/i,'0.25 ');
+  t=t.replace(/^(?:ein[e]?[nm]?\s+)?achtel\s+/i,'0.125 ');
   const ZAHL={zwei:2,drei:3,vier:4,fünf:5,sechs:6,sieben:7,acht:8,neun:9,zehn:10,elf:11,zwölf:12,dreizehn:13,vierzehn:14,fünfzehn:15,sechzehn:16,siebzehn:17,achtzehn:18,neunzehn:19,zwanzig:20,dreißig:30,dreissig:30,vierzig:40,fünfzig:50,sechzig:60,siebzig:70,achtzig:80,neunzig:90,hundert:100,einhundert:100,hundertfünfzig:150,zweihundert:200,zweihundertfünfzig:250,dreihundert:300,vierhundert:400,fünfhundert:500};
   t=t.replace(/^(zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf|dreizehn|vierzehn|fünfzehn|sechzehn|siebzehn|achtzehn|neunzehn|zwanzig|dreißig|dreissig|vierzig|fünfzig|sechzig|siebzig|achtzig|neunzig|einhundert|hundertfünfzig|zweihundertfünfzig|zweihundert|dreihundert|vierhundert|fünfhundert|hundert)\s+/i,(_,w)=>ZAHL[w.toLowerCase()]+' ');
   t=t.replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/i,'1 ');
@@ -478,8 +482,10 @@ const MASS={
 };
 
 function parseFood(text){
+  text=text.replace(/^(\d+)\s*\/\s*(\d+)\s+/,(_,n,d)=>(+n/+d)+' ');  // 1/8 → 0.125
   text=text.replace(/^(halb[e]?[snr]?)\s+/i,'0.5 ');
   text=text.replace(/^viertel\s+/i,'0.25 ');
+  text=text.replace(/^(?:ein[e]?[nm]?\s+)?achtel\s+/i,'0.125 ');
   const ZAHL={zwei:2,drei:3,vier:4,fünf:5,sechs:6,sieben:7,acht:8,neun:9,zehn:10,elf:11,zwölf:12,dreizehn:13,vierzehn:14,fünfzehn:15,sechzehn:16,siebzehn:17,achtzehn:18,neunzehn:19,zwanzig:20,dreißig:30,dreissig:30,vierzig:40,fünfzig:50,sechzig:60,siebzig:70,achtzig:80,neunzig:90,hundert:100,einhundert:100,hundertfünfzig:150,zweihundert:200,zweihundertfünfzig:250,dreihundert:300,vierhundert:400,fünfhundert:500};
   text=text.replace(/^(zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf|dreizehn|vierzehn|fünfzehn|sechzehn|siebzehn|achtzehn|neunzehn|zwanzig|dreißig|dreissig|vierzig|fünfzig|sechzig|siebzig|achtzig|neunzig|einhundert|hundertfünfzig|zweihundertfünfzig|zweihundert|dreihundert|vierhundert|fünfhundert|hundert)\s+/i,(_,w)=>ZAHL[w.toLowerCase()]+' ');
   text=text.replace(/^(?:der|die|das)\s+/i,'');

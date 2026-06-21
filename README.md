@@ -45,6 +45,9 @@ Live-URL: [renapralat.github.io/Ernaehrung](https://renapralat.github.io/Ernaehr
 | Stück | `zwei Stück Kuchen` | 200 g |
 | Anzahl | `fünf Kirschen` | 5 × Stückgewicht |
 | Bruchteil | `halbe Avocado` | 0,5 × Stückgewicht |
+| Viertel | `viertel Avocado` | 0,25 × Stückgewicht |
+| Achtel | `ein Achtel Avocado` | 0,125 × Stückgewicht |
+| Bruchschreibweise | `1/8 Avocado`, `3/4 Tomate` | berechnet automatisch |
 
 ### Mehrere Lebensmittel gleichzeitig
 

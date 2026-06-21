@@ -66,7 +66,7 @@ const DB = [
   { n:"Spargel",            k: 20, e: 2.2, z: 1.7, kh: 3.7, f: 0.1, sf: 0.0, lys: 84, arg: 81 },
   { n:"Spinat",             k: 23, e: 2.9, z: 0.4, kh: 3.6, f: 0.4, sf: 0.1, lys:174, arg:162 },
   { n:"Süßkartoffel",       k: 86, e: 1.6, z: 4.2, kh:20.1, f: 0.1, sf: 0.0, lys: 38, arg: 45 },
-  { n:"Tomate",             k: 18, e: 0.9, z: 2.6, kh: 3.9, f: 0.2, sf: 0.0, lys: 22, arg: 15 },
+  { n:"Tomate",             k: 18, e: 0.9, z: 2.6, kh: 3.9, f: 0.2, sf: 0.0, lys: 22, arg: 15, s:100 },
   { n:"Weißkohl",           k: 25, e: 1.3, z: 3.8, kh: 6.1, f: 0.1, sf: 0.0, lys: 52, arg: 57 },
   { n:"Wirsing",            k: 28, e: 2.0, z: 2.8, kh: 5.4, f: 0.4, sf: 0.1, lys: 95, arg: 72 },
   { n:"Zucchini",           k: 17, e: 1.2, z: 1.6, kh: 3.4, f: 0.3, sf: 0.1, lys: 47, arg: 47 },
