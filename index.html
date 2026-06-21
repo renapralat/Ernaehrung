@@ -76,6 +76,7 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
 .chip:hover{background:#334155;color:#f1f5f9;}
 .chip.aktiv{background:rgba(59,130,246,0.18);border-color:#3b82f6;color:#60a5fa;}
 .kat-badge{display:inline-block;background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);border-radius:12px;padding:0.08rem 0.5rem;font-size:0.7rem;font-weight:600;margin-left:0.4rem;vertical-align:middle;}
+.kat-edit-btn{cursor:pointer;user-select:none;}.kat-edit-btn:hover{background:rgba(59,130,246,0.28);}
 .status-msg{font-size:0.78rem;margin-top:0.4rem;min-height:1.1em;}
 .empty-hint{text-align:center;color:#475569;padding:1.5rem;font-size:0.875rem;}
 .search-box{position:relative;}
@@ -952,7 +953,7 @@ function eintragKarte(e, datum, suche){
     :'')
     +'</tbody></table>'
   +'</div>';
-  const katBadge=e.kategorie?'<span class="kat-badge">'+hl(e.kategorie,suche)+'</span>':'';
+  const katBadge='<span class="kat-badge kat-edit-btn" onclick="editKategorie(\''+e.id+'\')" title="Kategorie ändern">'+(e.kategorie?hl(e.kategorie,suche):'<span style="color:#475569;font-size:0.7rem">+Kat</span>')+'</span>';
   return '<div class="entry-card">'
     +'<div class="entry-card-name">🍽 '+hl(e.lebensmittel||'',suche)+katBadge+'</div>'
     +zutatenHTML
@@ -1067,6 +1068,46 @@ function wiederholenEintrag(id){
   document.getElementById('result-box').classList.remove('show');
   pendingRows=[];
   window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function editKategorie(id){
+  document.getElementById('kat-overlay')?.remove();
+  const e=eintraege.find(x=>String(x.id)===String(id));
+  if(!e)return;
+  const ov=document.createElement('div');
+  ov.id='kat-overlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem';
+  const kats=['Frühstück','Mittag','Abendessen','Snack','Gaststätte'];
+  const cur=e.kategorie||'';
+  ov.innerHTML='<div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:1.2rem 1.1rem;min-width:260px;max-width:92vw">'
+    +'<div style="font-size:0.8rem;color:#94a3b8;margin-bottom:0.6rem">Kategorie / Notiz:</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.75rem">'
+    +kats.map(k=>'<button onclick="saveKategorie(\''+id+'\',\''+k+'\')" style="padding:0.3rem 0.75rem;border-radius:20px;border:1px solid '+(k===cur?'#60a5fa':'#334155')+';background:'+(k===cur?'rgba(96,165,250,0.2)':'#0f172a')+';color:'+(k===cur?'#60a5fa':'#e2e8f0')+';font-size:0.82rem;cursor:pointer">'+k+'</button>').join('')
+    +'</div>'
+    +'<input id="kat-custom-inp" type="text" value="'+cur.replace(/"/g,'&quot;')+'" placeholder="Eigene Notiz, z.B. Restaurant…"'
+    +' style="width:100%;box-sizing:border-box;padding:0.4rem 0.6rem;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:0.85rem;margin-bottom:0.6rem"'
+    +' onkeydown="if(event.key===\'Enter\')saveKategorie(\''+id+'\',this.value)"/>'
+    +'<div style="display:flex;gap:0.5rem">'
+    +'<button onclick="saveKategorie(\''+id+'\',document.getElementById(\'kat-custom-inp\').value)" style="flex:1;padding:0.4rem;border-radius:8px;border:1px solid #60a5fa;background:rgba(96,165,250,0.15);color:#60a5fa;font-size:0.82rem;cursor:pointer">Speichern</button>'
+    +'<button onclick="saveKategorie(\''+id+'\',\'\')" style="padding:0.4rem 0.7rem;border-radius:8px;border:1px solid #ef4444;background:transparent;color:#ef4444;font-size:0.82rem;cursor:pointer">Entfernen</button>'
+    +'<button onclick="document.getElementById(\'kat-overlay\').remove()" style="padding:0.4rem 0.7rem;border-radius:8px;border:1px solid #334155;background:transparent;color:#94a3b8;font-size:0.82rem;cursor:pointer">✕</button>'
+    +'</div>'
+    +'</div>';
+  ov.addEventListener('click',ev=>{if(ev.target===ov)ov.remove();});
+  document.body.appendChild(ov);
+  setTimeout(()=>document.getElementById('kat-custom-inp')?.focus(),80);
+}
+
+async function saveKategorie(id,kat){
+  document.getElementById('kat-overlay')?.remove();
+  const idx=eintraege.findIndex(x=>String(x.id)===String(id));
+  if(idx<0)return;
+  const val=(kat||'').trim()||null;
+  try{
+    await fetch(URL_BASE+'?id=eq.'+id,{method:'PATCH',headers:H,body:JSON.stringify({kategorie:val})});
+    eintraege[idx].kategorie=val;
+    aktualisiereBanner();renderEintraege();
+  }catch(e){alert('Fehler: '+e.message);}
 }
 
 async function deleteEintrag(id,datum){
