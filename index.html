@@ -289,7 +289,13 @@ async function laden(){
 // ─── Food list ──────────────────────────────────────────────────────────────
 
 function teileEingabe(val){
-  const teile=val.split(/\s+(?:und|mit|sowie|außerdem|plus|an)\s+|[,&]\s*/i);
+  // Primär-Split: Konnektoren + Komma
+  let teile=val.split(/\s+(?:und|mit|sowie|außerdem|plus|an)\s+|[,&]\s*/i);
+  // Sekundär-Split: eingebettete "Zahl + Maßeinheit" Muster (ohne Gewichtseinheiten g/ml/kg/l)
+  const ZAHL_P='ein[e]?[nm]?|halb[e]?[snrm]?|viertel|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf|dreizehn|vierzehn|fünfzehn|sechzehn|siebzehn|achtzehn|neunzehn|zwanzig|drei(?:ßig|ssig)|vierzig|fünfzig|sechzig|siebzig|achtzig|neunzig|einhundert|hundertfünfzig|zweihundert(?:fünfzig)?|dreihundert|vierhundert|fünfhundert|hundert|\\d+(?:[.,]\\d+)?';
+  const MASS_P='teelöffel|tl|esslöffel|el|messlöffel|tassen?|kellen?|gläser|glas|becher|scheiben?|handvoll|prisen?|schüsse?|portionen?|stücke?';
+  const midSplit=new RegExp(`\\s+(?=(?:${ZAHL_P})\\s+(?:(?:gehäufte?|gestrichene?|große?|kleine?|gute?)\\s+)?(?:${MASS_P})\\b)`,'i');
+  teile=teile.flatMap(t=>t.split(midSplit));
   const fuell=/\b(?:dazu|noch|auch|bitte|etwas|mal|dann|je|jeweils|einfach|noch dazu)\b\s*/gi;
   return teile.map(s=>s.replace(fuell,'').replace(/\s+/g,' ').trim()).filter(Boolean);
 }
@@ -447,7 +453,8 @@ function parseFood(text){
   text=text.replace(/^viertel\s+/i,'0.25 ');
   const ZAHL={zwei:2,drei:3,vier:4,fünf:5,sechs:6,sieben:7,acht:8,neun:9,zehn:10,elf:11,zwölf:12,dreizehn:13,vierzehn:14,fünfzehn:15,sechzehn:16,siebzehn:17,achtzehn:18,neunzehn:19,zwanzig:20,dreißig:30,dreissig:30,vierzig:40,fünfzig:50,sechzig:60,siebzig:70,achtzig:80,neunzig:90,hundert:100,einhundert:100,hundertfünfzig:150,zweihundert:200,zweihundertfünfzig:250,dreihundert:300,vierhundert:400,fünfhundert:500};
   text=text.replace(/^(zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf|dreizehn|vierzehn|fünfzehn|sechzehn|siebzehn|achtzehn|neunzehn|zwanzig|dreißig|dreissig|vierzig|fünfzig|sechzig|siebzig|achtzig|neunzig|einhundert|hundertfünfzig|zweihundertfünfzig|zweihundert|dreihundert|vierhundert|fünfhundert|hundert)\s+/i,(_,w)=>ZAHL[w.toLowerCase()]+' ');
-  text=text.replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/i,'');
+  text=text.replace(/^(?:der|die|das)\s+/i,'');
+  text=text.replace(/^(?:ein[e]?[nm]?)\s+/i,'1 ');
   const mMass=text.match(/^(\d+(?:[.,]\d+)?)\s+(?:gehäufte?|gestrichene?|große?|kleine?|gute?)?\s*(teelöffel|esslöffel|tl|el|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|portion(?:en)?|prise[n]?|schüsse?|stücke?)\s+(.+)$/i);
   if(mMass){const anzahl=parseFloat(mMass[1].replace(',','.'));const gramsProEinheit=MASS[mMass[2].toLowerCase()]||15;return{name:mMass[3].trim(),grams:anzahl*gramsProEinheit};}
   const mMassHinten=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s+(teelöffel|esslöffel|tl|el|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|portion(?:en)?|prise[n]?|schüsse?|stücke?)$/i);
@@ -455,7 +462,7 @@ function parseFood(text){
   const mVorne=text.match(/^(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|gramm|gram)\s+(.+)$/i);
   if(mVorne){let grams=parseFloat(mVorne[1].replace(',','.'));const unit=mVorne[2].toLowerCase();if(unit==='kg'||unit==='l')grams*=1000;return{name:mVorne[3].trim(),grams};}
   const mAnzahl=text.match(/^(\d+(?:[.,]\d+)?)\s+([^\d].+)$/i);
-  if(mAnzahl){const n=parseFloat(mAnzahl[1].replace(',','.'));return{name:mAnzahl[2].trim(),grams:Math.round(n*100)};}
+  if(mAnzahl){const n=parseFloat(mAnzahl[1].replace(',','.'));let aName=mAnzahl[2].trim().replace(/^(?:kleine?[n]?|große?[n]?|frische?[n]?|reife?[n]?|gute?[n]?)\s+/i,'');return{name:aName,grams:Math.round(n*100)};}
   const mHinten=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|gramm|gram)?$/i);
   if(mHinten&&mHinten[2]){let grams=parseFloat(mHinten[2].replace(',','.'));const unit=(mHinten[3]||'g').toLowerCase();if(unit==='kg'||unit==='l')grams*=1000;return{name:mHinten[1].trim(),grams};}
   return{name:text.trim(),grams:100};
@@ -463,7 +470,8 @@ function parseFood(text){
 
 function sucheLokaleDB(name){
   if(typeof DB==='undefined')return null;
-  const s=name.toLowerCase().trim().replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/,'');
+  let s=name.toLowerCase().trim().replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/,'');
+  s=s.replace(/^(?:kleine?[n]?|große?[n]?|frische?[n]?|reife?[n]?|gute?[n]?|getrockne?te?[n]?|halbe?[n]?)\s+/,'');
   const sw=s.split(/\s+/)[0]; // erstes Wort für Prefix-Fallback
   return DB.find(x=>x.n.toLowerCase()===s)
     ||DB.find(x=>{const n=x.n.toLowerCase();return n.length>=4&&(s.startsWith(n)||n.startsWith(s));})
@@ -932,7 +940,7 @@ function eintragKarte(e, datum, suche){
       +'</div>'
     :'')
     +'<div class="entry-card-actions">'
-      +'<button class="btn-rep" onclick="wiederholenEintrag(\''+lmEsc+'\')">↩ Wiederholen</button>'
+      +'<button class="btn-rep" onclick="wiederholenEintrag(\''+e.id+'\')">↩ Wiederholen</button>'
       +'<button class="btn-del-sm" onclick="deleteEintrag(\''+e.id+'\',\''+datum+'\')">✕</button>'
     +'</div>'
   +'</div>';
@@ -1021,10 +1029,21 @@ function renderEintraege(){
   container.innerHTML=irgendwas?html:'<div class="empty-hint">Keine Einträge für diese Suche.</div>';
 }
 
-function wiederholenEintrag(lm){
-  if(!lm)return;
-  // Mahlzeit in einzelne Lebensmittel aufteilen
-  lm.split(',').map(s=>s.trim()).filter(Boolean).forEach(t=>foods.push(t));
+function wiederholenEintrag(id){
+  const e=eintraege.find(x=>String(x.id)===String(id));
+  if(!e)return;
+  let foodNames=[];
+  if(e.zutaten){
+    try{
+      const z=JSON.parse(e.zutaten);
+      if(z&&z.length>0)foodNames=z.map(item=>item.lebensmittel).filter(Boolean);
+    }catch(ex){}
+  }
+  if(!foodNames.length){
+    // Fallback: lebensmittel nach Komma splitten + Maßeinheiten weiter auftrennen
+    foodNames=e.lebensmittel.split(',').flatMap(s=>teileEingabe(s.trim())).filter(Boolean);
+  }
+  foodNames.forEach(t=>foods.push(t));
   renderFoodList();
   document.getElementById('result-box').classList.remove('show');
   pendingRows=[];

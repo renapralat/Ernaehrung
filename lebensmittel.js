@@ -210,7 +210,7 @@ const DB = [
   { n:"Mispel",                   k: 47, e: 0.4, z: 5.7, kh:12.0, f: 0.4, sf: 0.0, lys:  15, arg:  20, s:25 },
   { n:"Japanische Erdnussbälle",  k:510, e:20.0, z: 3.0, kh:60.0, f:25.0, sf: 2.5, lys: 450, arg:1500 },
   { n:"Cranberry getrocknet",     k:308, e: 0.1, z:65.0, kh:75.0, f: 1.0, sf: 0.1, lys:  15, arg:  10 },   // ⚠ viel Zucker
-  { n:"Cranberry",                k: 46, e: 0.4, z: 4.0, kh:12.0, f: 0.1, sf: 0.0, lys:  16, arg:  14 },   // frisch
+  { n:"Cranberry",                k: 46, e: 0.4, z: 4.0, kh:12.0, f: 0.1, sf: 0.0, lys:  16, arg:  14, s:  2 },   // frisch, ~2g/Stück
   { n:"Drachenfrucht getrocknet", k:270, e: 3.0, z:60.0, kh:65.0, f: 1.0, sf: 0.2, lys:  60, arg:  55 },   // ⚠ viel Zucker
   { n:"Drachenfrucht",            k: 60, e: 1.2, z: 8.0, kh:13.0, f: 0.4, sf: 0.0, lys:  20, arg:  18 },   // frisch
 
