@@ -99,6 +99,8 @@ const DB = [
   { n:"Frischkäse",         k:150, e: 6.0, z: 3.0, kh: 3.5, f:11.0, sf: 6.8, lys:430, arg:320 },
   { n:"Gouda",              k:356, e:25.0, z: 0.1, kh: 2.3, f:27.0, sf:17.4, lys:2060, arg:920 },
   { n:"Joghurt natur",      k: 61, e: 3.5, z: 4.7, kh: 4.7, f: 3.5, sf: 2.1, lys:260, arg:110 },
+  { n:"Joghurt 0,1%",       k: 37, e: 3.5, z: 3.8, kh: 4.0, f: 0.1, sf: 0.0, lys:260, arg:110 },
+  { n:"Joghurt 1,5%",       k: 47, e: 3.8, z: 3.8, kh: 4.0, f: 1.5, sf: 1.0, lys:260, arg:110 },
   { n:"Joghurt 0%",         k: 47, e: 4.3, z: 4.0, kh: 4.0, f: 0.1, sf: 0.1, lys:340, arg: 90 },
   { n:"Käse",               k:330, e:25.0, z: 0.1, kh: 0.5, f:27.0, sf:17.4, lys:1800, arg:800 },
   { n:"Mozzarella",         k:254, e:18.0, z: 0.0, kh: 2.2, f:20.0, sf:12.6, lys:1500, arg:680 },

@@ -290,7 +290,9 @@ async function laden(){
 
 function teileEingabe(val){
   // Primär-Split: Konnektoren + Komma
-  let teile=val.split(/\s+(?:und|mit|sowie|außerdem|plus|an)\s+|[,&]\s*/i);
+  // "mit" nicht splitten wenn direkt eine Zahl folgt ("mit 0,1% Fett", "mit 3,5%")
+  // Dezimalkomma schützen: "0,1" nicht als Listentrennzeichen werten
+  let teile=val.split(/\s+(?:und|sowie|außerdem|plus|an|mit(?!\s+\d))\s+|(?<!\d),(?!\d)\s*|&\s*/i);
   const ZAHL_P='ein[e]?[nm]?|halb[e]?[snrm]?|viertel|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf|dreizehn|vierzehn|fünfzehn|sechzehn|siebzehn|achtzehn|neunzehn|zwanzig|drei(?:ßig|ssig)|vierzig|fünfzig|sechzig|siebzig|achtzig|neunzig|einhundert|hundertfünfzig|zweihundert(?:fünfzig)?|dreihundert|vierhundert|fünfhundert|hundert|\\d+(?:[.,]\\d+)?';
   const MASS_P='teelöffel|tl|esslöffel|el|messlöffel|tassen?|kellen?|gläser|glas|becher|scheiben?|handvoll|prisen?|schüsse?|portionen?|stücke?';
   const ADJ_P='mittlere?[nrms]?|kleine?[nrms]?|große?[nrms]?|gute?[nrms]?|frische?[nrms]?|reife?[nrms]?|gehäufte?[nrms]?|gestrichene?[nrms]?|halbe?[nrms]?';
@@ -469,7 +471,7 @@ function parseFood(text){
   if(mMass){const anzahl=parseFloat(mMass[1].replace(',','.'));const gramsProEinheit=MASS[mMass[2].toLowerCase()]||15;return{name:mMass[3].trim(),grams:anzahl*gramsProEinheit};}
   const mMassHinten=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s+(teelöffel|esslöffel|tl|el|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|portion(?:en)?|prise[n]?|schüsse?|stücke?)$/i);
   if(mMassHinten){const anzahl=parseFloat(mMassHinten[2].replace(',','.'));const gramsProEinheit=MASS[mMassHinten[3].toLowerCase()]||15;return{name:mMassHinten[1].trim(),grams:anzahl*gramsProEinheit};}
-  const mVorne=text.match(/^(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|gramm|gram)\s+(.+)$/i);
+  const mVorne=text.match(/^(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|gramm|gram|gr)\s+(.+)$/i);
   if(mVorne){let grams=parseFloat(mVorne[1].replace(',','.'));const unit=mVorne[2].toLowerCase();if(unit==='kg'||unit==='l')grams*=1000;return{name:mVorne[3].trim(),grams};}
   const mAnzahl=text.match(/^(\d+(?:[.,]\d+)?)\s+([^\d].+)$/i);
   if(mAnzahl){const n=parseFloat(mAnzahl[1].replace(',','.'));let aName=mAnzahl[2].trim().replace(/^(?:kleine?[n]?|große?[n]?|frische?[n]?|reife?[n]?|gute?[n]?)\s+/i,'');return{name:aName,grams:Math.round(n*100)};}
