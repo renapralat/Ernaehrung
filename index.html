@@ -1344,6 +1344,11 @@ function stopMikroKat(){
 }
 function toggleMikroKat(){if(mikroKatAktiv)stopMikroKat();else startMikroKat();}
 
+// Mikro automatisch stoppen wenn Nutzer manuell tippt
+document.getElementById('lebensmittel-input').addEventListener('keydown',function(e){
+  if(mikroAktiv&&(e.key.length===1||e.key==='Backspace'||e.key==='Delete'))stopMikro();
+});
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function clearLebensmittelInput(){document.getElementById('lebensmittel-input').value='';gesprochenText='';}
