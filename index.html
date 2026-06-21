@@ -894,70 +894,66 @@ function aktualisiereBanner(){
 function matchSuche(name,s){if(!s)return true;const n=name.toLowerCase();s=s.toLowerCase();if(s.startsWith('*')&&s.endsWith('*'))return n.includes(s.slice(1,-1));if(s.startsWith('*'))return n.endsWith(s.slice(1));if(s.endsWith('*'))return n.startsWith(s.slice(0,-1));return n.includes(s);}
 
 function eintragKarte(e, datum, suche){
-  const lmEsc=(e.lebensmittel||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   let zutaten=null;
   if(e.zutaten){try{zutaten=JSON.parse(e.zutaten);}catch(ex){}}
-  let zutatenHTML='';
-  if(zutaten&&zutaten.length>1){
-    const zHasSF=zutaten.some(z=>z.sf!=null);
-    const zHasLys=zutaten.some(z=>(+z.lys||0)>0);
-    const zHasArg=zutaten.some(z=>(+z.arg||0)>0);
-    zutatenHTML='<div style="margin:0.35rem 0;overflow-x:auto">'
-      +'<table class="entries-table"><thead><tr>'
-        +'<th>Lebensmittel</th>'
-        +'<th style="text-align:right;color:#f59e0b">kcal</th>'
-        +'<th style="text-align:right;color:#22c55e">Eiw.</th>'
-        +'<th style="text-align:right;color:#f43f5e">Zck.</th>'
-        +'<th style="text-align:right;color:#ef4444">KH</th>'
-        +'<th style="text-align:right;color:#a78bfa">Fett</th>'
-        +(zHasSF?'<th style="text-align:right;color:#e879f9">ges.FS</th>':'')
-        +(zHasLys?'<th style="text-align:right;color:#60a5fa">Lys.</th>':'')
-        +(zHasArg?'<th style="text-align:right;color:#60a5fa">Argn.</th>':'')
-      +'</tr></thead><tbody>'
-      +zutaten.map(z=>{
-        const zSF=zHasSF?'<td style="text-align:right">'+(z.sf!=null?(+z.sf).toFixed(1)+'g':'–')+'</td>':'';
-        const zLys=zHasLys?'<td style="text-align:right">'+((+z.lys||0)>0?z.lys+'mg':'–')+'</td>':'';
-        const zArg=zHasArg?'<td style="text-align:right">'+((+z.arg||0)>0?z.arg+'mg':'–')+'</td>':'';
-        return '<tr>'
-          +'<td>'+z.lebensmittel+quelleBadge(z.quelle)+'</td>'
-          +'<td style="text-align:right">'+Math.round(+z.kalorien||0)+'</td>'
-          +'<td style="text-align:right">'+(+z.eiweiss||0).toFixed(1)+'g</td>'
-          +'<td style="text-align:right">'+(+z.zucker||0).toFixed(1)+'g</td>'
-          +'<td style="text-align:right">'+(+z.kohlenhydrate||0).toFixed(1)+'g</td>'
-          +'<td style="text-align:right">'+(+z.fett||0).toFixed(1)+'g</td>'
-          +zSF+zLys+zArg
-        +'</tr>';
-      }).join('')
-      +'<tr class="total-row">'
+  const multiRow=zutaten&&zutaten.length>1;
+  // Zeilen: bei vorhandenen zutaten diese nutzen, sonst Eintrag selbst als eine Zeile
+  const rows=zutaten&&zutaten.length>0 ? zutaten : [{
+    lebensmittel:e.lebensmittel,kalorien:+e.kalorien||0,eiweiss:+e.eiweiss||0,
+    zucker:+e.zucker||0,kohlenhydrate:+e.kohlenhydrate||0,fett:+e.fett||0,
+    sf:(+e.gesaettigt||0)>0?+e.gesaettigt:null,
+    lys:(+e.lysin||0)>0?+e.lysin:null,
+    arg:(+e.arginin||0)>0?+e.arginin:null,
+    quelle:e.quelle||null
+  }];
+  const hasSF=rows.some(z=>z.sf!=null&&+z.sf!==0);
+  const hasLys=rows.some(z=>(+z.lys||0)>0);
+  const hasArg=rows.some(z=>(+z.arg||0)>0);
+  const zutatenHTML='<div style="margin:0.35rem 0;overflow-x:auto">'
+    +'<table class="entries-table"><thead><tr>'
+      +'<th>Lebensmittel</th>'
+      +'<th style="text-align:right;color:#f59e0b">kcal</th>'
+      +'<th style="text-align:right;color:#22c55e">Eiw.</th>'
+      +'<th style="text-align:right;color:#f43f5e">Zck.</th>'
+      +'<th style="text-align:right;color:#ef4444">KH</th>'
+      +'<th style="text-align:right;color:#a78bfa">Fett</th>'
+      +(hasSF?'<th style="text-align:right;color:#e879f9">ges.FS</th>':'')
+      +(hasLys?'<th style="text-align:right;color:#60a5fa">Lys.</th>':'')
+      +(hasArg?'<th style="text-align:right;color:#60a5fa">Argn.</th>':'')
+    +'</tr></thead><tbody>'
+    +rows.map(z=>{
+      const zSF=hasSF?'<td style="text-align:right">'+(z.sf!=null&&+z.sf!==0?(+z.sf).toFixed(1)+'g':'–')+'</td>':'';
+      const zLys=hasLys?'<td style="text-align:right">'+((+z.lys||0)>0?Math.round(+z.lys)+'mg':'–')+'</td>':'';
+      const zArg=hasArg?'<td style="text-align:right">'+((+z.arg||0)>0?Math.round(+z.arg)+'mg':'–')+'</td>':'';
+      return '<tr>'
+        +'<td>'+z.lebensmittel+quelleBadge(z.quelle)+'</td>'
+        +'<td style="text-align:right">'+Math.round(+z.kalorien||0)+'</td>'
+        +'<td style="text-align:right">'+(+z.eiweiss||0).toFixed(1)+'g</td>'
+        +'<td style="text-align:right">'+(+z.zucker||0).toFixed(1)+'g</td>'
+        +'<td style="text-align:right">'+(+z.kohlenhydrate||0).toFixed(1)+'g</td>'
+        +'<td style="text-align:right">'+(+z.fett||0).toFixed(1)+'g</td>'
+        +zSF+zLys+zArg
+      +'</tr>';
+    }).join('')
+    +(multiRow?
+      '<tr class="total-row">'
         +'<td><strong>Gesamt</strong></td>'
         +'<td style="text-align:right;color:#f59e0b"><strong>'+Math.round(+e.kalorien||0)+'</strong></td>'
         +'<td style="text-align:right;color:#22c55e"><strong>'+(+e.eiweiss||0).toFixed(1)+'g</strong></td>'
         +'<td style="text-align:right;color:#f43f5e"><strong>'+(+e.zucker||0).toFixed(1)+'g</strong></td>'
         +'<td style="text-align:right;color:#ef4444"><strong>'+(+e.kohlenhydrate||0).toFixed(1)+'g</strong></td>'
         +'<td style="text-align:right;color:#a78bfa"><strong>'+(+e.fett||0).toFixed(1)+'g</strong></td>'
-        +(zHasSF?'<td style="text-align:right;color:#e879f9"><strong>'+((+e.gesaettigt||0)>0?(+e.gesaettigt).toFixed(1)+'g':'–')+'</strong></td>':'')
-        +(zHasLys?'<td style="text-align:right;color:#60a5fa"><strong>'+((+e.lysin||0)>0?Math.round(+e.lysin)+'mg':'–')+'</strong></td>':'')
-        +(zHasArg?'<td style="text-align:right;color:#60a5fa"><strong>'+((+e.arginin||0)>0?Math.round(+e.arginin)+'mg':'–')+'</strong></td>':'')
+        +(hasSF?'<td style="text-align:right;color:#e879f9"><strong>'+((+e.gesaettigt||0)>0?(+e.gesaettigt).toFixed(1)+'g':'–')+'</strong></td>':'')
+        +(hasLys?'<td style="text-align:right;color:#60a5fa"><strong>'+((+e.lysin||0)>0?Math.round(+e.lysin)+'mg':'–')+'</strong></td>':'')
+        +(hasArg?'<td style="text-align:right;color:#60a5fa"><strong>'+((+e.arginin||0)>0?Math.round(+e.arginin)+'mg':'–')+'</strong></td>':'')
       +'</tr>'
-      +'</tbody></table>'
-    +'</div>';
-  }
+    :'')
+    +'</tbody></table>'
+  +'</div>';
   const katBadge=e.kategorie?'<span class="kat-badge">'+hl(e.kategorie,suche)+'</span>':'';
   return '<div class="entry-card">'
     +'<div class="entry-card-name">🍽 '+hl(e.lebensmittel||'',suche)+katBadge+'</div>'
     +zutatenHTML
-    +(!(zutaten&&zutaten.length>1)?
-      '<div style="font-size:0.72rem;margin-bottom:4px;color:#475569;line-height:1.8">'
-      +'<span style="color:#f59e0b">'+Math.round(+e.kalorien||0)+'kcal</span>'
-      +' · <span style="color:#22c55e">'+(+e.eiweiss||0).toFixed(1)+'g Eiw</span>'
-      +' · <span style="color:#a78bfa">'+(+e.fett||0).toFixed(1)+'g Fett</span>'
-      +' · <span style="color:#ef4444">'+(+e.kohlenhydrate||0).toFixed(1)+'g KH</span>'
-      +' · <span style="color:#f43f5e">'+(+e.zucker||0).toFixed(1)+'g Zck</span>'
-      +((+e.gesaettigt||0)>0?' · <span style="color:#e879f9">FS:'+(+e.gesaettigt).toFixed(1)+'g</span>':'')
-      +((+e.lysin||0)>0?' · <span style="color:#60a5fa">Lys:'+(+e.lysin)+'mg</span>':'')
-      +((+e.arginin||0)>0?' · <span style="color:#60a5fa">Arg:'+(+e.arginin)+'mg</span>':'')
-      +'</div>'
-    :'')
     +'<div class="entry-card-actions">'
       +'<button class="btn-rep" onclick="wiederholenEintrag(\''+e.id+'\')">↩ Wiederholen</button>'
       +'<button class="btn-del-sm" onclick="deleteEintrag(\''+e.id+'\',\''+datum+'\')">✕</button>'
