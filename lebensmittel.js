@@ -192,9 +192,9 @@ const DB = [
   { n:"Eiweißshake Pulver",       k:400, e:80.0, z: 3.0, kh:10.0, f: 6.0, sf: 1.8, lys:8500, arg:2000 },
   { n:"Eiweiß Schokolade",        k:470, e:30.0, z:20.0, kh:35.0, f:20.0, sf:13.0, lys:1800, arg:1200 },
   { n:"Protein Snack",            k:440, e:40.0, z: 2.0, kh:20.0, f:15.0, sf: 4.0, lys:2200, arg:1800 },
-  { n:"Marmelade",                k:250, e: 0.5, z:55.0, kh:60.0, f: 0.1, sf: 0.0, lys:  10, arg:  10 },
+  { n:"Marmelade",                k:250, e: 0.5, z:55.0, kh:60.0, f: 0.1, sf: 0.0, lys:  10, arg:  10, s:8 },
   { n:"Hummus",                   k:166, e: 7.9, z: 0.4, kh:14.3, f: 9.6, sf: 1.1, lys: 410, arg: 800 },
-  { n:"Honig",                    k:304, e: 0.3, z:80.0, kh:82.4, f: 0.0, sf: 0.0, lys:   5, arg:  10 },
+  { n:"Honig",                    k:304, e: 0.3, z:80.0, kh:82.4, f: 0.0, sf: 0.0, lys:   5, arg:  10, s:8 },
   { n:"Nutella",                  k:539, e: 6.3, z:55.9, kh:57.5, f:30.9, sf:10.5, lys: 250, arg: 450 },
   { n:"Olivenöl",                 k:884, e: 0.0, z: 0.0, kh: 0.0, f:100.0, sf:13.8, lys:  0, arg:   0 },
   { n:"Sonnenblumenöl",           k:884, e: 0.0, z: 0.0, kh: 0.0, f:100.0, sf:10.1, lys:  0, arg:   0 },
@@ -243,7 +243,7 @@ const DB = [
 
   // Nussprodukte
   { n:"Erdnuss Japan Style",      k:426, e:10.0, z:22.0, kh:66.0, f:12.0, sf: 2.0, lys: 380, arg: 750 },
-  { n:"Mandelmus EnerBiO",        k:634, e:23.0, z: 4.2, kh: 6.5, f:54.0, sf: 4.5, lys: 610, arg:2310 },
+  { n:"Mandelmus EnerBiO",        k:634, e:23.0, z: 4.2, kh: 6.5, f:54.0, sf: 4.5, lys: 610, arg:2310, s:8 },
   { n:"Erdnussmus EnerBiO",       k:611, e:28.0, z: 4.5, kh:11.0, f:49.0, sf: 6.8, lys: 920, arg:3120, s:8 },
 
   // Schokolade (Stück)

@@ -381,10 +381,15 @@ function zeigeDBVorschlaege(q){
 function waehlVorschlagIdx(i){
   const x=_dbVorschlaegeListe[i];if(!x)return;
   const inp=document.getElementById('lebensmittel-input');
-  const cnt=extractCount(inp.value);   // Anzahl aus Eingabe erhalten ("5 Kirschen" → 5)
+  const v=inp.value.trim();
+  const MASS_U='teelöffel|tl|esslöffel|el|messlöffel|tassen?|kellen?|gläser|glas|becher|scheiben?|handvoll|prisen?|schüsse?|portionen?|stücke?';
+  // Maßeinheit aus aktueller Eingabe übernehmen ("ein Teelöffel Xyz" → "1 Teelöffel Name")
+  const mUnit=v.match(new RegExp('^(\\d+(?:[.,]\\d+)?)\\s+('+MASS_U+')\\b','i'));
+  const mEinUnit=v.match(new RegExp('^(?:ein[e]?[nm]?)\\s+('+MASS_U+')\\b','i'));
   let prefix='';
-  if(cnt!=null)prefix=cnt+' ';        // vorhandene Anzahl übernehmen
-  else if(x.s)prefix='1 ';            // Default: 1 Stück wenn Stückgewicht vorhanden
+  if(mUnit)prefix=mUnit[1]+' '+mUnit[2]+' ';
+  else if(mEinUnit)prefix='1 '+mEinUnit[1]+' ';
+  else{const cnt=extractCount(v);if(cnt!=null)prefix=cnt+' ';else if(x.s)prefix='1 ';}
   inp.value=prefix+x.n;
   schliessVorschlaege();
   inp.focus();
