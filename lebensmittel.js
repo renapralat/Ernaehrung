@@ -244,7 +244,7 @@ const DB = [
   // Nussprodukte
   { n:"Erdnuss Japan Style",      k:426, e:10.0, z:22.0, kh:66.0, f:12.0, sf: 2.0, lys: 380, arg: 750 },
   { n:"Mandelmus EnerBiO",        k:634, e:23.0, z: 4.2, kh: 6.5, f:54.0, sf: 4.5, lys: 610, arg:2310 },
-  { n:"Erdnussmus EnerBiO",       k:611, e:28.0, z: 4.5, kh:11.0, f:49.0, sf: 6.8, lys: 920, arg:3120 },
+  { n:"Erdnussmus EnerBiO",       k:611, e:28.0, z: 4.5, kh:11.0, f:49.0, sf: 6.8, lys: 920, arg:3120, s:8 },
 
   // Schokolade (Stück)
   { n:"Vollmilchschokolade Stück",k:543, e: 7.1, z:54.3, kh:57.1, f:31.4, sf:20.0, lys: 500, arg: 257, s:  7 },
