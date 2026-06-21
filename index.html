@@ -291,14 +291,24 @@ async function laden(){
 function teileEingabe(val){
   // Primär-Split: Konnektoren + Komma
   let teile=val.split(/\s+(?:und|mit|sowie|außerdem|plus|an)\s+|[,&]\s*/i);
-  // Sekundär-Split: eingebettete "Zahl + Maßeinheit" Muster (ohne Gewichtseinheiten g/ml/kg/l)
   const ZAHL_P='ein[e]?[nm]?|halb[e]?[snrm]?|viertel|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf|dreizehn|vierzehn|fünfzehn|sechzehn|siebzehn|achtzehn|neunzehn|zwanzig|drei(?:ßig|ssig)|vierzig|fünfzig|sechzig|siebzig|achtzig|neunzig|einhundert|hundertfünfzig|zweihundert(?:fünfzig)?|dreihundert|vierhundert|fünfhundert|hundert|\\d+(?:[.,]\\d+)?';
   const MASS_P='teelöffel|tl|esslöffel|el|messlöffel|tassen?|kellen?|gläser|glas|becher|scheiben?|handvoll|prisen?|schüsse?|portionen?|stücke?';
-  const midSplit=new RegExp(`\\s+(?=(?:${ZAHL_P})\\s+(?:(?:gehäufte?|gestrichene?|große?|kleine?|gute?)\\s+)?(?:${MASS_P})\\b)`,'i');
+  const ADJ_P='mittlere?[nrms]?|kleine?[nrms]?|große?[nrms]?|gute?[nrms]?|frische?[nrms]?|reife?[nrms]?|gehäufte?[nrms]?|gestrichene?[nrms]?|halbe?[nrms]?';
+  // Sekundär-Split: drei Muster, die den Start eines neuen Lebensmittels mitten im Text erkennen
+  const midSplit=new RegExp(
+    '\\s+(?='
+    // (1) Zahl/Zahlwort + Maßeinheit (EL, TL, Stück etc.)
+    +`(?:${ZAHL_P})\\s+(?:(?:${ADJ_P})\\s+)?(?:${MASS_P})\\b`
+    // (2) Zahl + Gewichtseinheit + Lebensmittelwort (z.B. "10 g Butter" / "150ml Milch")
+    +'|\\d+(?:[.,]\\d+)?\\s*(?:g|ml|kg|l|gramm)\\s+[a-zA-ZäöüÄÖÜß]{3}'
+    // (3) Artikel + optionales Adjektiv + Lebensmittelwort (z.B. "eine mittlere Kartoffel")
+    +`|(?:ein[e]?[nm]?|der|die|das)\\s+(?:(?:${ADJ_P})\\s+)?[a-zA-ZäöüÄÖÜß]{3,}`
+    +')', 'i');
   teile=teile.flatMap(t=>t.split(midSplit));
   const fuell=/\b(?:dazu|noch|auch|bitte|etwas|mal|dann|je|jeweils|einfach|noch dazu)\b\s*/gi;
   return teile.map(s=>s.replace(fuell,'').replace(/\s+/g,' ').trim()).filter(Boolean);
 }
+
 
 // ─── DB-Autocomplete ────────────────────────────────────────────────────────
 
