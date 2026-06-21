@@ -473,12 +473,21 @@ function sucheLokaleDB(name){
   let s=name.toLowerCase().trim().replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/,'');
   s=s.replace(/^(?:kleine?[n]?|große?[n]?|frische?[n]?|reife?[n]?|gute?[n]?|getrockne?te?[n]?|halbe?[n]?)\s+/,'');
   const sw=s.split(/\s+/)[0]; // erstes Wort für Prefix-Fallback
-  return DB.find(x=>x.n.toLowerCase()===s)
-    ||DB.find(x=>{const n=x.n.toLowerCase();return n.length>=4&&(s.startsWith(n)||n.startsWith(s));})
-    ||DB.find(x=>{const n=x.n.toLowerCase();return n.length>=4&&s.includes(n);})
-    ||DB.find(x=>{const n=x.n.toLowerCase();return sw.length>=5&&n.startsWith(sw);}) // "Proteino 25+" → "Proteinoform 25+"
+  // Plural-Stamm: -ies→-y (Cranberries), -nen/-en/-n/-s
+  let stem=s;
+  if(s.endsWith('ies')&&s.length>4)stem=s.slice(0,-3)+'y';
+  else if(s.endsWith('nen')&&s.length>5)stem=s.slice(0,-2);
+  else if(s.endsWith('en')&&s.length>5)stem=s.slice(0,-2);
+  else if(s.endsWith('n')&&s.length>5)stem=s.slice(0,-1);
+  else if(s.endsWith('s')&&s.length>4&&!s.endsWith('ss'))stem=s.slice(0,-1);
+  const _find=q=>DB.find(x=>x.n.toLowerCase()===q)
+    ||DB.find(x=>{const n=x.n.toLowerCase();return n.length>=4&&(q.startsWith(n)||n.startsWith(q));})
+    ||DB.find(x=>{const n=x.n.toLowerCase();return n.length>=4&&q.includes(n);})
+    ||DB.find(x=>{const n=x.n.toLowerCase();return sw.length>=5&&n.startsWith(sw);})
     ||null;
+  return _find(s)||(stem!==s?_find(stem):null);
 }
+
 
 async function fetchMitTimeout(url,ms){
   const ctrl=new AbortController();
