@@ -223,6 +223,11 @@ const DB = [
   // Getränke / Milchersatz
   { n:"Sojadrink Kaufland",       k: 33, e: 3.2, z: 0.0, kh: 0.2, f: 1.9, sf: 0.3, lys: 190, arg: 230 },
   { n:"Cappuccino Tchibo",        k: 47, e: 2.2, z: 3.1, kh: 3.2, f: 1.6, sf: 1.0, lys: 170, arg:  70 },
+  { n:"Champagner",               k: 90, e: 0.3, z: 2.5, kh: 2.5, f: 0.0, sf: 0.0, lys:   3, arg:   5 },  // ~12% Alk, per 100ml
+  { n:"Sekt",                     k: 75, e: 0.3, z: 1.0, kh: 2.5, f: 0.0, sf: 0.0, lys:   3, arg:   5 },  // ~11% Alk, per 100ml
+  { n:"Weißwein",                 k: 66, e: 0.1, z: 0.5, kh: 1.5, f: 0.0, sf: 0.0, lys:   2, arg:   4 },  // ~11% Alk, per 100ml
+  { n:"Rotwein",                  k: 70, e: 0.1, z: 0.5, kh: 2.0, f: 0.0, sf: 0.0, lys:   2, arg:   4 },  // ~12% Alk, per 100ml
+  { n:"Bier",                     k: 43, e: 0.5, z: 0.0, kh: 3.5, f: 0.0, sf: 0.0, lys:  10, arg:  10 },  // ~5% Alk, per 100ml
 
   // Riegel & Waffeln
   { n:"Proteinkick Rossmann",      k:479, e:28.0, z: 2.3, kh:20.0, f:16.0, sf: 7.3, lys:1200, arg:2000, s: 25 },  // Nussmischung, nicht Riegel
