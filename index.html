@@ -1061,6 +1061,8 @@ function wiederholenEintrag(id){
     foodNames=e.lebensmittel.split(',').flatMap(s=>teileEingabe(s.trim())).filter(Boolean);
   }
   foodNames.forEach(t=>foods.push(t));
+  // Kategorie aus Original-Eintrag übernehmen
+  if(e.kategorie){setKategorie(e.kategorie);}
   renderFoodList();
   document.getElementById('result-box').classList.remove('show');
   pendingRows=[];
