@@ -161,6 +161,9 @@ const DB = [
   { n:"kleiner Cappuccino",       k: 60, e: 3.0, z: 2.5, kh: 4.5, f: 2.5, sf: 1.4, lys:216, arg: 84 },
   { n:"großer Cappuccino",        k:120, e: 7.0, z: 5.0, kh: 9.0, f: 5.0, sf: 3.1, lys:504, arg:196 },
   { n:"Latte Macchiato",          k: 55, e: 2.8, z: 4.8, kh: 4.8, f: 2.0, sf: 1.3, lys:202, arg: 78 },
+  { n:"Milchkaffee",              k: 90, e: 5.0, z: 7.0, kh: 7.0, f: 5.0, sf: 3.0, lys:345, arg:135 },  // ~150ml Vollmilch
+  { n:"Milchkaffee mittel",       k:120, e: 6.0, z: 9.5, kh: 9.5, f: 7.0, sf: 4.2, lys:460, arg:180 },  // ~200ml Vollmilch
+  { n:"Kaffee Latte",             k:120, e: 6.0, z: 9.5, kh: 9.5, f: 7.0, sf: 4.2, lys:460, arg:180 },
   { n:"Schuss Milch",             k: 20, e: 1.0, z: 1.5, kh: 1.5, f: 0.9, sf: 0.5, lys: 60, arg: 23 },   // ~25ml Vollmilch
   { n:"Schuss Sojamilch",         k: 11, e: 0.9, z: 0.3, kh: 0.8, f: 0.4, sf: 0.1, lys: 50, arg: 58 },
   { n:"Geflügelbrühe",            k:  7, e: 1.0, z: 0.0, kh: 0.3, f: 0.1, sf: 0.0, lys: 75, arg: 60 },

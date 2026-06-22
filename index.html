@@ -290,6 +290,17 @@ async function laden(){
 // ─── Food list ──────────────────────────────────────────────────────────────
 
 function teileEingabe(val){
+  // "N food mit jeweils M unit food2" → "N food und N×M unit food2"
+  // z.B. "zwei Espresso doppio mit jeweils 110 ml Sojamilch" → "zwei Espresso doppio und 220 ml Sojamilch"
+  const _ZJEW={ein:1,eine:1,einen:1,einem:1,einer:1,zwei:2,drei:3,vier:4,fünf:5,sechs:6,sieben:7,acht:8,neun:9,zehn:10};
+  val=val.replace(/\bmit\s+jeweils\s+(\d+(?:[.,]\d+)?)\s*(ml|l|g|kg|gramm)\b/gi,
+    (m,amount,unit,offset,str)=>{
+      const nums=(str.slice(0,offset).match(/\b(ein[e]?[nm]?r?|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|\d+)\b/gi)||[]);
+      const last=nums[nums.length-1]||'1';
+      const n=_ZJEW[last.toLowerCase()]||parseInt(last)||1;
+      const total=Math.round(n*parseFloat(amount.replace(',','.'))*10)/10;
+      return `und ${total} ${unit}`;
+    });
   // Primär-Split: Konnektoren + Komma
   // "mit" nicht splitten wenn direkt eine Zahl folgt ("mit 0,1% Fett", "mit 3,5%")
   // Dezimalkomma schützen: "0,1" nicht als Listentrennzeichen werten
@@ -308,9 +319,13 @@ function teileEingabe(val){
     +`|(?:ein[e]?[nm]?|der|die|das)\\s+(?:(?:${ADJ_P})\\s+)?[a-zA-ZäöüÄÖÜß]{3,}`
     +')', 'i');
   teile=teile.flatMap(t=>t.split(midSplit));
-  const fuell=/\b(?:dazu|noch|auch|bitte|etwas|mal|dann|je|jeweils|einfach|noch dazu)\b\s*/gi;
-  // Spracherkennungs-Korrektur: "gekauft" → "gekocht" (z.B. "Nudeln gekauft" von Spracherkennung)
-  return teile.map(s=>s.replace(fuell,'').replace(/\bgekauft\b/gi,'gekocht').replace(/\s+/g,' ').trim()).filter(Boolean);
+  const fuell=/\b(?:dazu|noch|auch|bitte|etwas|mal|dann|je|einfach|noch dazu)\b\s*/gi;
+  // Spracherkennungs-Korrekturen
+  return teile.map(s=>s.replace(fuell,'')
+    .replace(/\bgekauft\b/gi,'gekocht')
+    .replace(/\bprotein[eo]?\s+(?:o\s+)?form\b/gi,'Proteinoform')
+    .replace(/\bprotein\s+reform\b/gi,'Proteinoform')
+    .replace(/\s+/g,' ').trim()).filter(Boolean);
 }
 
 
