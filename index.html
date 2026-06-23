@@ -1474,6 +1474,25 @@ async function init(){
   await laden();
 }
 init();
+
+// Datum auf Heute zurücksetzen wenn App aus dem Hintergrund kommt
+function _resetDatumHeute(){
+  const heute=heuteStr();
+  document.getElementById('datum').value=heute;
+  document.getElementById('datum').max=heute;
+}
+// Bfcache-Wiederherstellung (mobiler Browser, Tab-Wechsel)
+window.addEventListener('pageshow',e=>{if(e.persisted)_resetDatumHeute();});
+// Mitternacht: App bleibt offen, Tag wechselt
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'){
+    const heute=heuteStr();
+    document.getElementById('datum').max=heute;
+    const letzterTag=sessionStorage.getItem('_aktTag');
+    if(letzterTag&&letzterTag!==heute)_resetDatumHeute();
+    sessionStorage.setItem('_aktTag',heute);
+  }
+});
 </script>
 </body>
 </html>
