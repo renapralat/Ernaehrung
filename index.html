@@ -156,6 +156,7 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
         <option value="gpt-4o">GPT-4o</option>
       </select>
       <button class="btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.6rem;flex-shrink:0" onclick="toggleTokenForm()">⚙️ Token</button>
+      <button class="btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.6rem;flex-shrink:0" onclick="zeigeEigeneLebensmittel()">📋 Eigene Lebensmittel</button>
     </div>
     <div id="ki-token-form" style="display:none;margin-top:0.5rem">
       <div style="display:flex;gap:0.4rem;margin-bottom:0.4rem">
@@ -274,7 +275,7 @@ async function ladeCustomDB(){
     const r=await fetch(URL_BASE_CUSTOM+'?select=*',{headers:H});
     if(!r.ok)return;
     const rows=await r.json();
-    customDB=rows.map(x=>({n:x.name,k:+x.kalorien||0,e:+x.eiweiss||0,z:+x.zucker||0,kh:+x.kohlenhydrate||0,f:+x.fett||0,sf:x.gesaettigt!=null?+x.gesaettigt:null,lys:x.lysin!=null?+x.lysin:null,arg:x.arginin!=null?+x.arginin:null,s:x.stueckgewicht!=null?+x.stueckgewicht:undefined}));
+    customDB=rows.map(x=>({id:x.id,n:x.name,k:+x.kalorien||0,e:+x.eiweiss||0,z:+x.zucker||0,kh:+x.kohlenhydrate||0,f:+x.fett||0,sf:x.gesaettigt!=null?+x.gesaettigt:null,lys:x.lysin!=null?+x.lysin:null,arg:x.arginin!=null?+x.arginin:null,s:x.stueckgewicht!=null?+x.stueckgewicht:undefined}));
   }catch(e){customDB=[];}
 }
 
@@ -643,10 +644,136 @@ async function kiRechercheUndSpeichern(idx){
     const r=await fetch(URL_BASE_CUSTOM,{method:'POST',headers:H,body:JSON.stringify(body)});
     if(!r.ok)throw new Error('HTTP '+r.status);
     const saved=(await r.json())[0];
-    customDB.push({n:saved.name,k:+saved.kalorien,e:+saved.eiweiss,z:+saved.zucker,kh:+saved.kohlenhydrate,f:+saved.fett,sf:saved.gesaettigt,lys:saved.lysin,arg:saved.arginin,s:saved.stueckgewicht||undefined});
+    customDB.push({id:saved.id,n:saved.name,k:+saved.kalorien,e:+saved.eiweiss,z:+saved.zucker,kh:+saved.kohlenhydrate,f:+saved.fett,sf:saved.gesaettigt,lys:saved.lysin,arg:saved.arginin,s:saved.stueckgewicht||undefined});
     // Analyse neu ausführen – der Eintrag wird jetzt in der Zusatz-DB gefunden
     if(pendingKIMode)await analyzeKI();else await analyzeAndShow();
   }catch(e){alert('Fehler beim Speichern: '+e.message);}
+}
+
+// ─── Eigene Lebensmittel verwalten (Zusatz-DB): anzeigen, neu anlegen, korrigieren, löschen ──
+
+function zeigeEigeneLebensmittel(){
+  document.getElementById('eigene-lm-overlay')?.remove();
+  const ov=document.createElement('div');
+  ov.id='eigene-lm-overlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;overflow-y:auto';
+  const liste=[...customDB].sort((a,b)=>a.n.localeCompare(b.n));
+  const rowsHtml=liste.length?liste.map(x=>
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;border:1px solid #334155;border-radius:8px;padding:0.5rem 0.65rem;margin-bottom:0.4rem">'
+    +'<div style="min-width:0">'
+      +'<div style="font-size:0.85rem;color:#f1f5f9;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+x.n+'</div>'
+      +'<div style="font-size:0.7rem;color:#94a3b8">'+x.k+' kcal/100g'+(x.s?' · Portion ≈ '+x.s+'g':'')+'</div>'
+    +'</div>'
+    +'<div style="display:flex;gap:0.35rem;flex-shrink:0">'
+      +'<button class="btn-rep" style="padding:0.25rem 0.55rem" onclick="zeigeEigenLMFormular(\''+x.id+'\')" title="Bearbeiten">✎</button>'
+      +'<button class="btn-del-sm" onclick="loescheEigenesLebensmittel(\''+x.id+'\')" title="Löschen">✕</button>'
+    +'</div>'
+  +'</div>'
+  ).join(''):'<div style="color:#94a3b8;font-size:0.82rem;text-align:center;padding:1rem 0">Noch keine eigenen Lebensmittel gespeichert.</div>';
+  ov.innerHTML='<div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:1.2rem 1.1rem;max-width:480px;width:100%;max-height:85vh;overflow-y:auto">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.3rem">'
+      +'<div style="font-weight:700;color:#f1f5f9">📋 Eigene Lebensmittel</div>'
+      +'<button onclick="document.getElementById(\'eigene-lm-overlay\').remove()" style="background:none;border:none;color:#94a3b8;font-size:1.1rem;cursor:pointer;line-height:1">✕</button>'
+    +'</div>'
+    +'<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:0.75rem">Ergänzt deine eigene Datenbank (lebensmittel.js bleibt unverändert). Werte gelten pro 100g.</div>'
+    +'<button onclick="zeigeEigenLMFormular(null)" style="width:100%;padding:0.5rem;border-radius:8px;border:1px solid #60a5fa;background:rgba(96,165,250,0.15);color:#60a5fa;font-size:0.85rem;font-weight:700;cursor:pointer;margin-bottom:0.75rem">+ Neues Lebensmittel</button>'
+    +'<div>'+rowsHtml+'</div>'
+  +'</div>';
+  ov.addEventListener('click',ev=>{if(ev.target===ov)ov.remove();});
+  document.body.appendChild(ov);
+}
+
+function eigenLMFeld(label,id,val,step){
+  return '<label style="display:flex;flex-direction:column;font-size:0.68rem;color:#94a3b8;gap:2px">'+label
+    +'<input type="number" step="'+(step||'0.1')+'" id="'+id+'" value="'+(val??'')+'"'
+    +' style="width:100%;box-sizing:border-box;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:5px 7px;font-size:0.85rem"/>'
+  +'</label>';
+}
+
+function zeigeEigenLMFormular(id){
+  document.getElementById('eigene-lm-form-overlay')?.remove();
+  const x=id?customDB.find(e=>String(e.id)===String(id)):null;
+  const ov=document.createElement('div');
+  ov.id='eigene-lm-form-overlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:10000;display:flex;align-items:center;justify-content:center;padding:1rem;overflow-y:auto';
+  ov.innerHTML='<div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:1.2rem 1.1rem;max-width:420px;width:100%;max-height:85vh;overflow-y:auto">'
+    +'<div style="font-weight:700;color:#f1f5f9;margin-bottom:0.75rem">'+(x?'✎ Lebensmittel bearbeiten':'+ Neues Lebensmittel')+'</div>'
+    +'<label style="display:flex;flex-direction:column;font-size:0.68rem;color:#94a3b8;gap:2px;margin-bottom:0.6rem">Name'
+      +'<input type="text" id="eigen-lm-name" value="'+(x?x.n.replace(/"/g,'&quot;'):'')+'" placeholder="z.B. Basmati Reis"'
+      +' style="width:100%;box-sizing:border-box;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:5px 7px;font-size:0.85rem"/>'
+    +'</label>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.6rem">'
+      +eigenLMFeld('kcal/100g','eigen-lm-kcal',x?x.k:'',1)
+      +eigenLMFeld('Portion (g)','eigen-lm-portion',x?x.s:'',1)
+      +eigenLMFeld('Eiweiß (g)','eigen-lm-eiweiss',x?x.e:'')
+      +eigenLMFeld('Zucker (g)','eigen-lm-zucker',x?x.z:'')
+      +eigenLMFeld('Kohlenhydrate (g)','eigen-lm-kh',x?x.kh:'')
+      +eigenLMFeld('Fett (g)','eigen-lm-fett',x?x.f:'')
+      +eigenLMFeld('ges. Fettsäuren (g)','eigen-lm-sf',x?x.sf:'')
+      +eigenLMFeld('Lysin (mg)','eigen-lm-lys',x?x.lys:'',1)
+      +eigenLMFeld('Arginin (mg)','eigen-lm-arg',x?x.arg:'',1)
+    +'</div>'
+    +'<div style="font-size:0.68rem;color:#64748b;margin-bottom:0.75rem">Alle Werte außer Name und kcal sind optional.</div>'
+    +'<div style="display:flex;gap:0.5rem">'
+      +'<button onclick="speichereEigenesLebensmittel('+(x?'\''+x.id+'\'':'null')+')" style="flex:1;padding:0.5rem;border-radius:8px;border:1px solid #22c55e;background:rgba(34,197,94,0.15);color:#4ade80;font-size:0.85rem;font-weight:700;cursor:pointer">Speichern</button>'
+      +'<button onclick="document.getElementById(\'eigene-lm-form-overlay\').remove()" style="padding:0.5rem 0.9rem;border-radius:8px;border:1px solid #334155;background:transparent;color:#94a3b8;font-size:0.85rem;cursor:pointer">Abbrechen</button>'
+    +'</div>'
+  +'</div>';
+  ov.addEventListener('click',ev=>{if(ev.target===ov)ov.remove();});
+  document.body.appendChild(ov);
+  setTimeout(()=>document.getElementById('eigen-lm-name')?.focus(),80);
+}
+
+async function speichereEigenesLebensmittel(id){
+  const name=document.getElementById('eigen-lm-name').value.trim();
+  const kcal=+document.getElementById('eigen-lm-kcal').value;
+  if(!name){alert('Bitte einen Namen eingeben.');return;}
+  if(!kcal){alert('Bitte kcal/100g eingeben.');return;}
+  const g=fid=>{const v=document.getElementById(fid).value;return v===''?null:+v;};
+  const body={
+    name,
+    kalorien:kcal,
+    eiweiss:g('eigen-lm-eiweiss')||0,
+    zucker:g('eigen-lm-zucker')||0,
+    kohlenhydrate:g('eigen-lm-kh')||0,
+    fett:g('eigen-lm-fett')||0,
+    gesaettigt:g('eigen-lm-sf'),
+    lysin:g('eigen-lm-lys'),
+    arginin:g('eigen-lm-arg'),
+    stueckgewicht:g('eigen-lm-portion')
+  };
+  try{
+    let saved;
+    if(id){
+      const r=await fetch(URL_BASE_CUSTOM+'?id=eq.'+id,{method:'PATCH',headers:H,body:JSON.stringify(body)});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      saved=(await r.json())[0];
+      const idx=customDB.findIndex(e=>String(e.id)===String(id));
+      if(idx>=0)customDB[idx]={id:saved.id,n:saved.name,k:+saved.kalorien,e:+saved.eiweiss,z:+saved.zucker,kh:+saved.kohlenhydrate,f:+saved.fett,sf:saved.gesaettigt,lys:saved.lysin,arg:saved.arginin,s:saved.stueckgewicht||undefined};
+    }else{
+      const r=await fetch(URL_BASE_CUSTOM,{method:'POST',headers:H,body:JSON.stringify(body)});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      saved=(await r.json())[0];
+      customDB.push({id:saved.id,n:saved.name,k:+saved.kalorien,e:+saved.eiweiss,z:+saved.zucker,kh:+saved.kohlenhydrate,f:+saved.fett,sf:saved.gesaettigt,lys:saved.lysin,arg:saved.arginin,s:saved.stueckgewicht||undefined});
+    }
+    document.getElementById('eigene-lm-form-overlay')?.remove();
+    zeigeEigeneLebensmittel();
+  }catch(e){
+    if(e.message&&e.message.includes('409')){alert('Fehler: Ein Lebensmittel mit diesem Namen existiert bereits.');}
+    else alert('Fehler beim Speichern: '+e.message);
+  }
+}
+
+async function loescheEigenesLebensmittel(id){
+  const x=customDB.find(e=>String(e.id)===String(id));
+  if(!x)return;
+  if(!confirm('"'+x.n+'" aus der eigenen Zusatz-Datenbank löschen?'))return;
+  try{
+    const r=await fetch(URL_BASE_CUSTOM+'?id=eq.'+id,{method:'DELETE',headers:H});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    customDB=customDB.filter(e=>String(e.id)!==String(id));
+    zeigeEigeneLebensmittel();
+  }catch(e){alert('Fehler beim Löschen: '+e.message);}
 }
 
 // ─── Analyse: Nährwerte (individual lookup) ──────────────────────────────────
@@ -701,6 +828,8 @@ async function analyzeAndShow(){
       pendingRows.push(row);
     }
     showNWResults(pendingRows,kiGeschaetzt,nichtGefunden);
+    // Für nicht gefundene Lebensmittel automatisch die KI-Recherche starten (fragt vor dem Speichern trotzdem nach)
+    if(nichtGefunden.length&&loadToken())await kiRechercheUndSpeichern(0);
   }catch(e){alert('Fehler: '+e.message);}
   finally{if(btn){btn.innerHTML=orig;btn.disabled=false;}if(kibtn){kibtn.innerHTML=orig;kibtn.disabled=false;}}
 }
@@ -902,6 +1031,8 @@ async function analyzeKI(){
     tg.style.display='block';
     document.getElementById('result-box').classList.add('show');
     document.getElementById('kategorie-input').blur();
+    // Für nicht gefundene Lebensmittel automatisch die KI-Recherche starten (fragt vor dem Speichern trotzdem nach)
+    if(nichtGefundenKI.length)await kiRechercheUndSpeichern(0);
   }catch(e){
     if(btn){btn.innerHTML=orig;btn.disabled=false;}
     const kbEl=document.getElementById('ki-beschreibung');
