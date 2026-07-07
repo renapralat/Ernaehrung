@@ -598,8 +598,8 @@ async function kiVolleRecherche(name,token){
     headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
     body:JSON.stringify({
       model:getKiModel(),
-      messages:[{role:'user',content:'Recherchiere sorgfältig die durchschnittlichen Nährwerte pro 100g für "'+name+'". Nutze dein Wissen über Lebensmittel möglichst genau. Wenn es kein echtes, bekanntes Lebensmittel ist, setze alle Werte auf 0. Antworte NUR mit JSON: {"kcal":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0,"fett":0,"gesaettigt":0,"lysin":0,"arginin":0} (kcal in kcal, restliche Werte in g, lysin/arginin in mg – jeweils pro 100g, nur Zahlen, keine Einheiten).'}],
-      temperature:0,max_tokens:150
+      messages:[{role:'user',content:'Recherchiere sorgfältig die durchschnittlichen Nährwerte pro 100g für "'+name+'". Nutze dein Wissen über Lebensmittel möglichst genau. Gib zusätzlich an, wie viel Gramm eine im Alltag übliche Portion dieses Lebensmittels typischerweise wiegt (z.B. eine Portion gekochter Reis als Beilage, ein übliches Glas eines Getränks, ein normales Stück) – schätze realistisch, nicht 100g als Standardantwort. Wenn es kein echtes, bekanntes Lebensmittel ist, setze alle Werte auf 0. Antworte NUR mit JSON: {"kcal":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0,"fett":0,"gesaettigt":0,"lysin":0,"arginin":0,"portionsgramm":0} (kcal in kcal, restliche Werte in g, lysin/arginin in mg – jeweils pro 100g; portionsgramm ist die Gramm-Angabe für EINE übliche Portion, nur Zahlen, keine Einheiten).'}],
+      temperature:0,max_tokens:180
     })
   });
   if(!r.ok)return null;
@@ -607,7 +607,7 @@ async function kiVolleRecherche(name,token){
   const text=d.choices?.[0]?.message?.content||'';
   const m=text.match(/\{[^}]+\}/);if(!m)return null;
   const ki=JSON.parse(m[0]);
-  return{kalorien:+ki.kcal||0,eiweiss:+ki.eiweiss||0,zucker:+ki.zucker||0,kohlenhydrate:+ki.kohlenhydrate||0,fett:+ki.fett||0,gesaettigt:+ki.gesaettigt||0,lysin:Math.round(+ki.lysin||0),arginin:Math.round(+ki.arginin||0)};
+  return{kalorien:+ki.kcal||0,eiweiss:+ki.eiweiss||0,zucker:+ki.zucker||0,kohlenhydrate:+ki.kohlenhydrate||0,fett:+ki.fett||0,gesaettigt:+ki.gesaettigt||0,lysin:Math.round(+ki.lysin||0),arginin:Math.round(+ki.arginin||0),portionsgramm:Math.round(+ki.portionsgramm||0)||null};
 }
 
 async function kiRechercheUndSpeichern(idx){
@@ -615,15 +615,20 @@ async function kiRechercheUndSpeichern(idx){
   if(!eintrag)return;
   const token=loadToken();
   if(!token){alert('Für die KI-Recherche wird ein GitHub-Token benötigt (⚙️ oben rechts).');return;}
-  if(!confirm('KI nach Nährwerten für "'+eintrag.name+'" fragen und in deine eigene Zusatz-Datenbank speichern (lebensmittel.js bleibt unverändert)?'))return;
   try{
     const werte=await kiVolleRecherche(eintrag.name,token);
     if(!werte||!werte.kalorien){alert('KI konnte keine plausiblen Werte für "'+eintrag.name+'" ermitteln.');return;}
-    const body={name:eintrag.name,kalorien:werte.kalorien,eiweiss:werte.eiweiss,zucker:werte.zucker,kohlenhydrate:werte.kohlenhydrate,fett:werte.fett,gesaettigt:werte.gesaettigt,lysin:werte.lysin,arginin:werte.arginin};
+    const portionZeile=werte.portionsgramm?('\nÜbliche Portion: ca. '+werte.portionsgramm+'g (wird ab jetzt automatisch für "eine Portion '+eintrag.name+'" verwendet)'):'\n(Keine Portionsgröße ermittelt – "eine Portion" nutzt weiter den Standardwert 150g)';
+    const zusammenfassung='KI-Ergebnis für "'+eintrag.name+'" (pro 100g):\n'
+      +werte.kalorien+' kcal · '+werte.eiweiss+'g Eiweiß · '+werte.zucker+'g Zucker · '+werte.kohlenhydrate+'g Kohlenhydrate · '+werte.fett+'g Fett'
+      +portionZeile
+      +'\n\nIn die eigene Zusatz-Datenbank speichern?';
+    if(!confirm(zusammenfassung))return;
+    const body={name:eintrag.name,kalorien:werte.kalorien,eiweiss:werte.eiweiss,zucker:werte.zucker,kohlenhydrate:werte.kohlenhydrate,fett:werte.fett,gesaettigt:werte.gesaettigt,lysin:werte.lysin,arginin:werte.arginin,stueckgewicht:werte.portionsgramm};
     const r=await fetch(URL_BASE_CUSTOM,{method:'POST',headers:H,body:JSON.stringify(body)});
     if(!r.ok)throw new Error('HTTP '+r.status);
     const saved=(await r.json())[0];
-    customDB.push({n:saved.name,k:+saved.kalorien,e:+saved.eiweiss,z:+saved.zucker,kh:+saved.kohlenhydrate,f:+saved.fett,sf:saved.gesaettigt,lys:saved.lysin,arg:saved.arginin});
+    customDB.push({n:saved.name,k:+saved.kalorien,e:+saved.eiweiss,z:+saved.zucker,kh:+saved.kohlenhydrate,f:+saved.fett,sf:saved.gesaettigt,lys:saved.lysin,arg:saved.arginin,s:saved.stueckgewicht||undefined});
     // Analyse neu ausführen – der Eintrag wird jetzt in der Zusatz-DB gefunden
     if(pendingKIMode)await analyzeKI();else await analyzeAndShow();
   }catch(e){alert('Fehler beim Speichern: '+e.message);}
@@ -651,7 +656,12 @@ async function berechneZeile(food,onStatus){
   const offResult=await searchOpenFoodFacts(name);
   let n=offResult?.data||null;
   let quelle=offResult?.quelle||null;
-  if(!n){if(onStatus)onStatus(name,true);n=await callGithubKI(name);if(n)quelle='KI';}
+  if(!n){
+    if(onStatus)onStatus(name,true);
+    const kiN=await callGithubKI(name);
+    // KI antwortet bei unbekannten/erfundenen Lebensmitteln bewusst mit 0 kcal – das zählt als "nicht gefunden", nicht als Ergebnis
+    if(kiN&&(+kiN['energy-kcal_100g']||0)>0){n=kiN;quelle='KI';}
+  }
   const f=actualGrams/100;
   if(n){
     return{lebensmittel:food,kalorien:Math.round((+n['energy-kcal_100g']||0)*f),eiweiss:+((+n['proteins_100g']||0)*f).toFixed(1),zucker:+((+n['sugars_100g']||0)*f).toFixed(1),kohlenhydrate:+((+n['carbohydrates_100g']||0)*f).toFixed(1),fett:+((+n['fat_100g']||0)*f).toFixed(1),sf:(_dbE&&_dbE.sf!=null)?+(_dbE.sf*f).toFixed(1):null,lys:(_dbE&&_dbE.lys!=null)?Math.round(_dbE.lys*f):null,arg:(_dbE&&_dbE.arg!=null)?Math.round(_dbE.arg*f):null,quelle:quelle||'?',gefunden:true};
@@ -716,6 +726,19 @@ function lokaleBewertung(rows){
   return '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem;font-size:0.78rem">'+msgs.join('')+'</div>';
 }
 
+// Baut den "Nicht gefunden"-Hinweis inkl. Recherche-Buttons. Wird von showNWResults()
+// (Modus ohne Token) UND analyzeKI() (Modus MIT Token – der im Alltag genutzte Button) verwendet.
+function nichtGefundenHTML(list){
+  lastNichtGefunden=list;
+  if(!list.length)return'';
+  return '<div style="margin-bottom:0.35rem"><div style="margin-bottom:0.25rem">⚠️ Nicht gefunden (0 kcal):</div>'
+    +list.map((nf,i)=>'<div style="display:flex;align-items:center;gap:0.5rem;margin:0.2rem 0;flex-wrap:wrap">'
+      +'<span>'+nf.food+'</span>'
+      +'<button class="btn-ghost" style="font-size:0.68rem;padding:0.2rem 0.5rem" onclick="kiRechercheUndSpeichern('+i+')">🤖 KI recherchieren &amp; speichern</button>'
+    +'</div>').join('')
+  +'</div>';
+}
+
 function showNWResults(rows,kiGeschaetzt,nichtGefunden){
   document.getElementById('ki-beschreibung').style.display='none';
   document.getElementById('result-header').innerHTML='✅ Analysiert – <span style="font-size:0.75rem;color:#64748b">📊 Lokale DB / Open Food Facts</span>';
@@ -747,17 +770,7 @@ function showNWResults(rows,kiGeschaetzt,nichtGefunden){
     +(rows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right;color:#f59e0b"><strong>${totKcal}</strong></td><td style="text-align:right;color:#22c55e"><strong>${totEiw.toFixed(1)}g</strong></td><td style="text-align:right;color:#f43f5e"><strong>${totZck.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totKH.toFixed(1)}g</strong></td><td style="text-align:right;color:#a78bfa"><strong>${totFett.toFixed(1)}g</strong></td>${sfTot}${lysTot}${argTot}</tr>`:'')
     +'</tbody></table>'
     +'<div style="font-size:0.65rem;color:#475569;margin-top:3px">Quelle: 📋 eigene DB → 🌐 Open Food Facts → 🤖 KI (Reihenfolge der Suche)</div>';
-  lastNichtGefunden=nichtGefunden;
-  let hinweis='';
-  if(nichtGefunden.length){
-    hinweis+='<div style="margin-bottom:0.35rem"><div style="margin-bottom:0.25rem">⚠️ Nicht gefunden (0 kcal):</div>'
-      +nichtGefunden.map((nf,i)=>'<div style="display:flex;align-items:center;gap:0.5rem;margin:0.2rem 0;flex-wrap:wrap">'
-        +'<span>'+nf.food+'</span>'
-        +'<button class="btn-ghost" style="font-size:0.68rem;padding:0.2rem 0.5rem" onclick="kiRechercheUndSpeichern('+i+')">🤖 KI recherchieren &amp; speichern</button>'
-      +'</div>').join('')
-    +'</div>';
-  }
-  document.getElementById('result-nf').innerHTML=hinweis+lokaleBewertung(rows);
+  document.getElementById('result-nf').innerHTML=nichtGefundenHTML(nichtGefunden)+lokaleBewertung(rows);
   document.getElementById('result-totals').style.display='none';
   document.getElementById('result-box').classList.add('show');
   document.getElementById('kategorie-input').blur();
@@ -828,6 +841,8 @@ async function analyzeKI(){
       }
       return{lebensmittel:e.name,kalorien:kcal,eiweiss:eiw,zucker:zck,kohlenhydrate:kh,fett,sf,lys,arg,quelle:dbE?'DB':'KI'};
     });
+    // KI antwortet bei unbekannten/erfundenen Lebensmitteln bewusst mit 0 kcal – als "nicht gefunden" markieren statt stillschweigend 0 anzuzeigen
+    const nichtGefundenKI=pendingRows.filter(r=>r.quelle==='KI'&&(+r.kalorien||0)===0).map(r=>({food:r.lebensmittel,name:parseFood(r.lebensmittel).name}));
 
     // Show beschreibung
     const kbEl=document.getElementById('ki-beschreibung');
@@ -855,7 +870,7 @@ async function analyzeKI(){
       }).join('')
       +(pendingRows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right;color:#f59e0b"><strong>${totKcal}</strong></td><td style="text-align:right;color:#22c55e"><strong>${totEiw}g</strong></td><td style="text-align:right;color:#f43f5e"><strong>${totZck}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totKH}g</strong></td><td style="text-align:right;color:#a78bfa"><strong>${totFettKI}g</strong></td>`+(hasSFki?`<td style="text-align:right;color:#e879f9"><strong>${totSFki2.toFixed(1)}g</strong></td>`:'')+( hasLyski?`<td style="text-align:right;color:#60a5fa"><strong>${totLyski2}mg</strong></td>`:'')+( hasArgki?`<td style="text-align:right;color:#60a5fa"><strong>${totArgki2}mg</strong></td>`:'')+`</tr>` :'')
       +'</tbody></table>';
-    document.getElementById('result-nf').innerHTML=lokaleBewertung(pendingRows);
+    document.getElementById('result-nf').innerHTML=nichtGefundenHTML(nichtGefundenKI)+lokaleBewertung(pendingRows);
     document.getElementById('result-header').innerHTML='✅ Analysiert – <span style="font-size:0.75rem;color:#4ade80">🤖 KI-Analyse</span>';
 
     // Show totals grid (aus pendingRows berechnen, da DB-Werte KI-Werte überschreiben können)
