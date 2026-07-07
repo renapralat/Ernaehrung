@@ -645,8 +645,11 @@ async function kiRechercheUndSpeichern(idx){
     if(!r.ok)throw new Error('HTTP '+r.status);
     const saved=(await r.json())[0];
     customDB.push({id:saved.id,n:saved.name,k:+saved.kalorien,e:+saved.eiweiss,z:+saved.zucker,kh:+saved.kohlenhydrate,f:+saved.fett,sf:saved.gesaettigt,lys:saved.lysin,arg:saved.arginin,s:saved.stueckgewicht||undefined});
-    // Analyse neu ausführen – der Eintrag wird jetzt in der Zusatz-DB gefunden
-    if(pendingKIMode)await analyzeKI();else await analyzeAndShow();
+    // Analyse neu ausführen – der Eintrag wird jetzt in der Zusatz-DB gefunden.
+    // autoRecherche=false: verhindert eine Kette aus mehreren Bestätigungsdialogen hintereinander,
+    // wenn mehrere Lebensmittel auf einmal nicht gefunden wurden – für weitere fehlende Einträge
+    // bleibt der Button "🤖 KI recherchieren & speichern" sichtbar und muss einzeln angeklickt werden.
+    if(pendingKIMode)await analyzeKI(false);else await analyzeAndShow(false);
   }catch(e){alert('Fehler beim Speichern: '+e.message);}
 }
 
@@ -811,7 +814,8 @@ async function berechneZeile(food,onStatus){
   return{lebensmittel:food,kalorien:0,eiweiss:0,zucker:0,kohlenhydrate:0,fett:0,sf:null,lys:null,arg:null,quelle:'?',gefunden:false};
 }
 
-async function analyzeAndShow(){
+async function analyzeAndShow(autoRecherche){
+  if(autoRecherche===undefined)autoRecherche=true;
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
   const btn=document.getElementById('analyze-btn');
   const kibtn=document.getElementById('ki-btn');
@@ -829,7 +833,7 @@ async function analyzeAndShow(){
     }
     showNWResults(pendingRows,kiGeschaetzt,nichtGefunden);
     // Für nicht gefundene Lebensmittel automatisch die KI-Recherche starten (fragt vor dem Speichern trotzdem nach)
-    if(nichtGefunden.length&&loadToken())await kiRechercheUndSpeichern(0);
+    if(autoRecherche&&nichtGefunden.length&&loadToken())await kiRechercheUndSpeichern(0);
   }catch(e){alert('Fehler: '+e.message);}
   finally{if(btn){btn.innerHTML=orig;btn.disabled=false;}if(kibtn){kibtn.innerHTML=orig;kibtn.disabled=false;}}
 }
@@ -922,7 +926,8 @@ function showNWResults(rows,kiGeschaetzt,nichtGefunden){
 
 // ─── Analyse: KI Bewertung (whole-meal prompt) ───────────────────────────────
 
-async function analyzeKI(){
+async function analyzeKI(autoRecherche){
+  if(autoRecherche===undefined)autoRecherche=true;
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
   const token=loadToken();
   const btn=document.getElementById('ki-btn');
@@ -930,7 +935,7 @@ async function analyzeKI(){
   if(btn){btn.disabled=true;btn.innerHTML='<span class="loading"></span>KI…';}
   if(!token){
     if(btn){btn.innerHTML=orig;btn.disabled=false;}
-    await analyzeAndShow();return;
+    await analyzeAndShow(autoRecherche);return;
   }
   try{
     const prompt='Du bist Ernährungsberaterin. Analysiere diese Mahlzeit für eine Person (70 Jahre, Diabetes → Zucker minimieren, erhöhtes Cholesterin → gesättigte Fettsäuren beachten, Ziel: 80g Eiweiß/Tag).\n\nLebensmittel:\n'
@@ -1003,6 +1008,13 @@ async function analyzeKI(){
     const totSFki2=pendingRows.reduce((a,r)=>a+(+r.sf||0),0);
     const totLyski2=pendingRows.reduce((a,r)=>a+(+r.lys||0),0);
     const totArgki2=pendingRows.reduce((a,r)=>a+(+r.arg||0),0);
+    // Werden schon in der Tabellen-Gesamtzeile gebraucht (bei >1 Lebensmittel) – deshalb hier VOR der Tabelle berechnet,
+    // nicht erst danach (sonst ReferenceError: "Cannot access before initialization" bei mehr als einem Lebensmittel).
+    const totKcal=pendingRows.reduce((a,r)=>a+r.kalorien,0);
+    const totEiw=pendingRows.reduce((a,r)=>a+r.eiweiss,0).toFixed(1);
+    const totZck=pendingRows.reduce((a,r)=>a+r.zucker,0).toFixed(1);
+    const totKH=pendingRows.reduce((a,r)=>a+r.kohlenhydrate,0).toFixed(1);
+    const totFettKI=pendingRows.reduce((a,r)=>a+r.fett,0).toFixed(1);
     document.getElementById('result-table-wrap').innerHTML=
       '<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right;color:#f59e0b">kcal</th><th style="text-align:right;color:#22c55e">Eiw.</th><th style="text-align:right;color:#f43f5e">Zck.</th><th style="text-align:right;color:#ef4444">KH</th><th style="text-align:right;color:#a78bfa">Fett</th>'+sfHki+lysHki+argHki+'</tr></thead><tbody>'
       +pendingRows.map(r=>{
@@ -1017,12 +1029,7 @@ async function analyzeKI(){
     document.getElementById('result-nf').innerHTML=nichtGefundenHTML(nichtGefundenKI)+lokaleBewertung(pendingRows);
     document.getElementById('result-header').innerHTML='✅ Analysiert – <span style="font-size:0.75rem;color:#4ade80">🤖 KI-Analyse</span>';
 
-    // Show totals grid (aus pendingRows berechnen, da DB-Werte KI-Werte überschreiben können)
-    const totKcal=pendingRows.reduce((a,r)=>a+r.kalorien,0);
-    const totEiw=pendingRows.reduce((a,r)=>a+r.eiweiss,0).toFixed(1);
-    const totZck=pendingRows.reduce((a,r)=>a+r.zucker,0).toFixed(1);
-    const totKH=pendingRows.reduce((a,r)=>a+r.kohlenhydrate,0).toFixed(1);
-    const totFettKI=pendingRows.reduce((a,r)=>a+r.fett,0).toFixed(1);
+    // Show totals grid (totKcal/totEiw/totZck/totKH/totFettKI werden schon weiter oben berechnet)
     const totSFki=pendingRows.reduce((a,r)=>a+(+r.sf||0),0);
     const totLyski=pendingRows.reduce((a,r)=>a+(+r.lys||0),0);
     const totArgki=pendingRows.reduce((a,r)=>a+(+r.arg||0),0);
@@ -1032,13 +1039,13 @@ async function analyzeKI(){
     document.getElementById('result-box').classList.add('show');
     document.getElementById('kategorie-input').blur();
     // Für nicht gefundene Lebensmittel automatisch die KI-Recherche starten (fragt vor dem Speichern trotzdem nach)
-    if(nichtGefundenKI.length)await kiRechercheUndSpeichern(0);
+    if(autoRecherche&&nichtGefundenKI.length)await kiRechercheUndSpeichern(0);
   }catch(e){
     if(btn){btn.innerHTML=orig;btn.disabled=false;}
     const kbEl=document.getElementById('ki-beschreibung');
     kbEl.textContent='⚠️ KI nicht verfügbar – Werte aus lokaler DB / Open Food Facts.';
     kbEl.style.display='block';
-    await analyzeAndShow();
+    await analyzeAndShow(autoRecherche);
   }
   if(btn){btn.innerHTML=orig;btn.disabled=false;}
 }
@@ -1224,6 +1231,7 @@ function eintragKarte(e, datum, suche){
     +zutatenHTML
     +'<div class="entry-card-actions">'
       +'<button class="btn-rep" onclick="wiederholenEintrag(\''+e.id+'\')">↩ Wiederholen</button>'
+      +'<button class="btn-rep" onclick="zeigeAnalyseEintrag(\''+e.id+'\')" title="Nur ansehen, wie der Eintrag heute bewertet würde – nichts wird gespeichert">🤖 Analyse</button>'
       +'<button class="btn-rep" onclick="neuBewertenEintrag(\''+e.id+'\')" title="Nährwerte für diesen Eintrag neu ermitteln, z.B. nachdem fehlende Werte ergänzt wurden">🔄 Neu bewerten</button>'
       +'<button class="btn-del-sm" onclick="deleteEintrag(\''+e.id+'\',\''+datum+'\')">✕</button>'
     +'</div>'
@@ -1313,20 +1321,21 @@ function renderEintraege(){
   container.innerHTML=irgendwas?html:'<div class="empty-hint">Keine Einträge für diese Suche.</div>';
 }
 
+// Zutaten-Freitexte aus einem gespeicherten Eintrag rekonstruieren (aus zutaten-JSON,
+// sonst Fallback über den lebensmittel-Text). Wird von Wiederholen/Neu bewerten/Analyse genutzt.
+function itemsAusEintrag(e){
+  let items=[];
+  if(e.zutaten){
+    try{const z=JSON.parse(e.zutaten);if(z&&z.length>0)items=z.map(item=>item.lebensmittel).filter(Boolean);}catch(ex){}
+  }
+  if(!items.length)items=(e.lebensmittel||'').split(',').flatMap(s=>teileEingabe(s.trim())).filter(Boolean);
+  return items;
+}
+
 function wiederholenEintrag(id){
   const e=eintraege.find(x=>String(x.id)===String(id));
   if(!e)return;
-  let foodNames=[];
-  if(e.zutaten){
-    try{
-      const z=JSON.parse(e.zutaten);
-      if(z&&z.length>0)foodNames=z.map(item=>item.lebensmittel).filter(Boolean);
-    }catch(ex){}
-  }
-  if(!foodNames.length){
-    // Fallback: lebensmittel nach Komma splitten + Maßeinheiten weiter auftrennen
-    foodNames=e.lebensmittel.split(',').flatMap(s=>teileEingabe(s.trim())).filter(Boolean);
-  }
+  const foodNames=itemsAusEintrag(e);
   foodNames.forEach(t=>foods.push(t));
   // Kategorie aus Original-Eintrag übernehmen
   if(e.kategorie){setKategorie(e.kategorie);}
@@ -1343,11 +1352,7 @@ function wiederholenEintrag(id){
 async function neuBewertenEintrag(id){
   const e=eintraege.find(x=>String(x.id)===String(id));
   if(!e)return;
-  let items=[];
-  if(e.zutaten){
-    try{const z=JSON.parse(e.zutaten);if(z&&z.length>0)items=z.map(it=>it.lebensmittel).filter(Boolean);}catch(ex){}
-  }
-  if(!items.length)items=(e.lebensmittel||'').split(',').flatMap(s=>teileEingabe(s.trim())).filter(Boolean);
+  const items=itemsAusEintrag(e);
   if(!items.length)return;
 
   zeigeNeubewertungOverlay(id,null);
@@ -1363,6 +1368,76 @@ async function neuBewertenEintrag(id){
     document.getElementById('neubew-overlay')?.remove();
     alert('Fehler bei der Neubewertung: '+ex.message);
   }
+}
+
+// ─── Analyse ansehen: wie "Neu bewerten", aber rein lesend – es wird nichts gespeichert ──
+
+async function zeigeAnalyseEintrag(id){
+  const e=eintraege.find(x=>String(x.id)===String(id));
+  if(!e)return;
+  const items=itemsAusEintrag(e);
+  if(!items.length)return;
+
+  zeigeAnalyseOverlay(null);
+  try{
+    const rows=[];
+    for(const food of items){
+      const row=await berechneZeile(food);
+      delete row.gefunden;
+      rows.push(row);
+    }
+    zeigeAnalyseOverlay(rows);
+  }catch(ex){
+    document.getElementById('analyse-overlay')?.remove();
+    alert('Fehler bei der Analyse: '+ex.message);
+  }
+}
+
+function zeigeAnalyseOverlay(rows){
+  document.getElementById('analyse-overlay')?.remove();
+  const ov=document.createElement('div');
+  ov.id='analyse-overlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;overflow-y:auto';
+  if(!rows){
+    ov.innerHTML='<div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:1.6rem;text-align:center;color:#94a3b8"><span class="loading"></span> Wird analysiert…</div>';
+    document.body.appendChild(ov);
+    return;
+  }
+  const hasSF=rows.some(r=>r.sf!=null);
+  const hasLys=rows.some(r=>r.lys!=null);
+  const hasArg=rows.some(r=>r.arg!=null);
+  const totKcal=rows.reduce((a,r)=>a+r.kalorien,0);
+  const totEiw=rows.reduce((a,r)=>a+r.eiweiss,0);
+  const totZck=rows.reduce((a,r)=>a+r.zucker,0);
+  const totKH=rows.reduce((a,r)=>a+r.kohlenhydrate,0);
+  const totFett=rows.reduce((a,r)=>a+r.fett,0);
+  const totSF=rows.reduce((a,r)=>a+(+r.sf||0),0);
+  const totLys=rows.reduce((a,r)=>a+(+r.lys||0),0);
+  const totArg=rows.reduce((a,r)=>a+(+r.arg||0),0);
+  const sfHead=hasSF?'<th style="text-align:right;color:#e879f9">ges.FS</th>':'';
+  const lysHead=hasLys?'<th style="text-align:right;color:#60a5fa">Lys.</th>':'';
+  const argHead=hasArg?'<th style="text-align:right;color:#60a5fa">Argn.</th>':'';
+  const tableHtml='<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right;color:#f59e0b">kcal</th><th style="text-align:right;color:#22c55e">Eiw.</th><th style="text-align:right;color:#f43f5e">Zck.</th><th style="text-align:right;color:#ef4444">KH</th><th style="text-align:right;color:#a78bfa">Fett</th>'+sfHead+lysHead+argHead+'</tr></thead><tbody>'
+    +rows.map(r=>{
+      const sfCell=hasSF?`<td style="text-align:right">${r.sf!=null?r.sf.toFixed(1)+'g':'–'}</td>`:'';
+      const lysCell=hasLys?`<td style="text-align:right">${r.lys!=null?r.lys+'mg':'–'}</td>`:'';
+      const argCell=hasArg?`<td style="text-align:right">${r.arg!=null?r.arg+'mg':'–'}</td>`:'';
+      return `<tr><td>${r.lebensmittel}${quelleBadge(r.quelle)}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td>${sfCell}${lysCell}${argCell}</tr>`;
+    }).join('')
+    +(rows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right;color:#f59e0b"><strong>${totKcal}</strong></td><td style="text-align:right;color:#22c55e"><strong>${totEiw.toFixed(1)}g</strong></td><td style="text-align:right;color:#f43f5e"><strong>${totZck.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totKH.toFixed(1)}g</strong></td><td style="text-align:right;color:#a78bfa"><strong>${totFett.toFixed(1)}g</strong></td>${hasSF?`<td style="text-align:right;color:#e879f9"><strong>${totSF.toFixed(1)}g</strong></td>`:''}${hasLys?`<td style="text-align:right;color:#60a5fa"><strong>${totLys}mg</strong></td>`:''}${hasArg?`<td style="text-align:right;color:#60a5fa"><strong>${totArg}mg</strong></td>`:''}</tr>`:'')
+    +'</tbody></table>';
+  ov.innerHTML='<div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:1.2rem 1.1rem;max-width:480px;width:100%;max-height:85vh;overflow-y:auto">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.3rem">'
+      +'<div style="font-weight:700;color:#f1f5f9">🤖 Analyse (nur ansehen)</div>'
+      +'<button onclick="document.getElementById(\'analyse-overlay\').remove()" style="background:none;border:none;color:#94a3b8;font-size:1.1rem;cursor:pointer;line-height:1">✕</button>'
+    +'</div>'
+    +'<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:0.6rem">So würde dieser Eintrag mit dem heutigen Stand deiner Datenbank berechnet. Es wird nichts gespeichert oder verändert.</div>'
+    +'<div style="overflow-x:auto">'+tableHtml+'</div>'
+    +lokaleBewertung(rows)
+    +'<button onclick="document.getElementById(\'analyse-overlay\').remove()" style="width:100%;margin-top:0.75rem;padding:0.5rem;border-radius:8px;border:1px solid #334155;background:transparent;color:#94a3b8;font-size:0.85rem;cursor:pointer">Schließen</button>'
+  +'</div>';
+  ov.addEventListener('click',ev=>{if(ev.target===ov)ov.remove();});
+  document.body.appendChild(ov);
 }
 
 function neubewFeld(label,key,i,val){
