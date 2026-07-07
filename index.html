@@ -547,7 +547,20 @@ function sucheLokaleDB(name){
     ||_quelle.find(x=>{const n=x.n.toLowerCase();return n.length>=4&&q.includes(n);})
     ||_quelle.find(x=>{const n=x.n.toLowerCase();return sw.length>=5&&n.startsWith(sw);})
     ||null;
-  return _find(s)||(stem!==s?_find(stem):null);
+  // "Reis", "Nudeln", "Pasta", "Quinoa", "Couscous" etc. gibt es roh UND gekocht in der DB.
+  // Ohne ausdrückliche Angabe ("roh"/"trocken"/"ungekocht") meint man beim Essen fast immer die gekochte Variante –
+  // sonst würde z.B. "eine Portion Reis" mit den Werten von rohem (trockenem) Reis berechnet (~2,8x zu viele kcal).
+  const _bevorzugeGekocht=treffer=>{
+    if(!treffer)return treffer;
+    const n=treffer.n.toLowerCase();
+    if(n.endsWith(' roh')&&!/\broh\b|\btrocken\b|\bungekocht\b/i.test(s)){
+      const zielName=(treffer.n.slice(0,-4)+' gekocht').toLowerCase();
+      const alt=_quelle.find(x=>x.n.toLowerCase()===zielName);
+      if(alt)return alt;
+    }
+    return treffer;
+  };
+  return _bevorzugeGekocht(_find(s)||(stem!==s?_find(stem):null));
 }
 
 
