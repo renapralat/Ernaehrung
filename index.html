@@ -533,7 +533,9 @@ function sucheLokaleDB(name){
   // eigene DB (lebensmittel.js) hat Vorrang, Zusatz-DB (per KI recherchiert & in Supabase gespeichert) als Ergänzung
   const _quelle=customDB&&customDB.length?DB.concat(customDB):DB;
   let s=name.toLowerCase().trim().replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/,'');
-  s=s.replace(/^(?:kleine?[n]?|große?[n]?|frische?[n]?|reife?[n]?|gute?[n]?|getrockne?te?[n]?|halbe?[n]?)\s+/,'');
+  // "gekochter Reis" (natürliche Wortstellung) auf "Reis" reduzieren, damit es die DB findet
+  // (die DB nennt es "Reis gekocht" – ohne diesen Schritt schlägt die Suche für diese sehr übliche Formulierung fehl)
+  s=s.replace(/^(?:kleine?[n]?|große?[n]?|frische?[n]?|reife?[n]?|gute?[n]?|getrockne?te?[n]?|halbe?[n]?|gekochte?[rns]?)\s+/,'');
   const sw=s.split(/\s+/)[0]; // erstes Wort für Prefix-Fallback
   // Plural-Stamm: -ies→-y (Cranberries), -nen/-en/-n/-s
   let stem=s;
