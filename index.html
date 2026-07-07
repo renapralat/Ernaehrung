@@ -65,7 +65,7 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
 .entry-card{padding:0.65rem 0.75rem;}
 .entry-card+.entry-card{border-top:1px solid #1e293b;}
 .entry-card-name{font-size:0.88rem;font-weight:600;margin-bottom:0.45rem;color:#f1f5f9;}
-.entry-card-actions{display:flex;justify-content:space-between;align-items:center;}
+.entry-card-actions{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.4rem;}
 .btn-rep{background:rgba(96,165,250,0.12);border:1px solid rgba(96,165,250,0.3);color:#60a5fa;padding:0.28rem 0.7rem;font-size:0.78rem;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;}
 .btn-rep:hover{background:rgba(96,165,250,0.22);}
 .btn-del-sm{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:0.28rem 0.6rem;font-size:0.78rem;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:700;}
@@ -263,10 +263,20 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
 <script src="lebensmittel.js"></script>
 <script>
 const URL_BASE = 'https://bxwamphvycjfeexjzgyv.supabase.co/rest/v1/ernaehrung';
+const URL_BASE_CUSTOM = 'https://bxwamphvycjfeexjzgyv.supabase.co/rest/v1/eigene_lebensmittel';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4d2FtcGh2eWNqZmVleGp6Z3l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MjI1NjQsImV4cCI6MjA5MzM5ODU2NH0.LMEz3yuh8GmIZ6PfkTxer1yrAYpspNJOBPKTIV7T3qQ';
 const H = {'Content-Type':'application/json','apikey':KEY,'Authorization':'Bearer '+KEY,'Prefer':'return=representation'};
 
-let eintraege=[], foods=[], pendingRows=[], pendingKIMode=false;
+let eintraege=[], foods=[], pendingRows=[], pendingKIMode=false, customDB=[], lastNichtGefunden=[];
+
+async function ladeCustomDB(){
+  try{
+    const r=await fetch(URL_BASE_CUSTOM+'?select=*',{headers:H});
+    if(!r.ok)return;
+    const rows=await r.json();
+    customDB=rows.map(x=>({n:x.name,k:+x.kalorien||0,e:+x.eiweiss||0,z:+x.zucker||0,kh:+x.kohlenhydrate||0,f:+x.fett||0,sf:x.gesaettigt!=null?+x.gesaettigt:null,lys:x.lysin!=null?+x.lysin:null,arg:x.arginin!=null?+x.arginin:null,s:x.stueckgewicht!=null?+x.stueckgewicht:undefined}));
+  }catch(e){customDB=[];}
+}
 
 function setStatus(t,txt){document.getElementById('dot').className='dot '+t;document.getElementById('cloud-text').textContent=txt;}
 function heuteStr(){return new Date().toISOString().slice(0,10);}
@@ -520,6 +530,8 @@ function parseFood(text){
 
 function sucheLokaleDB(name){
   if(typeof DB==='undefined')return null;
+  // eigene DB (lebensmittel.js) hat Vorrang, Zusatz-DB (per KI recherchiert & in Supabase gespeichert) als Ergänzung
+  const _quelle=customDB&&customDB.length?DB.concat(customDB):DB;
   let s=name.toLowerCase().trim().replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/,'');
   s=s.replace(/^(?:kleine?[n]?|große?[n]?|frische?[n]?|reife?[n]?|gute?[n]?|getrockne?te?[n]?|halbe?[n]?)\s+/,'');
   const sw=s.split(/\s+/)[0]; // erstes Wort für Prefix-Fallback
@@ -530,10 +542,10 @@ function sucheLokaleDB(name){
   else if(s.endsWith('en')&&s.length>5)stem=s.slice(0,-2);
   else if(s.endsWith('n')&&s.length>5)stem=s.slice(0,-1);
   else if(s.endsWith('s')&&s.length>4&&!s.endsWith('ss'))stem=s.slice(0,-1);
-  const _find=q=>DB.find(x=>x.n.toLowerCase()===q)
-    ||DB.find(x=>{const n=x.n.toLowerCase();return n.length>=4&&(q.startsWith(n)||n.startsWith(q));})
-    ||DB.find(x=>{const n=x.n.toLowerCase();return n.length>=4&&q.includes(n);})
-    ||DB.find(x=>{const n=x.n.toLowerCase();return sw.length>=5&&n.startsWith(sw);})
+  const _find=q=>_quelle.find(x=>x.n.toLowerCase()===q)
+    ||_quelle.find(x=>{const n=x.n.toLowerCase();return n.length>=4&&(q.startsWith(n)||n.startsWith(q));})
+    ||_quelle.find(x=>{const n=x.n.toLowerCase();return n.length>=4&&q.includes(n);})
+    ||_quelle.find(x=>{const n=x.n.toLowerCase();return sw.length>=5&&n.startsWith(sw);})
     ||null;
   return _find(s)||(stem!==s?_find(stem):null);
 }
@@ -578,7 +590,74 @@ async function callGithubKI(name){
   }catch(e){return null;}
 }
 
+// ─── Nicht gefundene Lebensmittel: KI recherchieren & in Zusatz-DB speichern ─
+
+async function kiVolleRecherche(name,token){
+  const r=await fetch('https://models.inference.ai.azure.com/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body:JSON.stringify({
+      model:getKiModel(),
+      messages:[{role:'user',content:'Recherchiere sorgfältig die durchschnittlichen Nährwerte pro 100g für "'+name+'". Nutze dein Wissen über Lebensmittel möglichst genau. Wenn es kein echtes, bekanntes Lebensmittel ist, setze alle Werte auf 0. Antworte NUR mit JSON: {"kcal":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0,"fett":0,"gesaettigt":0,"lysin":0,"arginin":0} (kcal in kcal, restliche Werte in g, lysin/arginin in mg – jeweils pro 100g, nur Zahlen, keine Einheiten).'}],
+      temperature:0,max_tokens:150
+    })
+  });
+  if(!r.ok)return null;
+  const d=await r.json();
+  const text=d.choices?.[0]?.message?.content||'';
+  const m=text.match(/\{[^}]+\}/);if(!m)return null;
+  const ki=JSON.parse(m[0]);
+  return{kalorien:+ki.kcal||0,eiweiss:+ki.eiweiss||0,zucker:+ki.zucker||0,kohlenhydrate:+ki.kohlenhydrate||0,fett:+ki.fett||0,gesaettigt:+ki.gesaettigt||0,lysin:Math.round(+ki.lysin||0),arginin:Math.round(+ki.arginin||0)};
+}
+
+async function kiRechercheUndSpeichern(idx){
+  const eintrag=lastNichtGefunden[idx];
+  if(!eintrag)return;
+  const token=loadToken();
+  if(!token){alert('Für die KI-Recherche wird ein GitHub-Token benötigt (⚙️ oben rechts).');return;}
+  if(!confirm('KI nach Nährwerten für "'+eintrag.name+'" fragen und in deine eigene Zusatz-Datenbank speichern (lebensmittel.js bleibt unverändert)?'))return;
+  try{
+    const werte=await kiVolleRecherche(eintrag.name,token);
+    if(!werte||!werte.kalorien){alert('KI konnte keine plausiblen Werte für "'+eintrag.name+'" ermitteln.');return;}
+    const body={name:eintrag.name,kalorien:werte.kalorien,eiweiss:werte.eiweiss,zucker:werte.zucker,kohlenhydrate:werte.kohlenhydrate,fett:werte.fett,gesaettigt:werte.gesaettigt,lysin:werte.lysin,arginin:werte.arginin};
+    const r=await fetch(URL_BASE_CUSTOM,{method:'POST',headers:H,body:JSON.stringify(body)});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const saved=(await r.json())[0];
+    customDB.push({n:saved.name,k:+saved.kalorien,e:+saved.eiweiss,z:+saved.zucker,kh:+saved.kohlenhydrate,f:+saved.fett,sf:saved.gesaettigt,lys:saved.lysin,arg:saved.arginin});
+    // Analyse neu ausführen – der Eintrag wird jetzt in der Zusatz-DB gefunden
+    if(pendingKIMode)await analyzeKI();else await analyzeAndShow();
+  }catch(e){alert('Fehler beim Speichern: '+e.message);}
+}
+
 // ─── Analyse: Nährwerte (individual lookup) ──────────────────────────────────
+
+// Nährwerte für EIN Lebensmittel-Freitext-Item ermitteln (eigene DB+Zusatz-DB → OFF → KI).
+// Wird von analyzeAndShow() und neuBewertenEintrag() gemeinsam genutzt.
+async function berechneZeile(food,onStatus){
+  const{name,grams}=parseFood(food);
+  if(onStatus)onStatus(name,false);
+  // Per-piece: wenn DB-Eintrag s-Feld hat, extrahiere Anzahl aus Freitext (auch "halbe", "eine" etc.)
+  // NICHT bei echten Maßeinheiten (Esslöffel, Messlöffel usw.) – da zählt die Einheit selbst
+  const _hasUnit=/\b\d+\s*(g|ml|kg|l|gramm)\b/i.test(food);
+  const _hasMassUnit=/\b(teelöffel|tl|esslöffel|el|messlöffel|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|prise[n]?|schüsse?)\b/i.test(food);
+  const _dbE=sucheLokaleDB(name);
+  let actualGrams=grams;
+  if(!_hasUnit&&!_hasMassUnit&&_dbE&&_dbE.s){
+    let cnt=extractCount(food);
+    // Fallback: "Name 2 Portionen" oder "Name 3 Stücke" (Zahl nicht am Anfang)
+    if(cnt==null){const m2=food.match(/\b(\d+(?:[.,]\d+)?)\s+(?:portion(?:en)?|stücke?|messlöffel)/i);if(m2)cnt=parseFloat(m2[1].replace(',','.'));}
+    if(cnt!=null)actualGrams=Math.round(cnt*_dbE.s);
+  }
+  const offResult=await searchOpenFoodFacts(name);
+  let n=offResult?.data||null;
+  let quelle=offResult?.quelle||null;
+  if(!n){if(onStatus)onStatus(name,true);n=await callGithubKI(name);if(n)quelle='KI';}
+  const f=actualGrams/100;
+  if(n){
+    return{lebensmittel:food,kalorien:Math.round((+n['energy-kcal_100g']||0)*f),eiweiss:+((+n['proteins_100g']||0)*f).toFixed(1),zucker:+((+n['sugars_100g']||0)*f).toFixed(1),kohlenhydrate:+((+n['carbohydrates_100g']||0)*f).toFixed(1),fett:+((+n['fat_100g']||0)*f).toFixed(1),sf:(_dbE&&_dbE.sf!=null)?+(_dbE.sf*f).toFixed(1):null,lys:(_dbE&&_dbE.lys!=null)?Math.round(_dbE.lys*f):null,arg:(_dbE&&_dbE.arg!=null)?Math.round(_dbE.arg*f):null,quelle:quelle||'?',gefunden:true};
+  }
+  return{lebensmittel:food,kalorien:0,eiweiss:0,zucker:0,kohlenhydrate:0,fett:0,sf:null,lys:null,arg:null,quelle:'?',gefunden:false};
+}
 
 async function analyzeAndShow(){
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
@@ -590,31 +669,11 @@ async function analyzeAndShow(){
     pendingRows=[];pendingKIMode=false;
     const nichtGefunden=[],kiGeschaetzt=[];
     for(const food of foods){
-      const{name,grams}=parseFood(food);
-      if(btn)btn.innerHTML='⏳ '+name+'…';
-      // Per-piece: wenn DB-Eintrag s-Feld hat, extrahiere Anzahl aus Freitext (auch "halbe", "eine" etc.)
-      // NICHT bei echten Maßeinheiten (Esslöffel, Messlöffel usw.) – da zählt die Einheit selbst
-      const _hasUnit=/\b\d+\s*(g|ml|kg|l|gramm)\b/i.test(food);
-      const _hasMassUnit=/\b(teelöffel|tl|esslöffel|el|messlöffel|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|prise[n]?|schüsse?)\b/i.test(food);
-      const _dbE=sucheLokaleDB(name);
-      let actualGrams=grams;
-      if(!_hasUnit&&!_hasMassUnit&&_dbE&&_dbE.s){
-        let cnt=extractCount(food);
-        // Fallback: "Name 2 Portionen" oder "Name 3 Stücke" (Zahl nicht am Anfang)
-        if(cnt==null){const m2=food.match(/\b(\d+(?:[.,]\d+)?)\s+(?:portion(?:en)?|stücke?|messlöffel)/i);if(m2)cnt=parseFloat(m2[1].replace(',','.'));}
-        if(cnt!=null)actualGrams=Math.round(cnt*_dbE.s);
-      }
-      const offResult=await searchOpenFoodFacts(name);
-      let n=offResult?.data||null;
-      let quelle=offResult?.quelle||null;
-      if(!n){if(btn)btn.innerHTML='🤖 '+name+'…';n=await callGithubKI(name);if(n){kiGeschaetzt.push(name);quelle='KI';}}
-      const f=actualGrams/100;
-      if(n){
-        pendingRows.push({lebensmittel:food,kalorien:Math.round((+n['energy-kcal_100g']||0)*f),eiweiss:+((+n['proteins_100g']||0)*f).toFixed(1),zucker:+((+n['sugars_100g']||0)*f).toFixed(1),kohlenhydrate:+((+n['carbohydrates_100g']||0)*f).toFixed(1),fett:+((+n['fat_100g']||0)*f).toFixed(1),sf:(_dbE&&_dbE.sf!=null)?+(_dbE.sf*f).toFixed(1):null,lys:(_dbE&&_dbE.lys!=null)?Math.round(_dbE.lys*f):null,arg:(_dbE&&_dbE.arg!=null)?Math.round(_dbE.arg*f):null,quelle:quelle||'?'});
-      }else{
-        nichtGefunden.push(food);
-        pendingRows.push({lebensmittel:food,kalorien:0,eiweiss:0,zucker:0,kohlenhydrate:0,fett:0,sf:null,lys:null,arg:null,quelle:'?'});
-      }
+      const row=await berechneZeile(food,(name,istKi)=>{if(btn)btn.innerHTML=(istKi?'🤖 ':'⏳ ')+name+'…';});
+      if(row.quelle==='KI')kiGeschaetzt.push(food);
+      if(!row.gefunden)nichtGefunden.push({food,name:parseFood(food).name});
+      delete row.gefunden;
+      pendingRows.push(row);
     }
     showNWResults(pendingRows,kiGeschaetzt,nichtGefunden);
   }catch(e){alert('Fehler: '+e.message);}
@@ -688,9 +747,17 @@ function showNWResults(rows,kiGeschaetzt,nichtGefunden){
     +(rows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right;color:#f59e0b"><strong>${totKcal}</strong></td><td style="text-align:right;color:#22c55e"><strong>${totEiw.toFixed(1)}g</strong></td><td style="text-align:right;color:#f43f5e"><strong>${totZck.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totKH.toFixed(1)}g</strong></td><td style="text-align:right;color:#a78bfa"><strong>${totFett.toFixed(1)}g</strong></td>${sfTot}${lysTot}${argTot}</tr>`:'')
     +'</tbody></table>'
     +'<div style="font-size:0.65rem;color:#475569;margin-top:3px">Quelle: 📋 eigene DB → 🌐 Open Food Facts → 🤖 KI (Reihenfolge der Suche)</div>';
+  lastNichtGefunden=nichtGefunden;
   let hinweis='';
-  if(nichtGefunden.length)hinweis+='⚠️ Nicht gefunden (0 kcal): '+nichtGefunden.join(', ');
-  document.getElementById('result-nf').innerHTML=(hinweis?'<div style="margin-bottom:0.25rem">'+hinweis.trim()+'</div>':'')+lokaleBewertung(rows);
+  if(nichtGefunden.length){
+    hinweis+='<div style="margin-bottom:0.35rem"><div style="margin-bottom:0.25rem">⚠️ Nicht gefunden (0 kcal):</div>'
+      +nichtGefunden.map((nf,i)=>'<div style="display:flex;align-items:center;gap:0.5rem;margin:0.2rem 0;flex-wrap:wrap">'
+        +'<span>'+nf.food+'</span>'
+        +'<button class="btn-ghost" style="font-size:0.68rem;padding:0.2rem 0.5rem" onclick="kiRechercheUndSpeichern('+i+')">🤖 KI recherchieren &amp; speichern</button>'
+      +'</div>').join('')
+    +'</div>';
+  }
+  document.getElementById('result-nf').innerHTML=hinweis+lokaleBewertung(rows);
   document.getElementById('result-totals').style.display='none';
   document.getElementById('result-box').classList.add('show');
   document.getElementById('kategorie-input').blur();
@@ -996,6 +1063,7 @@ function eintragKarte(e, datum, suche){
     +zutatenHTML
     +'<div class="entry-card-actions">'
       +'<button class="btn-rep" onclick="wiederholenEintrag(\''+e.id+'\')">↩ Wiederholen</button>'
+      +'<button class="btn-rep" onclick="neuBewertenEintrag(\''+e.id+'\')" title="Nährwerte für diesen Eintrag neu ermitteln, z.B. nachdem fehlende Werte ergänzt wurden">🔄 Neu bewerten</button>'
       +'<button class="btn-del-sm" onclick="deleteEintrag(\''+e.id+'\',\''+datum+'\')">✕</button>'
     +'</div>'
   +'</div>';
@@ -1105,6 +1173,112 @@ function wiederholenEintrag(id){
   document.getElementById('result-box').classList.remove('show');
   pendingRows=[];
   window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ─── Neu bewerten: Nährwerte eines bestehenden Eintrags neu ermitteln ────────
+// Sucht automatisch neu (eigene DB + Zusatz-DB → OFF → KI), zeigt Ergebnis editierbar
+// zum Nachbearbeiten und überschreibt den bestehenden Eintrag (gleiche id/Datum).
+
+async function neuBewertenEintrag(id){
+  const e=eintraege.find(x=>String(x.id)===String(id));
+  if(!e)return;
+  let items=[];
+  if(e.zutaten){
+    try{const z=JSON.parse(e.zutaten);if(z&&z.length>0)items=z.map(it=>it.lebensmittel).filter(Boolean);}catch(ex){}
+  }
+  if(!items.length)items=(e.lebensmittel||'').split(',').flatMap(s=>teileEingabe(s.trim())).filter(Boolean);
+  if(!items.length)return;
+
+  zeigeNeubewertungOverlay(id,null);
+  try{
+    const neueRows=[];
+    for(const food of items){
+      const row=await berechneZeile(food);
+      delete row.gefunden;
+      neueRows.push(row);
+    }
+    zeigeNeubewertungOverlay(id,neueRows);
+  }catch(ex){
+    document.getElementById('neubew-overlay')?.remove();
+    alert('Fehler bei der Neubewertung: '+ex.message);
+  }
+}
+
+function neubewFeld(label,key,i,val){
+  return '<label style="display:flex;flex-direction:column;font-size:0.62rem;color:#64748b;gap:2px">'+label
+    +'<input type="number" step="0.1" value="'+(val??0)+'" data-i="'+i+'" data-k="'+key+'"'
+    +' style="width:100%;box-sizing:border-box;background:#0f172a;border:1px solid #334155;border-radius:5px;color:#e2e8f0;padding:3px 4px;font-size:0.78rem"/>'
+  +'</label>';
+}
+
+function zeigeNeubewertungOverlay(id,rows){
+  document.getElementById('neubew-overlay')?.remove();
+  const ov=document.createElement('div');
+  ov.id='neubew-overlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;overflow-y:auto';
+  if(!rows){
+    ov.innerHTML='<div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:1.6rem;text-align:center;color:#94a3b8"><span class="loading"></span> Werte werden neu ermittelt…</div>';
+    document.body.appendChild(ov);
+    return;
+  }
+  const rowHtml=rows.map((r,i)=>
+    '<div style="border:1px solid #334155;border-radius:8px;padding:0.5rem 0.6rem;margin-bottom:0.5rem">'
+    +'<div style="font-size:0.85rem;color:#f1f5f9;margin-bottom:0.35rem">'+r.lebensmittel+quelleBadge(r.quelle)+'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.35rem">'
+      +neubewFeld('kcal','kalorien',i,r.kalorien)
+      +neubewFeld('Eiw.','eiweiss',i,r.eiweiss)
+      +neubewFeld('Zck.','zucker',i,r.zucker)
+      +neubewFeld('KH','kohlenhydrate',i,r.kohlenhydrate)
+      +neubewFeld('Fett','fett',i,r.fett)
+    +'</div>'
+  +'</div>'
+  ).join('');
+  ov.innerHTML='<div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:1.2rem 1.1rem;max-width:480px;width:100%;max-height:85vh;overflow-y:auto">'
+    +'<div style="font-weight:700;color:#f1f5f9;margin-bottom:0.3rem">🔄 Neu bewertet</div>'
+    +'<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:0.75rem">Automatisch neu ermittelt. Werte bei Bedarf anpassen, dann speichern – Datum &amp; Kategorie bleiben unverändert.</div>'
+    +'<div id="neubew-rows">'+rowHtml+'</div>'
+    +'<div style="display:flex;gap:0.5rem;margin-top:0.5rem">'
+      +'<button onclick="speichereNeubewertung(\''+id+'\')" style="flex:1;padding:0.5rem;border-radius:8px;border:1px solid #22c55e;background:rgba(34,197,94,0.15);color:#4ade80;font-size:0.85rem;font-weight:700;cursor:pointer">Speichern</button>'
+      +'<button onclick="document.getElementById(\'neubew-overlay\').remove()" style="padding:0.5rem 0.9rem;border-radius:8px;border:1px solid #334155;background:transparent;color:#94a3b8;font-size:0.85rem;cursor:pointer">Abbrechen</button>'
+    +'</div>'
+  +'</div>';
+  ov.dataset.rows=JSON.stringify(rows);
+  ov.addEventListener('click',ev=>{if(ev.target===ov)ov.remove();});
+  document.body.appendChild(ov);
+}
+
+async function speichereNeubewertung(id){
+  const ov=document.getElementById('neubew-overlay');
+  if(!ov)return;
+  let rows;
+  try{rows=JSON.parse(ov.dataset.rows);}catch(ex){return;}
+  ov.querySelectorAll('input[data-i]').forEach(inp=>{
+    const i=+inp.dataset.i,k=inp.dataset.k;
+    rows[i][k]=k==='kalorien'?Math.round(+inp.value||0):+(+inp.value||0).toFixed(1);
+  });
+  const idx=eintraege.findIndex(x=>String(x.id)===String(id));
+  if(idx<0){ov.remove();return;}
+  const _hasSF=rows.some(r=>r.sf!=null);
+  const _hasLys=rows.some(r=>r.lys!=null);
+  const _hasArg=rows.some(r=>r.arg!=null);
+  const update={
+    zutaten: rows.length>1?JSON.stringify(rows):null,
+    kalorien: Math.round(rows.reduce((a,r)=>a+(+r.kalorien||0),0)),
+    eiweiss: +rows.reduce((a,r)=>a+(+r.eiweiss||0),0).toFixed(1),
+    zucker: +rows.reduce((a,r)=>a+(+r.zucker||0),0).toFixed(1),
+    kohlenhydrate: +rows.reduce((a,r)=>a+(+r.kohlenhydrate||0),0).toFixed(1),
+    fett: +rows.reduce((a,r)=>a+(+r.fett||0),0).toFixed(1),
+    gesaettigt: _hasSF?+rows.reduce((a,r)=>a+(+r.sf||0),0).toFixed(1):null,
+    lysin: _hasLys?Math.round(rows.reduce((a,r)=>a+(+r.lys||0),0)):null,
+    arginin: _hasArg?Math.round(rows.reduce((a,r)=>a+(+r.arg||0),0)):null
+  };
+  try{
+    const r=await fetch(URL_BASE+'?id=eq.'+id,{method:'PATCH',headers:H,body:JSON.stringify(update)});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    Object.assign(eintraege[idx],update);
+    ov.remove();
+    aktualisiereBanner();renderEintraege();
+  }catch(e){alert('Fehler beim Speichern: '+e.message);}
 }
 
 function editKategorie(id){
@@ -1471,6 +1645,7 @@ async function init(){
   if(localStorage.getItem('kalorien-ziel-'+heuteStr()))sperrZielInput();
   updateKiStatus();
   initKiModelSelect();
+  await ladeCustomDB();
   await laden();
 }
 init();
