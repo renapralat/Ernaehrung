@@ -149,6 +149,10 @@ const DB = [
   { n:"Walnüsse",                 k:654, e:15.2, z: 2.6, kh:13.7, f:65.2, sf: 6.1, lys: 424, arg:2278 },
 
   // ── GETRÄNKE ──────────────────────────────────────────────────────────────
+  { n:"Wasser",                   k:  0, e: 0.0, z: 0.0, kh: 0.0, f: 0.0, sf: 0.0, lys:  0, arg:  0 },
+  { n:"Leitungswasser",           k:  0, e: 0.0, z: 0.0, kh: 0.0, f: 0.0, sf: 0.0, lys:  0, arg:  0 },
+  { n:"Mineralwasser",            k:  0, e: 0.0, z: 0.0, kh: 0.0, f: 0.0, sf: 0.0, lys:  0, arg:  0 },
+  { n:"Sprudelwasser",            k:  0, e: 0.0, z: 0.0, kh: 0.0, f: 0.0, sf: 0.0, lys:  0, arg:  0 },
   { n:"Apfelsaft",                k: 46, e: 0.1, z: 9.9, kh:11.0, f: 0.1, sf: 0.0, lys:  6, arg:  5 },
   { n:"Espresso",                 k:  2, e: 0.1, z: 0.0, kh: 0.0, f: 0.1, sf: 0.0, lys:  5, arg:  1 },
   { n:"Espresso Doppio",          k:  4, e: 0.2, z: 0.0, kh: 0.0, f: 0.2, sf: 0.0, lys: 10, arg:  2 },
