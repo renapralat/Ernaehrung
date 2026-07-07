@@ -15,6 +15,8 @@ Live-URL: [renapralat.github.io/Ernaehrung](https://renapralat.github.io/Ernaehr
 - **Suche** in gespeicherten Einträgen (nach Name, Datum, Kategorie)
 - **Export** als Text oder CSV
 - **Wiederholen**: frühere Mahlzeiten mit einem Klick neu erfassen
+- **Neu bewerten**: Nährwerte eines bestehenden Eintrags neu ermitteln lassen (z.B. nachdem ein fehlendes Lebensmittel ergänzt wurde) – überschreibt direkt den Eintrag, kein erneutes Datum nötig
+- **Fehlende Lebensmittel per KI recherchieren**: wird ein Lebensmittel nirgends gefunden, kann die KI gezielt dafür recherchieren; das Ergebnis landet in einer eigenen Zusatz-Datenbank (Supabase), `lebensmittel.js` bleibt dabei unangetastet
 - **Kategorie nachträglich ändern** direkt am Eintrag
 - **KI-Bewertung** der Mahlzeit (Qualität, Arginin/Lysin-Verhältnis)
 
@@ -93,8 +95,17 @@ Das `s`-Feld (Stückgewicht) wird für Mengenangaben ohne Einheit genutzt:
 ## Backend
 
 - **Datenbank**: Supabase (PostgreSQL), Tabelle `ernaehrung`
+- **Zusatz-Datenbank**: Tabelle `eigene_lebensmittel` – per KI recherchierte Lebensmittel, die weder in `lebensmittel.js` noch bei Open Food Facts gefunden wurden. Wird beim App-Start geladen und bei der Suche wie die eigene Datenbank behandelt. `lebensmittel.js` wird dadurch nie automatisch verändert.
 - **KI**: GitHub Models (GPT-4o-mini, konfigurierbar)
 - **Nährwert-Fallback**: Open Food Facts API
+
+### Fehlende Werte nachtragen
+
+Wird ein Lebensmittel weder in der eigenen DB noch bei Open Food Facts gefunden ("Nicht gefunden (0 kcal)"), erscheint pro fehlendem Lebensmittel ein Button „🤖 KI recherchieren & speichern". Er fragt die KI gezielt nach den Nährwerten (inkl. gesättigte Fettsäuren, Lysin, Arginin) und speichert das Ergebnis nach Bestätigung in `eigene_lebensmittel`. Ein GitHub-Token (⚙️ oben rechts) wird dafür benötigt.
+
+### Einträge neu bewerten
+
+Am Eintrag steht neben ↩ Wiederholen und ✕ jetzt auch 🔄 Neu bewerten. Es sucht die Nährwerte für die im Eintrag gespeicherten Lebensmittel automatisch neu (z.B. weil inzwischen ein fehlendes Lebensmittel ergänzt wurde), zeigt das Ergebnis in bearbeitbaren Feldern zur Kontrolle an und überschreibt beim Speichern direkt den bestehenden Eintrag – Datum und Kategorie bleiben unverändert, es muss nichts neu eingegeben werden.
 
 ---
 
