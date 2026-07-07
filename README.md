@@ -16,7 +16,8 @@ Live-URL: [renapralat.github.io/Ernaehrung](https://renapralat.github.io/Ernaehr
 - **Export** als Text oder CSV
 - **Wiederholen**: frühere Mahlzeiten mit einem Klick neu erfassen
 - **Neu bewerten**: Nährwerte eines bestehenden Eintrags neu ermitteln lassen (z.B. nachdem ein fehlendes Lebensmittel ergänzt wurde) – überschreibt direkt den Eintrag, kein erneutes Datum nötig
-- **Fehlende Lebensmittel per KI recherchieren**: wird ein Lebensmittel nirgends gefunden, kann die KI gezielt dafür recherchieren; das Ergebnis landet in einer eigenen Zusatz-Datenbank (Supabase), `lebensmittel.js` bleibt dabei unangetastet
+- **Fehlende Lebensmittel automatisch per KI recherchieren**: wird ein Lebensmittel nirgends gefunden, recherchiert die KI von selbst dafür (inkl. realistischer Portionsgröße) und fragt vor dem Speichern nur noch zur Bestätigung; das Ergebnis landet in einer eigenen Zusatz-Datenbank (Supabase), `lebensmittel.js` bleibt dabei unangetastet
+- **📋 Eigene Lebensmittel verwalten**: eigene Zusatz-Datenbank jederzeit einsehen, Lebensmittel von Hand neu anlegen oder KI-Werte nachträglich korrigieren/löschen (⚙️-Leiste oben)
 - **Kategorie nachträglich ändern** direkt am Eintrag
 - **KI-Bewertung** der Mahlzeit (Qualität, Arginin/Lysin-Verhältnis)
 
@@ -101,7 +102,11 @@ Das `s`-Feld (Stückgewicht) wird für Mengenangaben ohne Einheit genutzt:
 
 ### Fehlende Werte nachtragen
 
-Wird ein Lebensmittel weder in der eigenen DB noch bei Open Food Facts gefunden ("Nicht gefunden (0 kcal)"), erscheint pro fehlendem Lebensmittel ein Button „🤖 KI recherchieren & speichern". Er fragt die KI gezielt nach den Nährwerten (inkl. gesättigte Fettsäuren, Lysin, Arginin) und speichert das Ergebnis nach Bestätigung in `eigene_lebensmittel`. Ein GitHub-Token (⚙️ oben rechts) wird dafür benötigt.
+Wird ein Lebensmittel weder in der eigenen DB noch bei Open Food Facts gefunden ("Nicht gefunden (0 kcal)"), startet die KI-Recherche automatisch (kein Klick nötig) und fragt gezielt nach den Nährwerten inkl. realistischer Portionsgröße (gesättigte Fettsäuren, Lysin, Arginin, Portion in Gramm). Vor dem Speichern in `eigene_lebensmittel` zeigt die App die ermittelten Werte zur Kontrolle an – erst nach Bestätigung wird gespeichert. Ein GitHub-Token (⚙️ oben rechts) wird dafür benötigt; ohne Token bleibt der manuelle „🤖 KI recherchieren & speichern"-Button als Fallback.
+
+### Eigene Lebensmittel verwalten
+
+Über „📋 Eigene Lebensmittel" (⚙️-Leiste oben) lässt sich die Zusatz-Datenbank jederzeit einsehen: neue Lebensmittel von Hand anlegen (z.B. von der Verpackung abgelesene Werte), bestehende Einträge korrigieren (✎) oder löschen (✕) – unabhängig von der KI-Recherche. `lebensmittel.js` bleibt davon immer unberührt.
 
 ### Einträge neu bewerten
 
