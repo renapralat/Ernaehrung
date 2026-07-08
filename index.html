@@ -1050,6 +1050,20 @@ async function analyzeKI(autoRecherche){
   if(btn){btn.innerHTML=orig;btn.disabled=false;}
 }
 
+// Kurzer KI-Bewertungstext (1-2 Sätze) für eine Liste von Lebensmittel-Freitexten.
+// Wird von nurBewertung() (aktuelle Eingabe) und zeigeAnalyseEintrag() (bestehender Eintrag) genutzt.
+async function kiKurzBewertung(foodList,token){
+  const prompt='Du bist Ernährungsberaterin. Bewerte diese Mahlzeit in 1-2 Sätzen für eine Person die auf Zucker (Diabetes) und Eiweiß (Alter) achtet.\n\nLebensmittel:\n'
+    +foodList.map((f,i)=>(i+1)+'. '+f).join('\n')+'\n\nNur Bewertungstext, kein JSON.';
+  const resp=await fetch('https://models.inference.ai.azure.com/chat/completions',{
+    method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body:JSON.stringify({model:getKiModel(),messages:[{role:'user',content:prompt}],temperature:0,max_tokens:150})
+  });
+  if(!resp.ok)throw new Error('HTTP '+resp.status);
+  const d=await resp.json();
+  return(d.choices?.[0]?.message?.content||'').trim();
+}
+
 async function nurBewertung(){
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
   const token=loadToken();
@@ -1058,15 +1072,7 @@ async function nurBewertung(){
   const orig=btn?btn.innerHTML:'';
   if(btn){btn.disabled=true;btn.innerHTML='<span class="loading"></span>…';}
   try{
-    const prompt='Du bist Ernährungsberaterin. Bewerte diese Mahlzeit in 1-2 Sätzen für eine Person die auf Zucker (Diabetes) und Eiweiß (Alter) achtet.\n\nLebensmittel:\n'
-      +foods.map((f,i)=>(i+1)+'. '+f).join('\n')+'\n\nNur Bewertungstext, kein JSON.';
-    const resp=await fetch('https://models.inference.ai.azure.com/chat/completions',{
-      method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body:JSON.stringify({model:getKiModel(),messages:[{role:'user',content:prompt}],temperature:0,max_tokens:150})
-    });
-    if(!resp.ok)throw new Error('HTTP '+resp.status);
-    const d=await resp.json();
-    const text=(d.choices?.[0]?.message?.content||'').trim();
+    const text=await kiKurzBewertung(foods,token);
     const kbEl=document.getElementById('ki-beschreibung');
     kbEl.textContent='💬 '+text;kbEl.style.display='block';
     document.getElementById('result-box').classList.add('show');
@@ -1386,14 +1392,22 @@ async function zeigeAnalyseEintrag(id){
       delete row.gefunden;
       rows.push(row);
     }
-    zeigeAnalyseOverlay(rows);
+    // Wie bei der normalen KI-Analyse: zusätzlich den kurzen Bewertungstext holen (Zucker/Eiweiß/ges. Fettsäuren) –
+    // das war der eigentliche Grund für den Button, nicht nur die Zahlentabelle.
+    let bewertungText=null;
+    const token=loadToken();
+    if(token){
+      try{bewertungText=await kiKurzBewertung(items,token);}
+      catch(ex){bewertungText='⚠️ KI-Bewertungstext nicht verfügbar ('+ex.message+')';}
+    }
+    zeigeAnalyseOverlay(rows,bewertungText);
   }catch(ex){
     document.getElementById('analyse-overlay')?.remove();
     alert('Fehler bei der Analyse: '+ex.message);
   }
 }
 
-function zeigeAnalyseOverlay(rows){
+function zeigeAnalyseOverlay(rows,bewertungText){
   document.getElementById('analyse-overlay')?.remove();
   const ov=document.createElement('div');
   ov.id='analyse-overlay';
@@ -1432,6 +1446,7 @@ function zeigeAnalyseOverlay(rows){
       +'<button onclick="document.getElementById(\'analyse-overlay\').remove()" style="background:none;border:none;color:#94a3b8;font-size:1.1rem;cursor:pointer;line-height:1">✕</button>'
     +'</div>'
     +'<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:0.6rem">So würde dieser Eintrag mit dem heutigen Stand deiner Datenbank berechnet. Es wird nichts gespeichert oder verändert.</div>'
+    +(bewertungText?'<div class="ki-beschreibung">💬 '+bewertungText+'</div>':(loadToken()?'':'<div style="font-size:0.7rem;color:#64748b;margin-bottom:0.6rem">ℹ️ Für den KI-Bewertungstext wird ein GitHub-Token benötigt (⚙️ oben rechts).</div>'))
     +'<div style="overflow-x:auto">'+tableHtml+'</div>'
     +lokaleBewertung(rows)
     +'<button onclick="document.getElementById(\'analyse-overlay\').remove()" style="width:100%;margin-top:0.75rem;padding:0.5rem;border-radius:8px;border:1px solid #334155;background:transparent;color:#94a3b8;font-size:0.85rem;cursor:pointer">Schließen</button>'
