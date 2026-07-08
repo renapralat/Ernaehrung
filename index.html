@@ -783,7 +783,7 @@ async function loescheEigenesLebensmittel(id){
 
 // Nährwerte für EIN Lebensmittel-Freitext-Item ermitteln (eigene DB+Zusatz-DB → OFF → KI).
 // Wird von analyzeAndShow() und neuBewertenEintrag() gemeinsam genutzt.
-async function berechneZeile(food,onStatus){
+async function berechneZeile(food,onStatus,grammsOverride){
   const{name,grams}=parseFood(food);
   if(onStatus)onStatus(name,false);
   // Per-piece: wenn DB-Eintrag s-Feld hat, extrahiere Anzahl aus Freitext (auch "halbe", "eine" etc.)
@@ -792,7 +792,10 @@ async function berechneZeile(food,onStatus){
   const _hasMassUnit=/\b(teelöffel|tl|esslöffel|el|messlöffel|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|prise[n]?|schüsse?)\b/i.test(food);
   const _dbE=sucheLokaleDB(name);
   let actualGrams=grams;
-  if(!_hasUnit&&!_hasMassUnit&&_dbE&&_dbE.s){
+  // grammsOverride: eine zuvor per "Neu bewerten" korrigierte Menge hat Vorrang vor der aus dem Text geparsten/geschätzten Menge
+  if(grammsOverride!=null){
+    actualGrams=grammsOverride;
+  }else if(!_hasUnit&&!_hasMassUnit&&_dbE&&_dbE.s){
     let cnt=extractCount(food);
     // Fallback: "Name 2 Portionen" oder "Name 3 Stücke" (Zahl nicht am Anfang)
     if(cnt==null){const m2=food.match(/\b(\d+(?:[.,]\d+)?)\s+(?:portion(?:en)?|stücke?|messlöffel)/i);if(m2)cnt=parseFloat(m2[1].replace(',','.'));}
@@ -1331,13 +1334,28 @@ function renderEintraege(){
 }
 
 // Zutaten-Freitexte aus einem gespeicherten Eintrag rekonstruieren (aus zutaten-JSON,
-// sonst Fallback über den lebensmittel-Text). Wird von Wiederholen/Neu bewerten/Analyse genutzt.
+// sonst Fallback über den lebensmittel-Text). Wird von Wiederholen genutzt.
 function itemsAusEintrag(e){
   let items=[];
   if(e.zutaten){
     try{const z=JSON.parse(e.zutaten);if(z&&z.length>0)items=z.map(item=>item.lebensmittel).filter(Boolean);}catch(ex){}
   }
   if(!items.length)items=(e.lebensmittel||'').split(',').flatMap(s=>teileEingabe(s.trim())).filter(Boolean);
+  return items;
+}
+
+// Wie itemsAusEintrag(), aber inkl. einer zuvor per "Neu bewerten" korrigierten Grammzahl
+// (falls vorhanden) – damit eine einmal korrigierte Menge (z.B. "nur 25g vom Proteinshake,
+// nicht 100g") bei einer erneuten Neubewertung nicht wieder verloren geht.
+function itemsMitGrammAusEintrag(e){
+  let items=[];
+  if(e.zutaten){
+    try{
+      const z=JSON.parse(e.zutaten);
+      if(z&&z.length>0)items=z.map(item=>({food:item.lebensmittel,grams:item.grams!=null?+item.grams:null})).filter(it=>it.food);
+    }catch(ex){}
+  }
+  if(!items.length)items=(e.lebensmittel||'').split(',').flatMap(s=>teileEingabe(s.trim())).filter(Boolean).map(food=>({food,grams:null}));
   return items;
 }
 
@@ -1361,14 +1379,14 @@ function wiederholenEintrag(id){
 async function neuBewertenEintrag(id){
   const e=eintraege.find(x=>String(x.id)===String(id));
   if(!e)return;
-  const items=itemsAusEintrag(e);
+  const items=itemsMitGrammAusEintrag(e);
   if(!items.length)return;
 
   zeigeNeubewertungOverlay(id,null);
   try{
     const neueRows=[];
-    for(const food of items){
-      const row=await berechneZeile(food);
+    for(const it of items){
+      const row=await berechneZeile(it.food,null,it.grams);
       delete row.gefunden;
       neueRows.push(row);
     }
@@ -1384,14 +1402,14 @@ async function neuBewertenEintrag(id){
 async function zeigeAnalyseEintrag(id){
   const e=eintraege.find(x=>String(x.id)===String(id));
   if(!e)return;
-  const items=itemsAusEintrag(e);
+  const items=itemsMitGrammAusEintrag(e);
   if(!items.length)return;
 
   zeigeAnalyseOverlay(null);
   try{
     const rows=[];
-    for(const food of items){
-      const row=await berechneZeile(food);
+    for(const it of items){
+      const row=await berechneZeile(it.food,null,it.grams);
       delete row.gefunden;
       rows.push(row);
     }
@@ -1400,7 +1418,7 @@ async function zeigeAnalyseEintrag(id){
     let bewertungText=null;
     const token=loadToken();
     if(token){
-      try{bewertungText=await kiKurzBewertung(items,token);}
+      try{bewertungText=await kiKurzBewertung(items.map(it=>it.food),token);}
       catch(ex){bewertungText='⚠️ KI-Bewertungstext nicht verfügbar ('+ex.message+')';}
     }
     zeigeAnalyseOverlay(rows,bewertungText);
@@ -1547,7 +1565,9 @@ async function speichereNeubewertung(id){
   const _hasLys=rows.some(r=>r.lys!=null);
   const _hasArg=rows.some(r=>r.arg!=null);
   const update={
-    zutaten: rows.length>1?JSON.stringify(rows):null,
+    // Immer speichern (auch bei nur einer Zutat) – sonst geht eine hier korrigierte Grammzahl
+    // beim nächsten "Neu bewerten" wieder verloren (siehe itemsMitGrammAusEintrag).
+    zutaten: JSON.stringify(rows),
     kalorien: Math.round(rows.reduce((a,r)=>a+(+r.kalorien||0),0)),
     eiweiss: +rows.reduce((a,r)=>a+(+r.eiweiss||0),0).toFixed(1),
     zucker: +rows.reduce((a,r)=>a+(+r.zucker||0),0).toFixed(1),
