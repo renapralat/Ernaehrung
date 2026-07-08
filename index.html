@@ -809,9 +809,11 @@ async function berechneZeile(food,onStatus){
   }
   const f=actualGrams/100;
   if(n){
-    return{lebensmittel:food,kalorien:Math.round((+n['energy-kcal_100g']||0)*f),eiweiss:+((+n['proteins_100g']||0)*f).toFixed(1),zucker:+((+n['sugars_100g']||0)*f).toFixed(1),kohlenhydrate:+((+n['carbohydrates_100g']||0)*f).toFixed(1),fett:+((+n['fat_100g']||0)*f).toFixed(1),sf:(_dbE&&_dbE.sf!=null)?+(_dbE.sf*f).toFixed(1):null,lys:(_dbE&&_dbE.lys!=null)?Math.round(_dbE.lys*f):null,arg:(_dbE&&_dbE.arg!=null)?Math.round(_dbE.arg*f):null,quelle:quelle||'?',gefunden:true};
+    // Basiswerte pro 100g mitgeben, damit die Menge (Gramm) später ohne neue Suche korrigiert werden kann (Neu bewerten)
+    const basis={k:+n['energy-kcal_100g']||0,e:+n['proteins_100g']||0,z:+n['sugars_100g']||0,kh:+n['carbohydrates_100g']||0,f:+n['fat_100g']||0,sf:(_dbE&&_dbE.sf!=null)?_dbE.sf:null,lys:(_dbE&&_dbE.lys!=null)?_dbE.lys:null,arg:(_dbE&&_dbE.arg!=null)?_dbE.arg:null};
+    return{lebensmittel:food,kalorien:Math.round(basis.k*f),eiweiss:+(basis.e*f).toFixed(1),zucker:+(basis.z*f).toFixed(1),kohlenhydrate:+(basis.kh*f).toFixed(1),fett:+(basis.f*f).toFixed(1),sf:basis.sf!=null?+(basis.sf*f).toFixed(1):null,lys:basis.lys!=null?Math.round(basis.lys*f):null,arg:basis.arg!=null?Math.round(basis.arg*f):null,quelle:quelle||'?',gefunden:true,grams:actualGrams,basis};
   }
-  return{lebensmittel:food,kalorien:0,eiweiss:0,zucker:0,kohlenhydrate:0,fett:0,sf:null,lys:null,arg:null,quelle:'?',gefunden:false};
+  return{lebensmittel:food,kalorien:0,eiweiss:0,zucker:0,kohlenhydrate:0,fett:0,sf:null,lys:null,arg:null,quelle:'?',gefunden:false,grams:actualGrams,basis:null};
 }
 
 async function analyzeAndShow(autoRecherche){
@@ -1284,13 +1286,14 @@ function renderEintraege(){
           +'</div>'
           +'<button class="btn-del-sm" onclick="deleteDay(\''+datum+'\')" title="Tag löschen">🗑️</button>'
         +'</div>'
-        // Zeile 2: Bewegung → Netto/Ampel
-        +'<div style="display:flex;align-items:center;gap:0.5rem;margin-top:5px">'
+        // Zeile 2: Schritte → Bewegungs-kcal → Netto/Ampel
+        +'<div style="display:flex;align-items:center;gap:0.5rem;margin-top:5px;flex-wrap:wrap">'
           +'<span style="font-size:1rem">🏃</span>'
-          +'<input type="number" value="'+(getBewegung(datum)||'')+'" min="0" step="10" placeholder="0"'
+          +'<input type="number" value="'+(getSchritte(datum)||'')+'" min="0" step="500" placeholder="0"'
             +' style="width:80px;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:5px 8px;font-size:0.9rem"'
-            +' onchange="setBewegungTag(\''+datum+'\',this.value)"/>'
-          +'<span style="color:#64748b;font-size:0.75rem">kcal</span>'
+            +' onchange="setSchritteTag(\''+datum+'\',this.value)"/>'
+          +'<span style="color:#64748b;font-size:0.75rem">Schritte</span>'
+          +'<span id="schritte-kcal-'+datum+'" style="color:#64748b;font-size:0.72rem">≈ '+getBewegung(datum)+' kcal</span>'
           +'<span style="color:#475569">→</span>'
           +'<span id="ampel-tag-'+datum+'" style="font-size:0.8rem">'+ampelNetto(kcal-getBewegung(datum),getZiel(datum))+'</span>'
         +'</div>'
@@ -1462,6 +1465,29 @@ function neubewFeld(label,key,i,val){
   +'</label>';
 }
 
+// Zeilen des aktuell offenen "Neu bewerten"-Overlays (für die Gramm-Neuberechnung ohne erneute Suche)
+let neubewAktuelleRows=[];
+
+// Menge (Gramm) wurde korrigiert – Nährwerte anhand der Basiswerte (pro 100g) neu berechnen,
+// ohne die Nährwertsuche erneut auszuführen. Für nicht gefundene Zeilen (kein "basis") passiert nichts automatisch.
+function neubewGrammGeaendert(i,val){
+  const g=Math.max(0,Math.round(+val||0));
+  const r=neubewAktuelleRows[i];
+  if(!r)return;
+  r.grams=g;
+  if(!r.basis)return;
+  const b=r.basis,f=g/100;
+  const setVal=(k,v)=>{const el=document.querySelector('#neubew-rows input[data-i="'+i+'"][data-k="'+k+'"]');if(el)el.value=v;};
+  r.kalorien=Math.round(b.k*f);setVal('kalorien',r.kalorien);
+  r.eiweiss=+(b.e*f).toFixed(1);setVal('eiweiss',r.eiweiss);
+  r.zucker=+(b.z*f).toFixed(1);setVal('zucker',r.zucker);
+  r.kohlenhydrate=+(b.kh*f).toFixed(1);setVal('kohlenhydrate',r.kohlenhydrate);
+  r.fett=+(b.f*f).toFixed(1);setVal('fett',r.fett);
+  if(b.sf!=null)r.sf=+(b.sf*f).toFixed(1);
+  if(b.lys!=null)r.lys=Math.round(b.lys*f);
+  if(b.arg!=null)r.arg=Math.round(b.arg*f);
+}
+
 function zeigeNeubewertungOverlay(id,rows){
   document.getElementById('neubew-overlay')?.remove();
   const ov=document.createElement('div');
@@ -1472,9 +1498,14 @@ function zeigeNeubewertungOverlay(id,rows){
     document.body.appendChild(ov);
     return;
   }
+  neubewAktuelleRows=rows;
   const rowHtml=rows.map((r,i)=>
     '<div style="border:1px solid #334155;border-radius:8px;padding:0.5rem 0.6rem;margin-bottom:0.5rem">'
     +'<div style="font-size:0.85rem;color:#f1f5f9;margin-bottom:0.35rem">'+r.lebensmittel+quelleBadge(r.quelle)+'</div>'
+    +'<label style="display:flex;flex-direction:column;font-size:0.65rem;color:#60a5fa;gap:2px;max-width:150px;margin-bottom:0.4rem">Menge (Gramm)'
+      +'<input type="number" step="1" value="'+(r.grams??100)+'" data-i="'+i+'" data-k="grams" onchange="neubewGrammGeaendert('+i+',this.value)"'
+      +' style="width:100%;box-sizing:border-box;background:#0f172a;border:1px solid #60a5fa;border-radius:5px;color:#e2e8f0;padding:4px 6px;font-size:0.85rem;font-weight:600"/>'
+    +'</label>'
     +'<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.35rem">'
       +neubewFeld('kcal','kalorien',i,r.kalorien)
       +neubewFeld('Eiw.','eiweiss',i,r.eiweiss)
@@ -1486,14 +1517,13 @@ function zeigeNeubewertungOverlay(id,rows){
   ).join('');
   ov.innerHTML='<div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:1.2rem 1.1rem;max-width:480px;width:100%;max-height:85vh;overflow-y:auto">'
     +'<div style="font-weight:700;color:#f1f5f9;margin-bottom:0.3rem">🔄 Neu bewertet</div>'
-    +'<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:0.75rem">Automatisch neu ermittelt. Werte bei Bedarf anpassen, dann speichern – Datum &amp; Kategorie bleiben unverändert.</div>'
+    +'<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:0.75rem">Automatisch neu ermittelt. Menge (Gramm) korrigieren, wenn sie nicht stimmt – die Nährwerte werden dann automatisch neu berechnet. Datum &amp; Kategorie bleiben unverändert.</div>'
     +'<div id="neubew-rows">'+rowHtml+'</div>'
     +'<div style="display:flex;gap:0.5rem;margin-top:0.5rem">'
       +'<button onclick="speichereNeubewertung(\''+id+'\')" style="flex:1;padding:0.5rem;border-radius:8px;border:1px solid #22c55e;background:rgba(34,197,94,0.15);color:#4ade80;font-size:0.85rem;font-weight:700;cursor:pointer">Speichern</button>'
       +'<button onclick="document.getElementById(\'neubew-overlay\').remove()" style="padding:0.5rem 0.9rem;border-radius:8px;border:1px solid #334155;background:transparent;color:#94a3b8;font-size:0.85rem;cursor:pointer">Abbrechen</button>'
     +'</div>'
   +'</div>';
-  ov.dataset.rows=JSON.stringify(rows);
   ov.addEventListener('click',ev=>{if(ev.target===ov)ov.remove();});
   document.body.appendChild(ov);
 }
@@ -1501,10 +1531,14 @@ function zeigeNeubewertungOverlay(id,rows){
 async function speichereNeubewertung(id){
   const ov=document.getElementById('neubew-overlay');
   if(!ov)return;
-  let rows;
-  try{rows=JSON.parse(ov.dataset.rows);}catch(ex){return;}
+  // neubewAktuelleRows statt einer Momentaufnahme verwenden, da dort sf/lys/arg bereits
+  // korrekt zur zuletzt eingetragenen Grammzahl neu berechnet sind (die es keine eigenen
+  // Eingabefelder gibt, würden sie sonst mit den alten, alten Werten überschrieben).
+  const rows=neubewAktuelleRows;
+  if(!rows||!rows.length)return;
   ov.querySelectorAll('input[data-i]').forEach(inp=>{
     const i=+inp.dataset.i,k=inp.dataset.k;
+    if(k==='grams'){rows[i].grams=Math.round(+inp.value||0);return;}
     rows[i][k]=k==='kalorien'?Math.round(+inp.value||0):+(+inp.value||0).toFixed(1);
   });
   const idx=eintraege.findIndex(x=>String(x.id)===String(id));
@@ -1868,11 +1902,19 @@ function setZiel(v){
   aktualisiereBanner();
   renderEintraege();
 }
-function getBewegung(datum){return +(localStorage.getItem('bewegung-'+datum)||0);}
-function setBewegungTag(datum,v){
-  const bew=Math.max(0,+v||0);
-  localStorage.setItem('bewegung-'+datum,bew);
+// Überschlägiger Verbrauch für normales, nicht forciertes Gehtempo (~30-35 kcal/1000 Schritte
+// bei einer durchschnittlichen älteren Person). Individuell abhängig von Gewicht und Tempo.
+const SCHRITT_KCAL_FAKTOR=0.035;
+function getSchritte(datum){return +(localStorage.getItem('schritte-'+datum)||0);}
+function schritteZuKcal(schritte){return Math.round(schritte*SCHRITT_KCAL_FAKTOR);}
+function getBewegung(datum){return schritteZuKcal(getSchritte(datum));}
+function setSchritteTag(datum,v){
+  const schritte=Math.max(0,Math.round(+v||0));
+  localStorage.setItem('schritte-'+datum,schritte);
+  const bew=schritteZuKcal(schritte);
   const tagesKcal=eintraege.filter(e=>e.datum&&e.datum.slice(0,10)===datum).reduce((a,e)=>a+(+e.kalorien||0),0);
+  const kcalEl=document.getElementById('schritte-kcal-'+datum);
+  if(kcalEl)kcalEl.textContent='≈ '+bew+' kcal';
   const el=document.getElementById('ampel-tag-'+datum);
   if(el)el.innerHTML=ampelNetto(tagesKcal-bew,getZiel(datum));
   if(datum===heuteStr())aktualisiereBanner();

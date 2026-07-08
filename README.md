@@ -15,7 +15,8 @@ Live-URL: [renapralat.github.io/Ernaehrung](https://renapralat.github.io/Ernaehr
 - **Suche** in gespeicherten Einträgen (nach Name, Datum, Kategorie)
 - **Export** als Text oder CSV
 - **Wiederholen**: frühere Mahlzeiten mit einem Klick neu erfassen
-- **Neu bewerten**: Nährwerte eines bestehenden Eintrags neu ermitteln lassen (z.B. nachdem ein fehlendes Lebensmittel ergänzt wurde) – überschreibt direkt den Eintrag, kein erneutes Datum nötig
+- **Neu bewerten**: Nährwerte eines bestehenden Eintrags neu ermitteln lassen (z.B. nachdem ein fehlendes Lebensmittel ergänzt wurde) – überschreibt direkt den Eintrag, kein erneutes Datum nötig. Die Menge (Gramm) ist dabei direkt korrigierbar (z.B. bei einer falsch eingeschätzten Kelle/Esslöffel), die Nährwerte werden dann automatisch neu berechnet
+- **Schritte statt Kalorien**: Bewegung wird als Schrittzahl eingetragen und automatisch in kcal umgerechnet (≈ 35 kcal/1000 Schritte bei normalem Gehtempo)
 - **Analyse ansehen**: wie ein bestehender Eintrag mit dem heutigen Datenstand bewertet würde – rein zur Ansicht, ohne etwas zu speichern oder zu verändern
 - **Fehlende Lebensmittel automatisch per KI recherchieren**: wird ein Lebensmittel nirgends gefunden, recherchiert die KI von selbst dafür (inkl. realistischer Portionsgröße) und fragt vor dem Speichern nur noch zur Bestätigung; das Ergebnis landet in einer eigenen Zusatz-Datenbank (Supabase), `lebensmittel.js` bleibt dabei unangetastet
 - **📋 Eigene Lebensmittel verwalten**: eigene Zusatz-Datenbank jederzeit einsehen, Lebensmittel von Hand neu anlegen oder KI-Werte nachträglich korrigieren/löschen (⚙️-Leiste oben)
