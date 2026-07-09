@@ -108,7 +108,7 @@ Wird ein Lebensmittel weder in der eigenen DB noch bei Open Food Facts gefunden 
 
 ### Eigene Lebensmittel verwalten
 
-Über „📋 Eigene Lebensmittel" (⚙️-Leiste oben) lässt sich die Zusatz-Datenbank jederzeit einsehen: neue Lebensmittel von Hand anlegen (z.B. von der Verpackung abgelesene Werte), bestehende Einträge korrigieren (✎) oder löschen (✕) – unabhängig von der automatischen KI-Recherche. Im Formular gibt es zusätzlich den Button „🤖 Werte per KI ermitteln" – trägt den Namen ein und lässt alle Felder direkt von der KI vorausfüllen (inkl. Restaurant-/Gaststättengerichte), statt sie einzeln nachzuschlagen und abzutippen. Die Werte bleiben vor dem Speichern editierbar. `lebensmittel.js` bleibt davon immer unberührt.
+Über „📋 Eigene Lebensmittel" (⚙️-Leiste oben) lässt sich die Zusatz-Datenbank jederzeit einsehen: neue Lebensmittel von Hand anlegen (z.B. von der Verpackung abgelesene Werte), bestehende Einträge korrigieren (✎) oder löschen (✕) – unabhängig von der automatischen KI-Recherche. Im Formular gibt es zusätzlich den Button „🤖 Werte per KI ermitteln" – trägt den Namen ein, die App fragt zuerst Open Food Facts (kein Token nötig) und lässt die KI danach nur noch gesättigte Fettsäuren/Lysin/Arginin/Portionsgröße ergänzen, die Open Food Facts nie liefert. Beim Tippen des Namens schlägt die App außerdem bereits vorhandene eigene Lebensmittel vor, um Duplikate zu vermeiden – ein Klick auf einen Vorschlag öffnet den bestehenden Eintrag zum Bearbeiten statt einen neuen anzulegen. Die Werte bleiben vor dem Speichern editierbar. `lebensmittel.js` bleibt davon immer unberührt.
 
 ### Einträge neu bewerten
 
