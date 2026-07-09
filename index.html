@@ -846,6 +846,21 @@ async function berechneZeile(food,onStatus,grammsOverride){
   return{lebensmittel:food,kalorien:0,eiweiss:0,zucker:0,kohlenhydrate:0,fett:0,sf:null,lys:null,arg:null,quelle:'?',gefunden:false,grams:actualGrams,basis:null};
 }
 
+// Nährwerte für eine Liste von Lebensmittel-Freitexten ermitteln (eigene DB+Zusatz-DB → Open Food Facts → KI,
+// über berechneZeile für jedes einzelne Item). Wird von analyzeAndShow() UND analyzeKI() genutzt, damit beide
+// Modi dieselbe zuverlässige Quellen-Kaskade nutzen statt die KI blind für die ganze Mahlzeit raten zu lassen.
+async function berechneAlleZeilen(foodListe,statusBtn){
+  const rows=[],nichtGefunden=[],kiGeschaetzt=[];
+  for(const food of foodListe){
+    const row=await berechneZeile(food,(name,istKi)=>{if(statusBtn)statusBtn.innerHTML=(istKi?'🤖 ':'⏳ ')+name+'…';});
+    if(row.quelle==='KI')kiGeschaetzt.push(food);
+    if(!row.gefunden)nichtGefunden.push({food,name:parseFood(food).name});
+    delete row.gefunden;
+    rows.push(row);
+  }
+  return{rows,nichtGefunden,kiGeschaetzt};
+}
+
 async function analyzeAndShow(autoRecherche){
   if(autoRecherche===undefined)autoRecherche=true;
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
@@ -854,15 +869,9 @@ async function analyzeAndShow(autoRecherche){
   if(btn){btn.disabled=true;}if(kibtn)kibtn.disabled=true;
   const orig=kibtn?kibtn.innerHTML:'';
   try{
-    pendingRows=[];pendingKIMode=false;
-    const nichtGefunden=[],kiGeschaetzt=[];
-    for(const food of foods){
-      const row=await berechneZeile(food,(name,istKi)=>{if(btn)btn.innerHTML=(istKi?'🤖 ':'⏳ ')+name+'…';});
-      if(row.quelle==='KI')kiGeschaetzt.push(food);
-      if(!row.gefunden)nichtGefunden.push({food,name:parseFood(food).name});
-      delete row.gefunden;
-      pendingRows.push(row);
-    }
+    pendingKIMode=false;
+    const{rows,nichtGefunden,kiGeschaetzt}=await berechneAlleZeilen(foods,btn);
+    pendingRows=rows;
     showNWResults(pendingRows,kiGeschaetzt,nichtGefunden);
     // Für nicht gefundene Lebensmittel automatisch die KI-Recherche starten (fragt vor dem Speichern trotzdem nach)
     if(autoRecherche&&nichtGefunden.length&&loadToken())await kiRechercheUndSpeichern(0);
@@ -970,125 +979,34 @@ async function analyzeKI(autoRecherche){
     await analyzeAndShow(autoRecherche);return;
   }
   try{
-    const prompt='Du bist Ernährungsberaterin. Analysiere diese Mahlzeit für eine Person (70 Jahre, Diabetes → Zucker minimieren, erhöhtes Cholesterin → gesättigte Fettsäuren beachten, Ziel: 80g Eiweiß/Tag).\n\nLebensmittel:\n'
-      +foods.map((f,i)=>(i+1)+'. '+f).join('\n')
-      +'\n\nWichtig: Wenn ein Lebensmittel unbekannt, erfunden oder nicht existent ist, setze alle seine Werte auf 0. Erfinde keine Nährwerte.'
-      +'\n\nAntworte NUR mit JSON (keine Backticks, kein Markdown):\n{"beschreibung":"1-2 Sätze Bewertung (Zucker, Eiweiß, gesättigte Fettsäuren erwähnen wenn relevant)","einzeln":[{"name":"Name mit Menge","kalorien":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0,"fett":0}],"kalorien":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0,"fett":0}';
-
-    const resp=await fetch('https://models.inference.ai.azure.com/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body:JSON.stringify({model:getKiModel(),messages:[{role:'user',content:prompt}],temperature:0,max_tokens:600})
-    });
-    if(!resp.ok)throw new Error('HTTP '+resp.status);
-    const d=await resp.json();
-    const text=d.choices?.[0]?.message?.content||'';
-    const m=text.match(/\{[\s\S]+\}/);
-    if(!m)throw new Error('Kein JSON in Antwort: '+text.slice(0,100));
-    const ki=JSON.parse(m[0]);
-
+    // Nährwerte über dieselbe zuverlässige Kaskade wie bei "📊 Nährwerte" ermitteln
+    // (eigene DB+Zusatz-DB → Open Food Facts → KI pro Lebensmittel), NICHT die KI die ganze
+    // Mahlzeit in einem Rutsch schätzen lassen – das ignorierte Open Food Facts komplett und
+    // führte bei unbekannten Markenprodukten zu falschen 0-Werten trotz vorhandener Daten.
     pendingKIMode=true;
-    // Nährwerte: lokale DB hat Vorrang (exakter); KI liefert Beschreibung + Werte für Unbekanntes
-    pendingRows=(ki.einzeln||[]).map(e=>{
-      const{name:pName,grams:pGrams}=parseFood(e.name);
-      const dbE=sucheLokaleDB(pName)||sucheLokaleDB(e.name);
-      let sf=null,lys=null,arg=null;
-      let kcal,eiw,zck,kh,fett;
-      if(dbE){
-        // Gramm aus KI-Name berechnen; Stückgewicht (s-Feld) berücksichtigen
-        const _hasMU=/\b(teelöffel|tl|esslöffel|el|messlöffel|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|prise[n]?|schüsse?)\b/i.test(e.name);
-        let actualG=pGrams;
-        if(!_hasMU&&dbE.s){
-          let cnt=extractCount(e.name);
-          if(cnt==null){const m2=e.name.match(/\b(\d+(?:[.,]\d+)?)\s+(?:portion(?:en)?|stücke?|messlöffel)/i);if(m2)cnt=parseFloat(m2[1].replace(',','.'));}
-          if(cnt!=null)actualG=Math.round(cnt*dbE.s);
-        }
-        const f=actualG/100;
-        kcal=Math.round(dbE.k*f);
-        eiw=+((dbE.e||0)*f).toFixed(1);
-        zck=+((dbE.z||0)*f).toFixed(1);
-        kh=+((dbE.kh||0)*f).toFixed(1);
-        fett=+((dbE.f||0)*f).toFixed(1);
-        if(dbE.sf!=null)sf=+(dbE.sf*f).toFixed(1);
-        if(dbE.lys!=null)lys=Math.round(dbE.lys*f);
-        if(dbE.arg!=null)arg=Math.round(dbE.arg*f);
-      }else{
-        // KI-Werte für unbekannte Lebensmittel
-        kcal=Math.round(+e.kalorien||0);
-        eiw=+(+e.eiweiss||0).toFixed(1);
-        zck=+(+e.zucker||0).toFixed(1);
-        kh=+(+e.kohlenhydrate||0).toFixed(1);
-        fett=+(+e.fett||0).toFixed(1);
-      }
-      return{lebensmittel:e.name,kalorien:kcal,eiweiss:eiw,zucker:zck,kohlenhydrate:kh,fett,sf,lys,arg,quelle:dbE?'DB':'KI'};
-    });
-    // KI antwortet bei unbekannten/erfundenen Lebensmitteln bewusst mit 0 kcal – als "nicht gefunden" markieren statt stillschweigend 0 anzuzeigen
-    const nichtGefundenKI=pendingRows.filter(r=>r.quelle==='KI'&&(+r.kalorien||0)===0).map(r=>({food:r.lebensmittel,name:parseFood(r.lebensmittel).name}));
+    const{rows,nichtGefunden,kiGeschaetzt}=await berechneAlleZeilen(foods,btn);
+    pendingRows=rows;
+    showNWResults(pendingRows,kiGeschaetzt,nichtGefunden);
+    document.getElementById('result-header').innerHTML='✅ Analysiert – <span style="font-size:0.75rem;color:#4ade80">🤖 KI-Analyse</span>';
 
-    // Bewertungstext separat mit den bereits berechneten (echten) Werten erzeugen, statt der KI-eigenen,
-    // teils falschen Einschätzung unbekannter Lebensmittel/Markenprodukte zu vertrauen (siehe kiBewertungMitWerten).
+    // Bewertungstext separat mit den bereits berechneten (echten) Werten erzeugen – die KI muss die
+    // Lebensmittel nicht mehr selbst erkennen, nur noch die vorliegenden Werte kommentieren.
     const kbEl=document.getElementById('ki-beschreibung');
     try{
       const beschreibung=await kiBewertungMitWerten(pendingRows,token);
       if(beschreibung){kbEl.textContent='💬 '+beschreibung;kbEl.style.display='block';}
       else kbEl.style.display='none';
     }catch(ex){
-      // Fallback: die KI-eigene Beschreibung aus der ersten Anfrage, falls die zweite Anfrage fehlschlägt
-      if(ki.beschreibung){kbEl.textContent='💬 '+ki.beschreibung;kbEl.style.display='block';}
-      else kbEl.style.display='none';
+      kbEl.textContent='⚠️ KI-Bewertungstext nicht verfügbar – Werte oben sind trotzdem korrekt.';
+      kbEl.style.display='block';
     }
 
-    // Show table (inkl. sf/lys/arg-Spalten falls vorhanden)
-    const hasSFki=pendingRows.some(r=>r.sf!=null);
-    const hasLyski=pendingRows.some(r=>r.lys!=null);
-    const hasArgki=pendingRows.some(r=>r.arg!=null);
-    const sfHki=hasSFki?'<th style="text-align:right;color:#e879f9">ges.FS</th>':'';
-    const lysHki=hasLyski?'<th style="text-align:right;color:#60a5fa">Lys.</th>':'';
-    const argHki=hasArgki?'<th style="text-align:right;color:#60a5fa">Argn.</th>':'';
-    const totSFki2=pendingRows.reduce((a,r)=>a+(+r.sf||0),0);
-    const totLyski2=pendingRows.reduce((a,r)=>a+(+r.lys||0),0);
-    const totArgki2=pendingRows.reduce((a,r)=>a+(+r.arg||0),0);
-    // Werden schon in der Tabellen-Gesamtzeile gebraucht (bei >1 Lebensmittel) – deshalb hier VOR der Tabelle berechnet,
-    // nicht erst danach (sonst ReferenceError: "Cannot access before initialization" bei mehr als einem Lebensmittel).
-    const totKcal=pendingRows.reduce((a,r)=>a+r.kalorien,0);
-    const totEiw=pendingRows.reduce((a,r)=>a+r.eiweiss,0).toFixed(1);
-    const totZck=pendingRows.reduce((a,r)=>a+r.zucker,0).toFixed(1);
-    const totKH=pendingRows.reduce((a,r)=>a+r.kohlenhydrate,0).toFixed(1);
-    const totFettKI=pendingRows.reduce((a,r)=>a+r.fett,0).toFixed(1);
-    document.getElementById('result-table-wrap').innerHTML=
-      '<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right;color:#f59e0b">kcal</th><th style="text-align:right;color:#22c55e">Eiw.</th><th style="text-align:right;color:#f43f5e">Zck.</th><th style="text-align:right;color:#ef4444">KH</th><th style="text-align:right;color:#a78bfa">Fett</th>'+sfHki+lysHki+argHki+'</tr></thead><tbody>'
-      +pendingRows.map(r=>{
-        const sfC=hasSFki?`<td style="text-align:right">${r.sf!=null?r.sf.toFixed(1)+'g':'–'}</td>`:'';
-        const lysC=hasLyski?`<td style="text-align:right">${r.lys!=null?r.lys+'mg':'–'}</td>`:'';
-        const argC=hasArgki?`<td style="text-align:right">${r.arg!=null?r.arg+'mg':'–'}</td>`:'';
-        const qBadge=quelleBadge(r.quelle);
-        return `<tr><td>${r.lebensmittel}${qBadge}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td>${sfC}${lysC}${argC}</tr>`;
-      }).join('')
-      +(pendingRows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right;color:#f59e0b"><strong>${totKcal}</strong></td><td style="text-align:right;color:#22c55e"><strong>${totEiw}g</strong></td><td style="text-align:right;color:#f43f5e"><strong>${totZck}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totKH}g</strong></td><td style="text-align:right;color:#a78bfa"><strong>${totFettKI}g</strong></td>`+(hasSFki?`<td style="text-align:right;color:#e879f9"><strong>${totSFki2.toFixed(1)}g</strong></td>`:'')+( hasLyski?`<td style="text-align:right;color:#60a5fa"><strong>${totLyski2}mg</strong></td>`:'')+( hasArgki?`<td style="text-align:right;color:#60a5fa"><strong>${totArgki2}mg</strong></td>`:'')+`</tr>` :'')
-      +'</tbody></table>';
-    document.getElementById('result-nf').innerHTML=nichtGefundenHTML(nichtGefundenKI)+lokaleBewertung(pendingRows);
-    document.getElementById('result-header').innerHTML='✅ Analysiert – <span style="font-size:0.75rem;color:#4ade80">🤖 KI-Analyse</span>';
-
-    // Show totals grid (totKcal/totEiw/totZck/totKH/totFettKI werden schon weiter oben berechnet)
-    const totSFki=pendingRows.reduce((a,r)=>a+(+r.sf||0),0);
-    const totLyski=pendingRows.reduce((a,r)=>a+(+r.lys||0),0);
-    const totArgki=pendingRows.reduce((a,r)=>a+(+r.arg||0),0);
-    const tg=document.getElementById('result-totals');
-    tg.style.display='none'; // Totals sind jetzt in der Tabelle als total-row
-    tg.style.display='block';
-    document.getElementById('result-box').classList.add('show');
-    document.getElementById('kategorie-input').blur();
     // Für nicht gefundene Lebensmittel automatisch die KI-Recherche starten (fragt vor dem Speichern trotzdem nach)
-    if(autoRecherche&&nichtGefundenKI.length)await kiRechercheUndSpeichern(0);
-  }catch(e){
-    if(btn){btn.innerHTML=orig;btn.disabled=false;}
-    const kbEl=document.getElementById('ki-beschreibung');
-    kbEl.textContent='⚠️ KI nicht verfügbar – Werte aus lokaler DB / Open Food Facts.';
-    kbEl.style.display='block';
-    await analyzeAndShow(autoRecherche);
-  }
-  if(btn){btn.innerHTML=orig;btn.disabled=false;}
+    if(autoRecherche&&nichtGefunden.length)await kiRechercheUndSpeichern(0);
+  }catch(e){alert('Fehler: '+e.message);}
+  finally{if(btn){btn.innerHTML=orig;btn.disabled=false;}}
 }
+
 
 // Kurzer KI-Bewertungstext (1-2 Sätze) für eine Liste von Lebensmittel-Freitexten.
 // Wird von nurBewertung() (aktuelle Eingabe) und zeigeAnalyseEintrag() (bestehender Eintrag) genutzt.
