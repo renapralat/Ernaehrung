@@ -98,7 +98,7 @@ Das `s`-Feld (Stückgewicht) wird für Mengenangaben ohne Einheit genutzt:
 ## Backend
 
 - **Datenbank**: Supabase (PostgreSQL), Tabelle `ernaehrung`
-- **Zusatz-Datenbank**: Tabelle `eigene_lebensmittel` – per KI recherchierte Lebensmittel, die weder in `lebensmittel.js` noch bei Open Food Facts gefunden wurden. Wird beim App-Start geladen und bei der Suche wie die eigene Datenbank behandelt. `lebensmittel.js` wird dadurch nie automatisch verändert.
+- **Zusatz-Datenbank**: Tabelle `eigene_lebensmittel` – per KI recherchierte oder von Hand angelegte Lebensmittel, die weder in `lebensmittel.js` noch bei Open Food Facts gefunden wurden. Wird beim App-Start geladen und bei der Suche **zuerst** durchsucht (vor `lebensmittel.js`), da sie persönlich kuratiert ist. `lebensmittel.js` wird dadurch nie automatisch verändert.
 - **KI**: GitHub Models (GPT-4o-mini, konfigurierbar)
 - **Nährwert-Fallback**: Open Food Facts API
 
@@ -108,7 +108,7 @@ Wird ein Lebensmittel weder in der eigenen DB noch bei Open Food Facts gefunden 
 
 ### Eigene Lebensmittel verwalten
 
-Über „📋 Eigene Lebensmittel" (⚙️-Leiste oben) lässt sich die Zusatz-Datenbank jederzeit einsehen: neue Lebensmittel von Hand anlegen (z.B. von der Verpackung abgelesene Werte), bestehende Einträge korrigieren (✎) oder löschen (✕) – unabhängig von der KI-Recherche. `lebensmittel.js` bleibt davon immer unberührt.
+Über „📋 Eigene Lebensmittel" (⚙️-Leiste oben) lässt sich die Zusatz-Datenbank jederzeit einsehen: neue Lebensmittel von Hand anlegen (z.B. von der Verpackung abgelesene Werte), bestehende Einträge korrigieren (✎) oder löschen (✕) – unabhängig von der automatischen KI-Recherche. Im Formular gibt es zusätzlich den Button „🤖 Werte per KI ermitteln" – trägt den Namen ein und lässt alle Felder direkt von der KI vorausfüllen (inkl. Restaurant-/Gaststättengerichte), statt sie einzeln nachzuschlagen und abzutippen. Die Werte bleiben vor dem Speichern editierbar. `lebensmittel.js` bleibt davon immer unberührt.
 
 ### Einträge neu bewerten
 
