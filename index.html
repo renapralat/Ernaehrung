@@ -733,24 +733,57 @@ async function kiFormularAusfuellen(){
   const nameEl=document.getElementById('eigen-lm-name');
   const name=nameEl.value.trim();
   if(!name){alert('Bitte zuerst einen Namen eingeben.');nameEl.focus();return;}
-  const token=loadToken();
-  if(!token){alert('Für die KI-Ermittlung wird ein GitHub-Token benötigt (⚙️ oben rechts).');return;}
   const btn=document.getElementById('eigen-lm-ki-btn');
   const orig=btn?btn.innerHTML:'';
   if(btn){btn.disabled=true;btn.innerHTML='<span class="loading"></span> Wird ermittelt…';}
   try{
-    const werte=await kiVolleRecherche(name,token);
-    if(!werte||!werte.kalorien){alert('KI konnte keine plausiblen Werte für "'+name+'" ermitteln. Bitte von Hand eintragen.');return;}
-    document.getElementById('eigen-lm-kcal').value=werte.kalorien;
-    document.getElementById('eigen-lm-eiweiss').value=werte.eiweiss;
-    document.getElementById('eigen-lm-zucker').value=werte.zucker;
-    document.getElementById('eigen-lm-kh').value=werte.kohlenhydrate;
-    document.getElementById('eigen-lm-fett').value=werte.fett;
-    document.getElementById('eigen-lm-sf').value=werte.gesaettigt;
-    document.getElementById('eigen-lm-lys').value=werte.lysin;
-    document.getElementById('eigen-lm-arg').value=werte.arginin;
-    if(werte.portionsgramm)document.getElementById('eigen-lm-portion').value=werte.portionsgramm;
-  }catch(e){alert('Fehler bei der KI-Ermittlung: '+e.message);}
+    // Erst Open Food Facts probieren (echte Produktdatenbank, kein Token nötig, genauer bei Markenprodukten) -
+    // vorher hat dieser Button direkt und ausschließlich die KI gefragt, die kein Internet hat und deshalb bei
+    // Markenprodukten wie "dm sportness" oft nichts Brauchbares wusste, obwohl Open Food Facts es kennt.
+    const offResult=await searchOpenFoodFacts(name);
+    const offGefunden=offResult&&offResult.data&&(+offResult.data['energy-kcal_100g']||0)>0;
+    if(offGefunden){
+      const d=offResult.data;
+      document.getElementById('eigen-lm-kcal').value=Math.round(+d['energy-kcal_100g']||0);
+      document.getElementById('eigen-lm-eiweiss').value=+(+d['proteins_100g']||0).toFixed(1);
+      document.getElementById('eigen-lm-zucker').value=+(+d['sugars_100g']||0).toFixed(1);
+      document.getElementById('eigen-lm-kh').value=+(+d['carbohydrates_100g']||0).toFixed(1);
+      document.getElementById('eigen-lm-fett').value=+(+d['fat_100g']||0).toFixed(1);
+    }
+    const token=loadToken();
+    if(!offGefunden&&!token){
+      alert('Weder bei Open Food Facts gefunden, noch ein KI-Token hinterlegt (⚙️ oben rechts). Bitte von Hand eintragen.');
+      return;
+    }
+    if(!offGefunden){
+      // Nichts bei Open Food Facts gefunden -> komplett auf KI-Schätzung ausweichen
+      const werte=await kiVolleRecherche(name,token);
+      if(!werte||!werte.kalorien){alert('Weder bei Open Food Facts noch per KI plausible Werte für "'+name+'" gefunden. Bitte von Hand eintragen.');return;}
+      document.getElementById('eigen-lm-kcal').value=werte.kalorien;
+      document.getElementById('eigen-lm-eiweiss').value=werte.eiweiss;
+      document.getElementById('eigen-lm-zucker').value=werte.zucker;
+      document.getElementById('eigen-lm-kh').value=werte.kohlenhydrate;
+      document.getElementById('eigen-lm-fett').value=werte.fett;
+      document.getElementById('eigen-lm-sf').value=werte.gesaettigt;
+      document.getElementById('eigen-lm-lys').value=werte.lysin;
+      document.getElementById('eigen-lm-arg').value=werte.arginin;
+      if(werte.portionsgramm)document.getElementById('eigen-lm-portion').value=werte.portionsgramm;
+      return;
+    }
+    // Open Food Facts hat die Hauptwerte geliefert - Open Food Facts kennt aber nie gesättigte Fettsäuren,
+    // Lysin, Arginin oder eine Portionsgröße; das ergänzt die KI hier zusätzlich, sofern ein Token vorhanden ist.
+    if(token){
+      try{
+        const werte=await kiVolleRecherche(name,token);
+        if(werte){
+          if(werte.gesaettigt)document.getElementById('eigen-lm-sf').value=werte.gesaettigt;
+          if(werte.lysin)document.getElementById('eigen-lm-lys').value=werte.lysin;
+          if(werte.arginin)document.getElementById('eigen-lm-arg').value=werte.arginin;
+          if(werte.portionsgramm)document.getElementById('eigen-lm-portion').value=werte.portionsgramm;
+        }
+      }catch(ex){/* Ergänzung optional - die Open-Food-Facts-Werte sind schon eingetragen */}
+    }
+  }catch(e){alert('Fehler bei der Ermittlung: '+e.message);}
   finally{if(btn){btn.innerHTML=orig;btn.disabled=false;}}
 }
 
