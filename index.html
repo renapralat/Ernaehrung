@@ -531,8 +531,9 @@ function parseFood(text){
 
 function sucheLokaleDB(name){
   if(typeof DB==='undefined')return null;
-  // eigene DB (lebensmittel.js) hat Vorrang, Zusatz-DB (per KI recherchiert & in Supabase gespeichert) als Ergänzung
-  const _quelle=customDB&&customDB.length?DB.concat(customDB):DB;
+  // Zusatz-DB (eigene, per KI recherchierte oder von Hand angelegte Lebensmittel) hat Vorrang vor lebensmittel.js,
+  // da sie persönlich kuratiert/korrigiert wird. Erst danach wird in der Original-Datei gesucht.
+  const _quelle=customDB&&customDB.length?customDB.concat(DB):DB;
   let s=name.toLowerCase().trim().replace(/^(?:ein[e]?[nm]?|der|die|das)\s+/,'');
   // "gekochter Reis" (natürliche Wortstellung) auf "Reis" reduzieren, damit es die DB findet
   // (die DB nennt es "Reis gekocht" – ohne diesen Schritt schlägt die Suche für diese sehr übliche Formulierung fehl)
@@ -701,10 +702,11 @@ function zeigeEigenLMFormular(id){
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:10000;display:flex;align-items:center;justify-content:center;padding:1rem;overflow-y:auto';
   ov.innerHTML='<div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:1.2rem 1.1rem;max-width:420px;width:100%;max-height:85vh;overflow-y:auto">'
     +'<div style="font-weight:700;color:#f1f5f9;margin-bottom:0.75rem">'+(x?'✎ Lebensmittel bearbeiten':'+ Neues Lebensmittel')+'</div>'
-    +'<label style="display:flex;flex-direction:column;font-size:0.68rem;color:#94a3b8;gap:2px;margin-bottom:0.6rem">Name'
-      +'<input type="text" id="eigen-lm-name" value="'+(x?x.n.replace(/"/g,'&quot;'):'')+'" placeholder="z.B. Basmati Reis"'
+    +'<label style="display:flex;flex-direction:column;font-size:0.68rem;color:#94a3b8;gap:2px;margin-bottom:0.4rem">Name'
+      +'<input type="text" id="eigen-lm-name" value="'+(x?x.n.replace(/"/g,'&quot;'):'')+'" placeholder="z.B. Rotes Thai-Curry Restaurant"'
       +' style="width:100%;box-sizing:border-box;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:5px 7px;font-size:0.85rem"/>'
     +'</label>'
+    +'<button type="button" id="eigen-lm-ki-btn" onclick="kiFormularAusfuellen()" style="width:100%;padding:0.4rem;margin-bottom:0.65rem;border-radius:8px;border:1px solid #f59e0b;background:rgba(245,158,11,0.12);color:#f59e0b;font-size:0.8rem;font-weight:600;cursor:pointer">🤖 Werte per KI ermitteln</button>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.6rem">'
       +eigenLMFeld('kcal/100g','eigen-lm-kcal',x?x.k:'',1)
       +eigenLMFeld('Portion (g)','eigen-lm-portion',x?x.s:'',1)
@@ -725,6 +727,31 @@ function zeigeEigenLMFormular(id){
   ov.addEventListener('click',ev=>{if(ev.target===ov)ov.remove();});
   document.body.appendChild(ov);
   setTimeout(()=>document.getElementById('eigen-lm-name')?.focus(),80);
+}
+
+async function kiFormularAusfuellen(){
+  const nameEl=document.getElementById('eigen-lm-name');
+  const name=nameEl.value.trim();
+  if(!name){alert('Bitte zuerst einen Namen eingeben.');nameEl.focus();return;}
+  const token=loadToken();
+  if(!token){alert('Für die KI-Ermittlung wird ein GitHub-Token benötigt (⚙️ oben rechts).');return;}
+  const btn=document.getElementById('eigen-lm-ki-btn');
+  const orig=btn?btn.innerHTML:'';
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="loading"></span> Wird ermittelt…';}
+  try{
+    const werte=await kiVolleRecherche(name,token);
+    if(!werte||!werte.kalorien){alert('KI konnte keine plausiblen Werte für "'+name+'" ermitteln. Bitte von Hand eintragen.');return;}
+    document.getElementById('eigen-lm-kcal').value=werte.kalorien;
+    document.getElementById('eigen-lm-eiweiss').value=werte.eiweiss;
+    document.getElementById('eigen-lm-zucker').value=werte.zucker;
+    document.getElementById('eigen-lm-kh').value=werte.kohlenhydrate;
+    document.getElementById('eigen-lm-fett').value=werte.fett;
+    document.getElementById('eigen-lm-sf').value=werte.gesaettigt;
+    document.getElementById('eigen-lm-lys').value=werte.lysin;
+    document.getElementById('eigen-lm-arg').value=werte.arginin;
+    if(werte.portionsgramm)document.getElementById('eigen-lm-portion').value=werte.portionsgramm;
+  }catch(e){alert('Fehler bei der KI-Ermittlung: '+e.message);}
+  finally{if(btn){btn.innerHTML=orig;btn.disabled=false;}}
 }
 
 async function speichereEigenesLebensmittel(id){
