@@ -702,9 +702,11 @@ function zeigeEigenLMFormular(id){
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:10000;display:flex;align-items:center;justify-content:center;padding:1rem;overflow-y:auto';
   ov.innerHTML='<div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:1.2rem 1.1rem;max-width:420px;width:100%;max-height:85vh;overflow-y:auto">'
     +'<div style="font-weight:700;color:#f1f5f9;margin-bottom:0.75rem">'+(x?'✎ Lebensmittel bearbeiten':'+ Neues Lebensmittel')+'</div>'
-    +'<label style="display:flex;flex-direction:column;font-size:0.68rem;color:#94a3b8;gap:2px;margin-bottom:0.4rem">Name'
-      +'<input type="text" id="eigen-lm-name" value="'+(x?x.n.replace(/"/g,'&quot;'):'')+'" placeholder="z.B. Rotes Thai-Curry Restaurant"'
+    +'<label style="display:flex;flex-direction:column;font-size:0.68rem;color:#94a3b8;gap:2px;margin-bottom:0.4rem;position:relative">Name'
+      +'<input type="text" id="eigen-lm-name" value="'+(x?x.n.replace(/"/g,'&quot;'):'')+'" placeholder="z.B. Rotes Thai-Curry Restaurant" autocomplete="off"'
+      +(x?'':' oninput="zeigeEigenLMVorschlaege(this.value)" onblur="setTimeout(schliessEigenLMVorschlaege,320)"')
       +' style="width:100%;box-sizing:border-box;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:5px 7px;font-size:0.85rem"/>'
+      +'<div id="eigen-lm-vorschlaege" style="display:none;position:absolute;top:100%;left:0;right:0;background:#1e293b;border:1px solid #334155;border-radius:8px;margin-top:2px;max-height:200px;overflow-y:auto;z-index:60"></div>'
     +'</label>'
     +'<button type="button" id="eigen-lm-ki-btn" onclick="kiFormularAusfuellen()" style="width:100%;padding:0.4rem;margin-bottom:0.65rem;border-radius:8px;border:1px solid #f59e0b;background:rgba(245,158,11,0.12);color:#f59e0b;font-size:0.8rem;font-weight:600;cursor:pointer">🤖 Werte per KI ermitteln</button>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.6rem">'
@@ -727,6 +729,38 @@ function zeigeEigenLMFormular(id){
   ov.addEventListener('click',ev=>{if(ev.target===ov)ov.remove();});
   document.body.appendChild(ov);
   setTimeout(()=>document.getElementById('eigen-lm-name')?.focus(),80);
+}
+
+// Autocomplete im "Neues Lebensmittel"-Formular: während des Tippens passende, bereits vorhandene
+// eigene Lebensmittel vorschlagen, damit nicht versehentlich Duplikate mit leicht anderem Namen entstehen.
+let _eigenLMVorschlaegeListe=[];
+function zeigeEigenLMVorschlaege(q){
+  const box=document.getElementById('eigen-lm-vorschlaege');
+  if(!box)return;
+  const s=(q||'').trim().toLowerCase();
+  _eigenLMVorschlaegeListe=s.length<2?[]:customDB
+    .map(x=>({x,sc:x.n.toLowerCase()===s?3:x.n.toLowerCase().startsWith(s)?2:x.n.toLowerCase().includes(s)?1:0}))
+    .filter(o=>o.sc>0).sort((a,b)=>b.sc-a.sc).slice(0,6).map(o=>o.x);
+  if(!_eigenLMVorschlaegeListe.length){box.style.display='none';return;}
+  box.innerHTML=_eigenLMVorschlaegeListe.map((x,i)=>
+    '<div onmousedown="event.preventDefault()" onclick="waehlEigenLMVorschlag('+i+')"'
+    +' style="padding:0.4rem 0.6rem;cursor:pointer;border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center;font-size:0.82rem">'
+    +'<span style="color:#e2e8f0">'+x.n+'</span>'
+    +'<span style="color:#64748b;font-size:0.7rem;margin-left:0.5rem;white-space:nowrap">'+x.k+' kcal/100g</span>'
+    +'</div>'
+  ).join('');
+  box.style.display='block';
+}
+function schliessEigenLMVorschlaege(){
+  const box=document.getElementById('eigen-lm-vorschlaege');
+  if(box)box.style.display='none';
+}
+function waehlEigenLMVorschlag(i){
+  const x=_eigenLMVorschlaegeListe[i];
+  if(!x)return;
+  schliessEigenLMVorschlaege();
+  // Formular auf den bestehenden Eintrag umschalten (Bearbeiten-Modus) statt versehentlich ein Duplikat anzulegen
+  zeigeEigenLMFormular(x.id);
 }
 
 async function kiFormularAusfuellen(){
