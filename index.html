@@ -620,7 +620,7 @@ async function callGithubKI(name){
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
       body:JSON.stringify({
         model:getKiModel(),
-        messages:[{role:'user',content:'Nährwerte pro 100g für "'+name+'"? Nur wenn es ein echtes, bekanntes Lebensmittel ist. Wenn unbekannt, erfunden oder nicht existent, setze alle Werte auf 0. Antworte NUR mit JSON: {"kcal":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0,"fett":0} Nur Zahlen, keine Einheiten.'}],
+        messages:[{role:'user',content:'Schätze die durchschnittlichen Nährwerte pro 100g für "'+name+'" so genau wie möglich – auch wenn es ein selbstgekochtes, zusammengesetztes oder nicht exakt standardisiertes Gericht ist (z.B. eine Nudel- oder Salat-Kombination): nutze dein Wissen über die typischen Zutaten für eine plausible Schätzung, wie es auch eine erfahrene Ernährungsberaterin tun würde. Nur wenn der Name eindeutig KEIN Lebensmittel ist (Unsinn, ein Gegenstand, ein Fantasiewort), setze alle Werte auf 0. Antworte NUR mit JSON: {"kcal":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0,"fett":0} Nur Zahlen, keine Einheiten.'}],
         temperature:0,max_tokens:80
       })
     });
@@ -641,7 +641,7 @@ async function kiVolleRecherche(name,token){
     headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
     body:JSON.stringify({
       model:getKiModel(),
-      messages:[{role:'user',content:'Recherchiere sorgfältig die durchschnittlichen Nährwerte pro 100g für "'+name+'". Nutze dein Wissen über Lebensmittel möglichst genau. Gib zusätzlich an, wie viel Gramm eine im Alltag übliche Portion dieses Lebensmittels typischerweise wiegt (z.B. eine Portion gekochter Reis als Beilage, ein übliches Glas eines Getränks, ein normales Stück) – schätze realistisch, nicht 100g als Standardantwort. Wenn es kein echtes, bekanntes Lebensmittel ist, setze alle Werte auf 0. Antworte NUR mit JSON: {"kcal":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0,"fett":0,"gesaettigt":0,"lysin":0,"arginin":0,"portionsgramm":0} (kcal in kcal, restliche Werte in g, lysin/arginin in mg – jeweils pro 100g; portionsgramm ist die Gramm-Angabe für EINE übliche Portion, nur Zahlen, keine Einheiten).'}],
+      messages:[{role:'user',content:'Recherchiere sorgfältig die durchschnittlichen Nährwerte pro 100g für "'+name+'". Auch wenn es ein selbstgekochtes, zusammengesetztes oder nicht exakt standardisiertes Gericht ist (z.B. eine bestimmte Nudel- oder Salat-Kombination, die nicht als feststehender Rezeptname bekannt ist), schätze anhand der typischen Zutaten eine plausible Durchschnittsangabe, wie es auch eine erfahrene Ernährungsberaterin tun würde – die Schätzung muss nicht zu 100% exakt sein. Gib zusätzlich an, wie viel Gramm eine im Alltag übliche Portion dieses Lebensmittels typischerweise wiegt (z.B. eine Portion gekochter Reis als Beilage, ein übliches Glas eines Getränks, ein normales Stück) – schätze realistisch, nicht 100g als Standardantwort. Nur wenn der Name eindeutig KEIN Lebensmittel ist (Unsinn, ein Gegenstand, ein Fantasiewort), setze alle Werte auf 0. Antworte NUR mit JSON: {"kcal":0,"eiweiss":0,"zucker":0,"kohlenhydrate":0,"fett":0,"gesaettigt":0,"lysin":0,"arginin":0,"portionsgramm":0} (kcal in kcal, restliche Werte in g, lysin/arginin in mg – jeweils pro 100g; portionsgramm ist die Gramm-Angabe für EINE übliche Portion, nur Zahlen, keine Einheiten).'}],
       temperature:0,max_tokens:180
     })
   });
