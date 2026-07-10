@@ -374,9 +374,15 @@ function sucheDBVorschlaege(q){
     if(n.startsWith(s)||s.startsWith(n))return 3;
     if(stem!==s&&(n.startsWith(stem)||n.includes(stem)))return 2;
     if(n.includes(s))return 1;
+    // Leerzeichen-unabhängiger Vergleich für zusammengesetzte Wörter ("Bohneneintopf" vs. gespeichertes "Bohnen Eintopf")
+    const nOhneLeer=n.replace(/\s+/g,''),sOhneLeer=s.replace(/\s+/g,'');
+    if(sOhneLeer.length>=6&&nOhneLeer.includes(sOhneLeer))return 0.5;
     return 0;
   };
-  return DB.map(x=>({x,sc:score(x)})).filter(o=>o.sc>0).sort((a,b)=>b.sc-a.sc).slice(0,8).map(o=>o.x);
+  // Eigene Zusatz-DB (customDB) mit durchsuchen, nicht nur lebensmittel.js - sonst schlägt das Eingabefeld
+  // selbst angelegte/per KI recherchierte eigene Lebensmittel nie vor.
+  const _quelleVorschlag=(typeof customDB!=='undefined'&&customDB.length)?customDB.concat(DB):DB;
+  return _quelleVorschlag.map(x=>({x,sc:score(x)})).filter(o=>o.sc>0).sort((a,b)=>b.sc-a.sc).slice(0,8).map(o=>o.x);
 }
 
 function portionsHinweis(x){
