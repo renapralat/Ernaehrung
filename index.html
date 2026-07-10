@@ -581,14 +581,34 @@ async function fetchMitTimeout(url,ms){
   catch(e){clearTimeout(t);throw e;}
 }
 
+// Grobe Relevanzprüfung für einen Open-Food-Facts-Treffer: mindestens ein nennenswertes Wort (≥4 Zeichen)
+// aus der Suche muss im Produktnamen vorkommen. Ohne diese Prüfung übernahm die App das erstbeste, oft
+// zufällige/unpassende Ergebnis der Volltextsuche (z.B. ein Fertigprodukt mit ähnlichem Namen) ungeprüft -
+// und die KI kam für generische, selbstgekochte Gerichte (z.B. "Caprese") gar nicht erst zum Zug.
+function offTrefferRelevant(suchbegriff,produktname){
+  const pname=(produktname||'').toLowerCase();
+  if(!pname)return false;
+  const woerter=suchbegriff.toLowerCase().split(/\s+/).filter(w=>w.length>=4);
+  if(!woerter.length)return true;
+  return woerter.some(w=>pname.includes(w));
+}
+
 async function searchOpenFoodFacts(name){
   const lokal=sucheLokaleDB(name);
   if(lokal)return{data:{'energy-kcal_100g':lokal.k,'proteins_100g':lokal.e,'sugars_100g':lokal.z,'carbohydrates_100g':lokal.kh,'fat_100g':lokal.f||0},quelle:'DB'};
   const q='&search_simple=1&action=process&json=1&fields=product_name,nutriments&page_size=1';
   const urlDE='https://de.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(name)+q;
   const urlWelt='https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(name)+q;
-  try{const r=await fetchMitTimeout(urlDE,5000);const d=await r.json();if(d.products&&d.products.length>0&&d.products[0].nutriments)return{data:d.products[0].nutriments,quelle:'OFF'};}catch(e){}
-  try{const r=await fetchMitTimeout(urlWelt,5000);const d=await r.json();if(d.products&&d.products.length>0&&d.products[0].nutriments)return{data:d.products[0].nutriments,quelle:'OFF'};}catch(e){}
+  try{
+    const r=await fetchMitTimeout(urlDE,5000);const d=await r.json();
+    if(d.products&&d.products.length>0&&d.products[0].nutriments&&offTrefferRelevant(name,d.products[0].product_name))
+      return{data:d.products[0].nutriments,quelle:'OFF'};
+  }catch(e){}
+  try{
+    const r=await fetchMitTimeout(urlWelt,5000);const d=await r.json();
+    if(d.products&&d.products.length>0&&d.products[0].nutriments&&offTrefferRelevant(name,d.products[0].product_name))
+      return{data:d.products[0].nutriments,quelle:'OFF'};
+  }catch(e){}
   return null;
 }
 
