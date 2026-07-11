@@ -1799,6 +1799,11 @@ function exportBrief(){
     const gkcalN=sum('kalorien'),geiwN=sum('eiweiss'),gzckN=sum('zucker'),gkhN=sum('kohlenhydrate'),gfatN=sum('fett');
     const bewegung=getBewegung(datum),ziel=getZiel(datum),netto=Math.round(gkcalN-bewegung),diff=netto-ziel;
     zeilen.push('Schritte: '+(getSchritte(datum)||0)+' (≈ '+bewegung+' kcal)    Netto: '+netto+' kcal    Zielabweichung: '+(diff>0?'+':'')+diff+' kcal (Ziel '+ziel+' kcal)');
+    const macroKcal=geiwN*4+gfatN*9+gkhN*4;
+    if(macroKcal>0){
+      const pEiw=Math.round(geiwN*4/macroKcal*100),pFat=Math.round(gfatN*9/macroKcal*100),pKH=Math.round(gkhN*4/macroKcal*100);
+      zeilen.push('Anteile: Eiweiß '+pEiw+'% · Fett '+pFat+'% · Kohlenhydrate '+pKH+'%  (Ziel: '+MAKROZIEL.eiw+'% / '+MAKROZIEL.fett+'% / '+MAKROZIEL.kh+'%)');
+    }
     zeilen.push('');
 
     // Nach Kategorien gruppieren: Frühstück, Mittag, Abendessen zuerst (in dieser Reihenfolge),
@@ -1814,7 +1819,9 @@ function exportBrief(){
       return (ia>=0?ia:katOrder.length)-(ib>=0?ib:katOrder.length);
     });
     katNamen.forEach(kat=>{
-      zeilen.push(kat);
+      const ksum=k=>gruppen[kat].reduce((a,e)=>a+(+e[k]||0),0);
+      zeilen.push(briefZeile(kat,Math.round(ksum('kalorien')),ksum('eiweiss').toFixed(1),ksum('fett').toFixed(1),ksum('gesaettigt').toFixed(1),ksum('kohlenhydrate').toFixed(1),ksum('zucker').toFixed(1)));
+      zeilen.push('-'.repeat(hdr.length));
       gruppen[kat].forEach(e=>{
         let zutaten=null;
         if(e.zutaten){try{zutaten=JSON.parse(e.zutaten);}catch(ex){}}
@@ -1828,20 +1835,12 @@ function exportBrief(){
           });
         }
       });
-      const ksum=k=>gruppen[kat].reduce((a,e)=>a+(+e[k]||0),0);
-      zeilen.push('-'.repeat(hdr.length));
-      zeilen.push(briefZeile('Summe '+kat,Math.round(ksum('kalorien')),ksum('eiweiss').toFixed(1),ksum('fett').toFixed(1),ksum('gesaettigt').toFixed(1),ksum('kohlenhydrate').toFixed(1),ksum('zucker').toFixed(1)));
       zeilen.push('');
     });
 
     zeilen.push('-'.repeat(hdr.length));
     zeilen.push(briefZeile('GESAMT  '+fmtMitTag(datum),Math.round(gkcalN),geiwN.toFixed(1),gfatN.toFixed(1),sum('gesaettigt').toFixed(1),gkhN.toFixed(1),gzckN.toFixed(1)));
     zeilen.push(hdrKurz);
-    const macroKcal=geiwN*4+gfatN*9+gkhN*4;
-    if(macroKcal>0){
-      const pEiw=Math.round(geiwN*4/macroKcal*100),pFat=Math.round(gfatN*9/macroKcal*100),pKH=Math.round(gkhN*4/macroKcal*100);
-      zeilen.push('Anteile: Eiweiß '+pEiw+'% · Fett '+pFat+'% · Kohlenhydrate '+pKH+'%  (Ziel: '+MAKROZIEL.eiw+'% / '+MAKROZIEL.fett+'% / '+MAKROZIEL.kh+'%)');
-    }
     zeilen.push('');
   });
   const txt='﻿'+zeilen.join('\r\n');
@@ -2043,7 +2042,7 @@ function setSchritteTag(datum,v){
   if(el)el.innerHTML=ampelNetto(tagesKcal-bew,getZiel(datum));
   if(datum===heuteStr())aktualisiereBanner();
 }
-const NOTIZ_MAXLEN=40;
+const NOTIZ_MAXLEN=60;
 function getNotiz(datum){return (localStorage.getItem('notiz-'+datum)||'').slice(0,NOTIZ_MAXLEN);}
 function setNotizTag(datum,v){
   const n=String(v||'').slice(0,NOTIZ_MAXLEN);
