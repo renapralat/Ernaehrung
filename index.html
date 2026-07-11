@@ -284,7 +284,7 @@ function heuteStr(){return new Date().toISOString().slice(0,10);}
 function fmt(s){if(!s)return'';const[y,m,d]=s.slice(0,10).split('-');return d+'.'+m+'.'+y;}
 function fmtMitTag(s){if(!s)return'';const d=new Date(s.slice(0,10)+'T12:00:00');const t=['So','Mo','Di','Mi','Do','Fr','Sa'][d.getDay()];return t+', '+fmt(s);}
 function hl(text,suche){if(!suche||!text)return text;const clean=suche.toLowerCase().replace(/^\*|\*$/g,'');if(!clean)return text;const idx=text.toLowerCase().indexOf(clean);if(idx<0)return text;return text.slice(0,idx)+'<mark style="background:#92400e;color:#fef3c7;border-radius:2px;padding:0 1px">'+text.slice(idx,idx+clean.length)+'</mark>'+hl(text.slice(idx+clean.length),suche);}
-const katOrder=['Frühstück','Mittag','Abendessen','Snacks'];
+const katOrder=['Frühstück','Mittag','Abendessen'];
 function katPrio(e){const i=katOrder.indexOf(e.kategorie||'');return i>=0?i:katOrder.length;}
 
 async function laden(){
@@ -1042,14 +1042,14 @@ function showNWResults(rows,kiGeschaetzt,nichtGefunden){
   const lysTot=hasLys?`<td style="text-align:right;color:#93c5fd"><strong>${totLys}mg</strong></td>`:'';
   const argTot=hasArg?`<td style="text-align:right;color:#93c5fd"><strong>${totArg}mg</strong></td>`:'';
   document.getElementById('result-table-wrap').innerHTML=
-    '<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right;color:#f59e0b">kcal</th><th style="text-align:right;color:#22c55e">Eiw.</th><th style="text-align:right;color:#ef4444">Zck.</th><th style="text-align:right;color:#3b82f6">KH</th><th style="text-align:right;color:#ef4444">Fett</th>'+sfHead+lysHead+argHead+'</tr></thead><tbody>'
+    '<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right;color:#f59e0b">kcal</th><th style="text-align:right;color:#22c55e">Eiw.</th><th style="text-align:right;color:#ef4444">Fett</th>'+sfHead+'<th style="text-align:right;color:#3b82f6">KH</th><th style="text-align:right;color:#ef4444">Zck.</th>'+lysHead+argHead+'</tr></thead><tbody>'
     +rows.map(r=>{
       const sfCell=hasSF?`<td style="text-align:right">${r.sf!=null?r.sf.toFixed(1)+'g':'–'}</td>`:'';
       const lysCell=hasLys?`<td style="text-align:right">${r.lys!=null?r.lys+'mg':'–'}</td>`:'';
       const argCell=hasArg?`<td style="text-align:right">${r.arg!=null?r.arg+'mg':'–'}</td>`:'';
-      return `<tr><td>${r.lebensmittel}${quelleBadge(r.quelle)}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td>${sfCell}${lysCell}${argCell}</tr>`;
+      return `<tr><td>${r.lebensmittel}${quelleBadge(r.quelle)}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.fett}g</td>${sfCell}<td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.zucker}g</td>${lysCell}${argCell}</tr>`;
     }).join('')
-    +(rows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right;color:#f59e0b"><strong>${totKcal}</strong></td><td style="text-align:right;color:#22c55e"><strong>${totEiw.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totZck.toFixed(1)}g</strong></td><td style="text-align:right;color:#3b82f6"><strong>${totKH.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totFett.toFixed(1)}g</strong></td>${sfTot}${lysTot}${argTot}</tr>`:'')
+    +(rows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right;color:#f59e0b"><strong>${totKcal}</strong></td><td style="text-align:right;color:#22c55e"><strong>${totEiw.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totFett.toFixed(1)}g</strong></td>${sfTot}<td style="text-align:right;color:#3b82f6"><strong>${totKH.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totZck.toFixed(1)}g</strong></td>${lysTot}${argTot}</tr>`:'')
     +'</tbody></table>'
     +'<div style="font-size:0.65rem;color:#475569;margin-top:3px">Quelle: 📋 eigene DB → 🌐 Open Food Facts → 🤖 KI (Reihenfolge der Suche)</div>';
   document.getElementById('result-nf').innerHTML=nichtGefundenHTML(nichtGefunden)+lokaleBewertung(rows);
@@ -1269,10 +1269,10 @@ function eintragKarte(e, datum, suche){
       +'<th>Lebensmittel</th>'
       +'<th style="text-align:right;color:#f59e0b">kcal</th>'
       +'<th style="text-align:right;color:#22c55e">Eiw.</th>'
-      +'<th style="text-align:right;color:#ef4444">Zck.</th>'
-      +'<th style="text-align:right;color:#3b82f6">KH</th>'
       +'<th style="text-align:right;color:#ef4444">Fett</th>'
       +(hasSF?'<th style="text-align:right;color:#fca5a5">ges.FS</th>':'')
+      +'<th style="text-align:right;color:#3b82f6">KH</th>'
+      +'<th style="text-align:right;color:#ef4444">Zck.</th>'
       +(hasLys?'<th style="text-align:right;color:#93c5fd">Lys.</th>':'')
       +(hasArg?'<th style="text-align:right;color:#93c5fd">Argn.</th>':'')
     +'</tr></thead><tbody>'
@@ -1284,10 +1284,11 @@ function eintragKarte(e, datum, suche){
         +'<td>'+z.lebensmittel+quelleBadge(z.quelle)+'</td>'
         +'<td style="text-align:right">'+Math.round(+z.kalorien||0)+'</td>'
         +'<td style="text-align:right">'+(+z.eiweiss||0).toFixed(1)+'g</td>'
-        +'<td style="text-align:right">'+(+z.zucker||0).toFixed(1)+'g</td>'
-        +'<td style="text-align:right">'+(+z.kohlenhydrate||0).toFixed(1)+'g</td>'
         +'<td style="text-align:right">'+(+z.fett||0).toFixed(1)+'g</td>'
-        +zSF+zLys+zArg
+        +zSF
+        +'<td style="text-align:right">'+(+z.kohlenhydrate||0).toFixed(1)+'g</td>'
+        +'<td style="text-align:right">'+(+z.zucker||0).toFixed(1)+'g</td>'
+        +zLys+zArg
       +'</tr>';
     }).join('')
     +(multiRow?
@@ -1295,10 +1296,10 @@ function eintragKarte(e, datum, suche){
         +'<td><strong>Gesamt</strong></td>'
         +'<td style="text-align:right;color:#f59e0b"><strong>'+Math.round(+e.kalorien||0)+'</strong></td>'
         +'<td style="text-align:right;color:#22c55e"><strong>'+(+e.eiweiss||0).toFixed(1)+'g</strong></td>'
-        +'<td style="text-align:right;color:#ef4444"><strong>'+(+e.zucker||0).toFixed(1)+'g</strong></td>'
-        +'<td style="text-align:right;color:#3b82f6"><strong>'+(+e.kohlenhydrate||0).toFixed(1)+'g</strong></td>'
         +'<td style="text-align:right;color:#ef4444"><strong>'+(+e.fett||0).toFixed(1)+'g</strong></td>'
         +(hasSF?'<td style="text-align:right;color:#fca5a5"><strong>'+((+e.gesaettigt||0)>0?(+e.gesaettigt).toFixed(1)+'g':'–')+'</strong></td>':'')
+        +'<td style="text-align:right;color:#3b82f6"><strong>'+(+e.kohlenhydrate||0).toFixed(1)+'g</strong></td>'
+        +'<td style="text-align:right;color:#ef4444"><strong>'+(+e.zucker||0).toFixed(1)+'g</strong></td>'
         +(hasLys?'<td style="text-align:right;color:#93c5fd"><strong>'+((+e.lysin||0)>0?Math.round(+e.lysin)+'mg':'–')+'</strong></td>':'')
         +(hasArg?'<td style="text-align:right;color:#93c5fd"><strong>'+((+e.arginin||0)>0?Math.round(+e.arginin)+'mg':'–')+'</strong></td>':'')
       +'</tr>'
@@ -1358,6 +1359,13 @@ function renderEintraege(){
           +'</div>'
           +'<button class="btn-del-sm" onclick="deleteDay(\''+datum+'\')" title="Tag löschen">🗑️</button>'
         +'</div>'
+        // Zeile 1b: Notiz zum Tag (Befinden/Besonderheiten)
+        +'<div style="display:flex;align-items:center;gap:0.4rem;margin-top:4px">'
+          +'<span style="font-size:0.85rem">📝</span>'
+          +'<input type="text" value="'+(getNotiz(datum)||'').replace(/"/g,'&quot;')+'" maxlength="'+NOTIZ_MAXLEN+'" placeholder="Notiz zu Befinden/Besonderheiten"'
+            +' style="flex:1;min-width:0;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:4px 8px;font-size:0.8rem"'
+            +' onchange="setNotizTag(\''+datum+'\',this.value)"/>'
+        +'</div>'
         // Zeile 2: Schritte → Bewegungs-kcal → Netto/Ampel
         +'<div style="display:flex;align-items:center;gap:0.5rem;margin-top:5px;flex-wrap:wrap">'
           +'<span style="font-size:1rem">🏃</span>'
@@ -1374,20 +1382,20 @@ function renderEintraege(){
           +'<table class="entries-table"><thead><tr>'
             +'<th style="text-align:right;color:#f59e0b">kcal</th>'
             +'<th style="text-align:right;color:#22c55e">Eiw.</th>'
-            +'<th style="text-align:right;color:#ef4444">Zck.</th>'
-            +'<th style="text-align:right;color:#3b82f6">KH</th>'
             +'<th style="text-align:right;color:#ef4444">Fett</th>'
             +(hasSFTag?'<th style="text-align:right;color:#fca5a5">ges.FS</th>':'')
+            +'<th style="text-align:right;color:#3b82f6">KH</th>'
+            +'<th style="text-align:right;color:#ef4444">Zck.</th>'
             +(hasLysTag?'<th style="text-align:right;color:#93c5fd">Lys.</th>':'')
             +(hasArgTag?'<th style="text-align:right;color:#93c5fd">Argn.</th>':'')
           +'</tr></thead><tbody>'
           +'<tr class="total-row">'
             +'<td style="text-align:right;color:#f59e0b"><strong>'+kcal+'</strong></td>'
             +'<td style="text-align:right;color:#22c55e"><strong>'+eiw+'g'+(macroKcal>0?' <span style="font-size:0.65rem">'+pEiw+'%</span>':'')+'</strong></td>'
-            +'<td style="text-align:right;color:#ef4444"><strong>'+zuk+'g</strong></td>'
-            +'<td style="text-align:right;color:#3b82f6"><strong>'+kh+'g'+(macroKcal>0?' <span style="font-size:0.65rem">'+pKH+'%</span>':'')+'</strong></td>'
             +'<td style="text-align:right;color:#ef4444"><strong>'+fat+'g'+(macroKcal>0?' <span style="font-size:0.65rem">'+pFat+'%</span>':'')+'</strong></td>'
             +(hasSFTag?'<td style="text-align:right;color:#fca5a5"><strong>'+sfTag.toFixed(1)+'g</strong></td>':'')
+            +'<td style="text-align:right;color:#3b82f6"><strong>'+kh+'g'+(macroKcal>0?' <span style="font-size:0.65rem">'+pKH+'%</span>':'')+'</strong></td>'
+            +'<td style="text-align:right;color:#ef4444"><strong>'+zuk+'g</strong></td>'
             +(hasLysTag?'<td style="text-align:right;color:#93c5fd"><strong>'+lysTag+'mg</strong></td>':'')
             +(hasArgTag?'<td style="text-align:right;color:#93c5fd"><strong>'+argTag+'mg</strong></td>':'')
           +'</tr>'
@@ -1521,14 +1529,14 @@ function zeigeAnalyseOverlay(rows,bewertungText){
   const sfHead=hasSF?'<th style="text-align:right;color:#fca5a5">ges.FS</th>':'';
   const lysHead=hasLys?'<th style="text-align:right;color:#93c5fd">Lys.</th>':'';
   const argHead=hasArg?'<th style="text-align:right;color:#93c5fd">Argn.</th>':'';
-  const tableHtml='<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right;color:#f59e0b">kcal</th><th style="text-align:right;color:#22c55e">Eiw.</th><th style="text-align:right;color:#ef4444">Zck.</th><th style="text-align:right;color:#3b82f6">KH</th><th style="text-align:right;color:#ef4444">Fett</th>'+sfHead+lysHead+argHead+'</tr></thead><tbody>'
+  const tableHtml='<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right;color:#f59e0b">kcal</th><th style="text-align:right;color:#22c55e">Eiw.</th><th style="text-align:right;color:#ef4444">Fett</th>'+sfHead+'<th style="text-align:right;color:#3b82f6">KH</th><th style="text-align:right;color:#ef4444">Zck.</th>'+lysHead+argHead+'</tr></thead><tbody>'
     +rows.map(r=>{
       const sfCell=hasSF?`<td style="text-align:right">${r.sf!=null?r.sf.toFixed(1)+'g':'–'}</td>`:'';
       const lysCell=hasLys?`<td style="text-align:right">${r.lys!=null?r.lys+'mg':'–'}</td>`:'';
       const argCell=hasArg?`<td style="text-align:right">${r.arg!=null?r.arg+'mg':'–'}</td>`:'';
-      return `<tr><td>${r.lebensmittel}${quelleBadge(r.quelle)}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td>${sfCell}${lysCell}${argCell}</tr>`;
+      return `<tr><td>${r.lebensmittel}${quelleBadge(r.quelle)}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.fett}g</td>${sfCell}<td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.zucker}g</td>${lysCell}${argCell}</tr>`;
     }).join('')
-    +(rows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right;color:#f59e0b"><strong>${totKcal}</strong></td><td style="text-align:right;color:#22c55e"><strong>${totEiw.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totZck.toFixed(1)}g</strong></td><td style="text-align:right;color:#3b82f6"><strong>${totKH.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totFett.toFixed(1)}g</strong></td>${hasSF?`<td style="text-align:right;color:#fca5a5"><strong>${totSF.toFixed(1)}g</strong></td>`:''}${hasLys?`<td style="text-align:right;color:#93c5fd"><strong>${totLys}mg</strong></td>`:''}${hasArg?`<td style="text-align:right;color:#93c5fd"><strong>${totArg}mg</strong></td>`:''}</tr>`:'')
+    +(rows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right;color:#f59e0b"><strong>${totKcal}</strong></td><td style="text-align:right;color:#22c55e"><strong>${totEiw.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totFett.toFixed(1)}g</strong></td>${hasSF?`<td style="text-align:right;color:#fca5a5"><strong>${totSF.toFixed(1)}g</strong></td>`:''}<td style="text-align:right;color:#3b82f6"><strong>${totKH.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totZck.toFixed(1)}g</strong></td>${hasLys?`<td style="text-align:right;color:#93c5fd"><strong>${totLys}mg</strong></td>`:''}${hasArg?`<td style="text-align:right;color:#93c5fd"><strong>${totArg}mg</strong></td>`:''}</tr>`:'')
     +'</tbody></table>';
   ov.innerHTML='<div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:1.2rem 1.1rem;max-width:480px;width:100%;max-height:85vh;overflow-y:auto">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.3rem">'
@@ -1596,9 +1604,9 @@ function zeigeNeubewertungOverlay(id,rows){
     +'<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.35rem">'
       +neubewFeld('kcal','kalorien',i,r.kalorien)
       +neubewFeld('Eiw.','eiweiss',i,r.eiweiss)
-      +neubewFeld('Zck.','zucker',i,r.zucker)
-      +neubewFeld('KH','kohlenhydrate',i,r.kohlenhydrate)
       +neubewFeld('Fett','fett',i,r.fett)
+      +neubewFeld('KH','kohlenhydrate',i,r.kohlenhydrate)
+      +neubewFeld('Zck.','zucker',i,r.zucker)
     +'</div>'
   +'</div>'
   ).join('');
@@ -1757,17 +1765,18 @@ function pad(s,n){s=String(s);while(s.length<n)s=' '+s;return s;}
 function padR(s,n){s=String(s);while(s.length<n)s=s+' ';return s;}
 
 // Spaltenbreiten für Briefform (Courier) – ohne Lysin/Arginin, für den Arzt uninteressant
-const BF={name:42,kcal:6,eiw:7,zck:7,kh:7,fat:7,sf:7};
+// Spaltenreihenfolge überall: Eiweiß, Fett, ges. Fettsäuren, Kohlenhydrate, Zucker
+const BF={name:42,kcal:6,eiw:7,fat:7,sf:7,kh:7,zck:7};
 const MAKROZIEL={eiw:30,fett:30,kh:40};
-function briefVals(kcal,eiw,zck,kh,fat,sf){
-  return pad(String(kcal),BF.kcal)+pad(String(eiw),BF.eiw)+pad(String(zck),BF.zck)+pad(String(kh),BF.kh)+pad(String(fat),BF.fat)
-    +pad(sf!=null&&sf!==''?String(sf):'-',BF.sf);
+function briefVals(kcal,eiw,fat,sf,kh,zck){
+  return pad(String(kcal),BF.kcal)+pad(String(eiw),BF.eiw)+pad(String(fat),BF.fat)
+    +pad(sf!=null&&sf!==''?String(sf):'-',BF.sf)+pad(String(kh),BF.kh)+pad(String(zck),BF.zck);
 }
-function briefZeile(name,kcal,eiw,zck,kh,fat,sf){
-  return padR(String(name).slice(0,BF.name),BF.name)+briefVals(kcal,eiw,zck,kh,fat,sf);
+function briefZeile(name,kcal,eiw,fat,sf,kh,zck){
+  return padR(String(name).slice(0,BF.name),BF.name)+briefVals(kcal,eiw,fat,sf,kh,zck);
 }
 function wrapText(text,width){if(text.length<=width)return[text];const ws=text.split(' ');const ls=[];let c='';for(const w of ws){const n=c?c+' '+w:w;if(n.length<=width){c=n;}else{if(c)ls.push(c);c=w;}}if(c)ls.push(c);return ls.length?ls:[text.slice(0,width)];}
-function briefZeileWrap(indent,name,kcal,eiw,zck,kh,fat,sf){const nw=BF.name-indent.length;const vals=briefVals(kcal,eiw,zck,kh,fat,sf);const ls=wrapText(String(name),nw);const out=[];for(let i=0;i<ls.length-1;i++)out.push(indent+ls[i]);const last=ls[ls.length-1]||'';out.push(indent+padR(last,nw)+vals);return out.join('\n');}
+function briefZeileWrap(indent,name,kcal,eiw,fat,sf,kh,zck){const nw=BF.name-indent.length;const vals=briefVals(kcal,eiw,fat,sf,kh,zck);const ls=wrapText(String(name),nw);const out=[];for(let i=0;i<ls.length-1;i++)out.push(indent+ls[i]);const last=ls[ls.length-1]||'';out.push(indent+padR(last,nw)+vals);return out.join('\n');}
 
 function exportBrief(){
   const status=document.getElementById('export-status');
@@ -1775,8 +1784,8 @@ function exportBrief(){
   const gef=getExportTage();
   if(!gef.length){status.textContent='⚠️ Keine Einträge.';status.style.color='#f59e0b';return;}
   const tage={};gef.forEach(e=>{const d=e.datum.slice(0,10);if(!tage[d])tage[d]=[];tage[d].push(e);});
-  const hdr=briefZeile('Lebensmittel','kcal','Eiw.g','Zck.g','KH.g','Fett.g','ges.FS');
-  const hdrKurz=padR('',BF.name)+pad('kcal',BF.kcal)+pad('Eiw.g',BF.eiw)+pad('Zck.g',BF.zck)+pad('KH.g',BF.kh)+pad('Fett.g',BF.fat)+pad('ges.FS',BF.sf);
+  const hdr=briefZeile('Lebensmittel','kcal','Eiw.g','Fett.g','ges.FS','KH.g','Zck.g');
+  const hdrKurz=padR('',BF.name)+pad('kcal',BF.kcal)+pad('Eiw.g',BF.eiw)+pad('Fett.g',BF.fat)+pad('ges.FS',BF.sf)+pad('KH.g',BF.kh)+pad('Zck.g',BF.zck);
   const zeilen=['ERNÄHRUNGSPROTOKOLL',''];
   zeilen.push('Makroziel: '+MAKROZIEL.eiw+'% Eiweiß · '+MAKROZIEL.fett+'% Fett · '+MAKROZIEL.kh+'% Kohlenhydrate    Kalorienziel: '+getZiel()+' kcal','');
   if(von||bis)zeilen.push('Zeitraum: '+(von?fmt(von):'')+(von&&bis?' bis ':bis?'bis ':'')+( bis?fmt(bis):''),'');
@@ -1784,32 +1793,50 @@ function exportBrief(){
   zeilen.push('-'.repeat(hdr.length));
   zeilen.push('');
   Object.keys(tage).sort((a,b)=>a<b?-1:a>b?1:0).forEach(datum=>{
-    zeilen.push(fmtMitTag(datum));
-    const briefSortiert=[...tage[datum]].sort((a,b)=>katPrio(a)-katPrio(b));
-    briefSortiert.forEach(e=>{
-      let zutaten=null;
-      if(e.zutaten){try{zutaten=JSON.parse(e.zutaten);}catch(ex){}}
-      const mehrere=zutaten&&zutaten.length>1;
-      const hauptLabel=mehrere&&e.kategorie?e.kategorie:(e.lebensmittel||'');
-      const esf=e.gesaettigt!=null?(+e.gesaettigt).toFixed(1):'';
-      zeilen.push(briefZeileWrap('  ',hauptLabel,Math.round(+e.kalorien||0),(+e.eiweiss||0).toFixed(1),(+e.zucker||0).toFixed(1),(+e.kohlenhydrate||0).toFixed(1),(+e.fett||0).toFixed(1),esf));
-      if(mehrere){
-        zutaten.forEach(z=>{
-          const zsf=z.sf!=null?(+z.sf).toFixed(1):'';
-          zeilen.push(briefZeileWrap('    ',z.lebensmittel||'',Math.round(+z.kalorien||0),(+z.eiweiss||0).toFixed(1),(+z.zucker||0).toFixed(1),(+z.kohlenhydrate||0).toFixed(1),(+z.fett||0).toFixed(1),zsf));
-        });
-      }
-    });
+    const notiz=getNotiz(datum);
+    zeilen.push(fmtMitTag(datum)+(notiz?'    Notiz: '+notiz:''));
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
     const gkcalN=sum('kalorien'),geiwN=sum('eiweiss'),gzckN=sum('zucker'),gkhN=sum('kohlenhydrate'),gfatN=sum('fett');
-    const gkcal=Math.round(gkcalN),geiw=geiwN.toFixed(1),gzck=gzckN.toFixed(1),gkh=gkhN.toFixed(1),gfat=gfatN.toFixed(1);
-    const gsf=sum('gesaettigt').toFixed(1);
-    zeilen.push('-'.repeat(hdr.length));
-    zeilen.push(briefZeile('GESAMT  '+fmtMitTag(datum),gkcal,geiw,gzck,gkh,gfat,gsf));
-    zeilen.push(hdrKurz);
-    zeilen.push('');
     const bewegung=getBewegung(datum),ziel=getZiel(datum),netto=Math.round(gkcalN-bewegung),diff=netto-ziel;
     zeilen.push('Schritte: '+(getSchritte(datum)||0)+' (≈ '+bewegung+' kcal)    Netto: '+netto+' kcal    Zielabweichung: '+(diff>0?'+':'')+diff+' kcal (Ziel '+ziel+' kcal)');
+    zeilen.push('');
+
+    // Nach Kategorien gruppieren: Frühstück, Mittag, Abendessen zuerst (in dieser Reihenfolge),
+    // danach Snack/Gaststätte/eigene Kategorien/ohne Kategorie in beliebiger Reihenfolge
+    const briefSortiert=[...tage[datum]].sort((a,b)=>katPrio(a)-katPrio(b));
+    const gruppen={};
+    briefSortiert.forEach(e=>{
+      const key=e.kategorie||'Ohne Kategorie';
+      (gruppen[key]=gruppen[key]||[]).push(e);
+    });
+    const katNamen=Object.keys(gruppen).sort((a,b)=>{
+      const ia=katOrder.indexOf(a),ib=katOrder.indexOf(b);
+      return (ia>=0?ia:katOrder.length)-(ib>=0?ib:katOrder.length);
+    });
+    katNamen.forEach(kat=>{
+      zeilen.push(kat);
+      gruppen[kat].forEach(e=>{
+        let zutaten=null;
+        if(e.zutaten){try{zutaten=JSON.parse(e.zutaten);}catch(ex){}}
+        const mehrere=zutaten&&zutaten.length>1;
+        const esf=e.gesaettigt!=null?(+e.gesaettigt).toFixed(1):'';
+        zeilen.push(briefZeileWrap('  ',e.lebensmittel||'',Math.round(+e.kalorien||0),(+e.eiweiss||0).toFixed(1),(+e.fett||0).toFixed(1),esf,(+e.kohlenhydrate||0).toFixed(1),(+e.zucker||0).toFixed(1)));
+        if(mehrere){
+          zutaten.forEach(z=>{
+            const zsf=z.sf!=null?(+z.sf).toFixed(1):'';
+            zeilen.push(briefZeileWrap('    ',z.lebensmittel||'',Math.round(+z.kalorien||0),(+z.eiweiss||0).toFixed(1),(+z.fett||0).toFixed(1),zsf,(+z.kohlenhydrate||0).toFixed(1),(+z.zucker||0).toFixed(1)));
+          });
+        }
+      });
+      const ksum=k=>gruppen[kat].reduce((a,e)=>a+(+e[k]||0),0);
+      zeilen.push('-'.repeat(hdr.length));
+      zeilen.push(briefZeile('Summe '+kat,Math.round(ksum('kalorien')),ksum('eiweiss').toFixed(1),ksum('fett').toFixed(1),ksum('gesaettigt').toFixed(1),ksum('kohlenhydrate').toFixed(1),ksum('zucker').toFixed(1)));
+      zeilen.push('');
+    });
+
+    zeilen.push('-'.repeat(hdr.length));
+    zeilen.push(briefZeile('GESAMT  '+fmtMitTag(datum),Math.round(gkcalN),geiwN.toFixed(1),gfatN.toFixed(1),sum('gesaettigt').toFixed(1),gkhN.toFixed(1),gzckN.toFixed(1)));
+    zeilen.push(hdrKurz);
     const macroKcal=geiwN*4+gfatN*9+gkhN*4;
     if(macroKcal>0){
       const pEiw=Math.round(geiwN*4/macroKcal*100),pFat=Math.round(gfatN*9/macroKcal*100),pKH=Math.round(gkhN*4/macroKcal*100);
@@ -2015,6 +2042,12 @@ function setSchritteTag(datum,v){
   const el=document.getElementById('ampel-tag-'+datum);
   if(el)el.innerHTML=ampelNetto(tagesKcal-bew,getZiel(datum));
   if(datum===heuteStr())aktualisiereBanner();
+}
+const NOTIZ_MAXLEN=40;
+function getNotiz(datum){return (localStorage.getItem('notiz-'+datum)||'').slice(0,NOTIZ_MAXLEN);}
+function setNotizTag(datum,v){
+  const n=String(v||'').slice(0,NOTIZ_MAXLEN);
+  if(n)localStorage.setItem('notiz-'+datum,n);else localStorage.removeItem('notiz-'+datum);
 }
 function ampelNetto(netto,ziel){
   const n=Math.round(netto),diff=Math.round(netto-ziel);
