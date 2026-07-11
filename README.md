@@ -13,7 +13,7 @@ Live-URL: [renapralat.github.io/Ernaehrung](https://renapralat.github.io/Ernaehr
 - **Kategorien**: Frühstück, Mittag, Abendessen, Snack, Gaststätte (oder freier Text)
 - **Tagesansicht** mit Gesamtwerten und Makronährstoff-Prozenten
 - **Suche** in gespeicherten Einträgen (nach Name, Datum, Kategorie)
-- **Export** als Text oder CSV
+- **Export** als Text oder CSV, sowie als **Brief** (Klartext-Tabellenform für den Arzt): zeigt ganz oben Makroziel (Eiweiß/Fett/KH-Verhältnis) und aktuelles Kalorienziel, pro Tag zusätzlich Schritte samt Bewegungs-kcal, Netto-kcal und Abweichung vom Kalorienziel sowie die tatsächlichen Makro-Anteile im Vergleich zum Ziel – Lysin/Arginin werden hier bewusst weggelassen, da für die ärztliche Beurteilung uninteressant
 - **Wiederholen**: frühere Mahlzeiten mit einem Klick neu erfassen
 - **Neu bewerten**: Nährwerte eines bestehenden Eintrags neu ermitteln lassen (z.B. nachdem ein fehlendes Lebensmittel ergänzt wurde) – überschreibt direkt den Eintrag, kein erneutes Datum nötig. Die Menge (Gramm) ist dabei direkt korrigierbar (z.B. bei einer falsch eingeschätzten Kelle/Esslöffel), die Nährwerte werden dann automatisch neu berechnet
 - **Schritte statt Kalorien**: Bewegung wird als Schrittzahl eingetragen und automatisch in kcal umgerechnet (≈ 35 kcal/1000 Schritte bei normalem Gehtempo)
@@ -22,6 +22,7 @@ Live-URL: [renapralat.github.io/Ernaehrung](https://renapralat.github.io/Ernaehr
 - **📋 Eigene Lebensmittel verwalten**: eigene Zusatz-Datenbank jederzeit einsehen, Lebensmittel von Hand neu anlegen oder KI-Werte nachträglich korrigieren/löschen (⚙️-Leiste oben)
 - **Kategorie nachträglich ändern** direkt am Eintrag
 - **KI-Bewertung** der Mahlzeit (Qualität, Arginin/Lysin-Verhältnis)
+- **Farbcodierung** der Nährwerte, überall einheitlich: Eiweiß grün, Fett und Zucker kräftig rot, Kohlenhydrate blau, gesättigte Fettsäuren schwach rot, Lysin/Arginin schwach blau
 
 ---
 

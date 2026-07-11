@@ -112,15 +112,15 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
             <div style="font-size:0.72rem;color:#22c55e;font-weight:600;min-height:1.1em"><span id="banner-eiw-pct"></span></div>
           </div>
           <div style="text-align:right">
-            <div><span id="banner-fett" style="font-size:1.05rem;font-weight:700;color:#a78bfa">0</span><span style="font-size:0.68rem;color:#a78bfa">g Fett</span></div>
-            <div style="font-size:0.72rem;color:#a78bfa;font-weight:600;min-height:1.1em"><span id="banner-fat-pct"></span></div>
+            <div><span id="banner-fett" style="font-size:1.05rem;font-weight:700;color:#ef4444">0</span><span style="font-size:0.68rem;color:#ef4444">g Fett</span></div>
+            <div style="font-size:0.72rem;color:#ef4444;font-weight:600;min-height:1.1em"><span id="banner-fat-pct"></span></div>
           </div>
           <div style="text-align:right">
-            <div><span id="banner-kh" style="font-size:1.05rem;font-weight:700;color:#ef4444">0</span><span style="font-size:0.68rem;color:#ef4444">g KH</span></div>
-            <div style="font-size:0.72rem;color:#ef4444;font-weight:600;min-height:1.1em"><span id="banner-kh-pct"></span></div>
+            <div><span id="banner-kh" style="font-size:1.05rem;font-weight:700;color:#3b82f6">0</span><span style="font-size:0.68rem;color:#3b82f6">g KH</span></div>
+            <div style="font-size:0.72rem;color:#3b82f6;font-weight:600;min-height:1.1em"><span id="banner-kh-pct"></span></div>
           </div>
           <div style="text-align:right">
-            <div><span id="banner-zucker" style="font-size:1.05rem;font-weight:700;color:#f43f5e">0</span><span style="font-size:0.68rem;color:#f43f5e">g Zck</span></div>
+            <div><span id="banner-zucker" style="font-size:1.05rem;font-weight:700;color:#ef4444">0</span><span style="font-size:0.68rem;color:#ef4444">g Zck</span></div>
             <div style="min-height:1.1em"></div>
           </div>
         </div>
@@ -132,7 +132,7 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
     <div class="title">🍽️ Ernährungsprotokoll</div>
     <div class="subtitle">Nährwerterfassung via lokale DB · Open Food Facts · KI</div>
     <div style="font-size:0.78rem;margin-top:6px;letter-spacing:0.01em;display:flex;align-items:center;justify-content:center;gap:0.6rem;flex-wrap:wrap">
-      <span style="color:#94a3b8">Makroziel: <span style="color:#22c55e;font-weight:700">30% Eiw</span> <span style="color:#475569">·</span> <span style="color:#a78bfa;font-weight:700">30% Fett</span> <span style="color:#475569">·</span> <span style="color:#3b82f6;font-weight:700">40% KH</span></span>
+      <span style="color:#94a3b8">Makroziel: <span style="color:#22c55e;font-weight:700">30% Eiw</span> <span style="color:#475569">·</span> <span style="color:#ef4444;font-weight:700">30% Fett</span> <span style="color:#475569">·</span> <span style="color:#3b82f6;font-weight:700">40% KH</span></span>
       <span style="color:#334155">|</span>
       <span style="display:flex;align-items:center;gap:0.3rem">
         <span style="color:#64748b">🎯</span>
@@ -992,7 +992,7 @@ function lokaleBewertung(rows){
   if(totZck>10)msgs.push('<span style="color:#f87171">⚠️ Zucker '+totZck.toFixed(1)+'g (&gt;10g)</span>');
   if(totEiw<10)msgs.push('<span style="color:#f87171">⚠️ Eiweiß nur '+totEiw.toFixed(1)+'g (&lt;10g)</span>');
   else if(totEiw>=20)msgs.push('<span style="color:#4ade80">✅ Eiweiß '+totEiw.toFixed(1)+'g (≥20g)</span>');
-  if(hasSF&&totSF>6)msgs.push('<span style="color:#e879f9">⚠️ Ges.Fettsäuren '+totSF.toFixed(1)+'g (&gt;6g)</span>');
+  if(hasSF&&totSF>6)msgs.push('<span style="color:#fca5a5">⚠️ Ges.Fettsäuren '+totSF.toFixed(1)+'g (&gt;6g)</span>');
   if(fatPct>35)msgs.push('<span style="color:#f87171">⚠️ Fettanteil '+fatPct+'% (&gt;35%)</span>');
   const haslysarg=rows.some(r=>r.lys!=null||r.arg!=null);
   if(haslysarg){
@@ -1035,21 +1035,21 @@ function showNWResults(rows,kiGeschaetzt,nichtGefunden){
   const totSF=rows.reduce((a,r)=>a+(+r.sf||0),0);
   const totLys=rows.reduce((a,r)=>a+(+r.lys||0),0);
   const totArg=rows.reduce((a,r)=>a+(+r.arg||0),0);
-  const sfHead=hasSF?'<th style="text-align:right;color:#e879f9">ges.FS</th>':'';
-  const lysHead=hasLys?'<th style="text-align:right;color:#60a5fa">Lys.</th>':'';
-  const argHead=hasArg?'<th style="text-align:right;color:#60a5fa">Argn.</th>':'';
-  const sfTot=hasSF?`<td style="text-align:right;color:#e879f9"><strong>${totSF.toFixed(1)}g</strong></td>`:'';
-  const lysTot=hasLys?`<td style="text-align:right;color:#60a5fa"><strong>${totLys}mg</strong></td>`:'';
-  const argTot=hasArg?`<td style="text-align:right;color:#60a5fa"><strong>${totArg}mg</strong></td>`:'';
+  const sfHead=hasSF?'<th style="text-align:right;color:#fca5a5">ges.FS</th>':'';
+  const lysHead=hasLys?'<th style="text-align:right;color:#93c5fd">Lys.</th>':'';
+  const argHead=hasArg?'<th style="text-align:right;color:#93c5fd">Argn.</th>':'';
+  const sfTot=hasSF?`<td style="text-align:right;color:#fca5a5"><strong>${totSF.toFixed(1)}g</strong></td>`:'';
+  const lysTot=hasLys?`<td style="text-align:right;color:#93c5fd"><strong>${totLys}mg</strong></td>`:'';
+  const argTot=hasArg?`<td style="text-align:right;color:#93c5fd"><strong>${totArg}mg</strong></td>`:'';
   document.getElementById('result-table-wrap').innerHTML=
-    '<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right;color:#f59e0b">kcal</th><th style="text-align:right;color:#22c55e">Eiw.</th><th style="text-align:right;color:#f43f5e">Zck.</th><th style="text-align:right;color:#ef4444">KH</th><th style="text-align:right;color:#a78bfa">Fett</th>'+sfHead+lysHead+argHead+'</tr></thead><tbody>'
+    '<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right;color:#f59e0b">kcal</th><th style="text-align:right;color:#22c55e">Eiw.</th><th style="text-align:right;color:#ef4444">Zck.</th><th style="text-align:right;color:#3b82f6">KH</th><th style="text-align:right;color:#ef4444">Fett</th>'+sfHead+lysHead+argHead+'</tr></thead><tbody>'
     +rows.map(r=>{
       const sfCell=hasSF?`<td style="text-align:right">${r.sf!=null?r.sf.toFixed(1)+'g':'–'}</td>`:'';
       const lysCell=hasLys?`<td style="text-align:right">${r.lys!=null?r.lys+'mg':'–'}</td>`:'';
       const argCell=hasArg?`<td style="text-align:right">${r.arg!=null?r.arg+'mg':'–'}</td>`:'';
       return `<tr><td>${r.lebensmittel}${quelleBadge(r.quelle)}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td>${sfCell}${lysCell}${argCell}</tr>`;
     }).join('')
-    +(rows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right;color:#f59e0b"><strong>${totKcal}</strong></td><td style="text-align:right;color:#22c55e"><strong>${totEiw.toFixed(1)}g</strong></td><td style="text-align:right;color:#f43f5e"><strong>${totZck.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totKH.toFixed(1)}g</strong></td><td style="text-align:right;color:#a78bfa"><strong>${totFett.toFixed(1)}g</strong></td>${sfTot}${lysTot}${argTot}</tr>`:'')
+    +(rows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right;color:#f59e0b"><strong>${totKcal}</strong></td><td style="text-align:right;color:#22c55e"><strong>${totEiw.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totZck.toFixed(1)}g</strong></td><td style="text-align:right;color:#3b82f6"><strong>${totKH.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totFett.toFixed(1)}g</strong></td>${sfTot}${lysTot}${argTot}</tr>`:'')
     +'</tbody></table>'
     +'<div style="font-size:0.65rem;color:#475569;margin-top:3px">Quelle: 📋 eigene DB → 🌐 Open Food Facts → 🤖 KI (Reihenfolge der Suche)</div>';
   document.getElementById('result-nf').innerHTML=nichtGefundenHTML(nichtGefunden)+lokaleBewertung(rows);
@@ -1269,12 +1269,12 @@ function eintragKarte(e, datum, suche){
       +'<th>Lebensmittel</th>'
       +'<th style="text-align:right;color:#f59e0b">kcal</th>'
       +'<th style="text-align:right;color:#22c55e">Eiw.</th>'
-      +'<th style="text-align:right;color:#f43f5e">Zck.</th>'
-      +'<th style="text-align:right;color:#ef4444">KH</th>'
-      +'<th style="text-align:right;color:#a78bfa">Fett</th>'
-      +(hasSF?'<th style="text-align:right;color:#e879f9">ges.FS</th>':'')
-      +(hasLys?'<th style="text-align:right;color:#60a5fa">Lys.</th>':'')
-      +(hasArg?'<th style="text-align:right;color:#60a5fa">Argn.</th>':'')
+      +'<th style="text-align:right;color:#ef4444">Zck.</th>'
+      +'<th style="text-align:right;color:#3b82f6">KH</th>'
+      +'<th style="text-align:right;color:#ef4444">Fett</th>'
+      +(hasSF?'<th style="text-align:right;color:#fca5a5">ges.FS</th>':'')
+      +(hasLys?'<th style="text-align:right;color:#93c5fd">Lys.</th>':'')
+      +(hasArg?'<th style="text-align:right;color:#93c5fd">Argn.</th>':'')
     +'</tr></thead><tbody>'
     +rows.map(z=>{
       const zSF=hasSF?'<td style="text-align:right">'+(z.sf!=null&&+z.sf!==0?(+z.sf).toFixed(1)+'g':'–')+'</td>':'';
@@ -1295,12 +1295,12 @@ function eintragKarte(e, datum, suche){
         +'<td><strong>Gesamt</strong></td>'
         +'<td style="text-align:right;color:#f59e0b"><strong>'+Math.round(+e.kalorien||0)+'</strong></td>'
         +'<td style="text-align:right;color:#22c55e"><strong>'+(+e.eiweiss||0).toFixed(1)+'g</strong></td>'
-        +'<td style="text-align:right;color:#f43f5e"><strong>'+(+e.zucker||0).toFixed(1)+'g</strong></td>'
-        +'<td style="text-align:right;color:#ef4444"><strong>'+(+e.kohlenhydrate||0).toFixed(1)+'g</strong></td>'
-        +'<td style="text-align:right;color:#a78bfa"><strong>'+(+e.fett||0).toFixed(1)+'g</strong></td>'
-        +(hasSF?'<td style="text-align:right;color:#e879f9"><strong>'+((+e.gesaettigt||0)>0?(+e.gesaettigt).toFixed(1)+'g':'–')+'</strong></td>':'')
-        +(hasLys?'<td style="text-align:right;color:#60a5fa"><strong>'+((+e.lysin||0)>0?Math.round(+e.lysin)+'mg':'–')+'</strong></td>':'')
-        +(hasArg?'<td style="text-align:right;color:#60a5fa"><strong>'+((+e.arginin||0)>0?Math.round(+e.arginin)+'mg':'–')+'</strong></td>':'')
+        +'<td style="text-align:right;color:#ef4444"><strong>'+(+e.zucker||0).toFixed(1)+'g</strong></td>'
+        +'<td style="text-align:right;color:#3b82f6"><strong>'+(+e.kohlenhydrate||0).toFixed(1)+'g</strong></td>'
+        +'<td style="text-align:right;color:#ef4444"><strong>'+(+e.fett||0).toFixed(1)+'g</strong></td>'
+        +(hasSF?'<td style="text-align:right;color:#fca5a5"><strong>'+((+e.gesaettigt||0)>0?(+e.gesaettigt).toFixed(1)+'g':'–')+'</strong></td>':'')
+        +(hasLys?'<td style="text-align:right;color:#93c5fd"><strong>'+((+e.lysin||0)>0?Math.round(+e.lysin)+'mg':'–')+'</strong></td>':'')
+        +(hasArg?'<td style="text-align:right;color:#93c5fd"><strong>'+((+e.arginin||0)>0?Math.round(+e.arginin)+'mg':'–')+'</strong></td>':'')
       +'</tr>'
     :'')
     +'</tbody></table>'
@@ -1374,22 +1374,22 @@ function renderEintraege(){
           +'<table class="entries-table"><thead><tr>'
             +'<th style="text-align:right;color:#f59e0b">kcal</th>'
             +'<th style="text-align:right;color:#22c55e">Eiw.</th>'
-            +'<th style="text-align:right;color:#f43f5e">Zck.</th>'
-            +'<th style="text-align:right;color:#ef4444">KH</th>'
-            +'<th style="text-align:right;color:#a78bfa">Fett</th>'
-            +(hasSFTag?'<th style="text-align:right;color:#e879f9">ges.FS</th>':'')
-            +(hasLysTag?'<th style="text-align:right;color:#60a5fa">Lys.</th>':'')
-            +(hasArgTag?'<th style="text-align:right;color:#60a5fa">Argn.</th>':'')
+            +'<th style="text-align:right;color:#ef4444">Zck.</th>'
+            +'<th style="text-align:right;color:#3b82f6">KH</th>'
+            +'<th style="text-align:right;color:#ef4444">Fett</th>'
+            +(hasSFTag?'<th style="text-align:right;color:#fca5a5">ges.FS</th>':'')
+            +(hasLysTag?'<th style="text-align:right;color:#93c5fd">Lys.</th>':'')
+            +(hasArgTag?'<th style="text-align:right;color:#93c5fd">Argn.</th>':'')
           +'</tr></thead><tbody>'
           +'<tr class="total-row">'
             +'<td style="text-align:right;color:#f59e0b"><strong>'+kcal+'</strong></td>'
             +'<td style="text-align:right;color:#22c55e"><strong>'+eiw+'g'+(macroKcal>0?' <span style="font-size:0.65rem">'+pEiw+'%</span>':'')+'</strong></td>'
-            +'<td style="text-align:right;color:#f43f5e"><strong>'+zuk+'g</strong></td>'
-            +'<td style="text-align:right;color:#ef4444"><strong>'+kh+'g'+(macroKcal>0?' <span style="font-size:0.65rem">'+pKH+'%</span>':'')+'</strong></td>'
-            +'<td style="text-align:right;color:#a78bfa"><strong>'+fat+'g'+(macroKcal>0?' <span style="font-size:0.65rem">'+pFat+'%</span>':'')+'</strong></td>'
-            +(hasSFTag?'<td style="text-align:right;color:#e879f9"><strong>'+sfTag.toFixed(1)+'g</strong></td>':'')
-            +(hasLysTag?'<td style="text-align:right;color:#60a5fa"><strong>'+lysTag+'mg</strong></td>':'')
-            +(hasArgTag?'<td style="text-align:right;color:#60a5fa"><strong>'+argTag+'mg</strong></td>':'')
+            +'<td style="text-align:right;color:#ef4444"><strong>'+zuk+'g</strong></td>'
+            +'<td style="text-align:right;color:#3b82f6"><strong>'+kh+'g'+(macroKcal>0?' <span style="font-size:0.65rem">'+pKH+'%</span>':'')+'</strong></td>'
+            +'<td style="text-align:right;color:#ef4444"><strong>'+fat+'g'+(macroKcal>0?' <span style="font-size:0.65rem">'+pFat+'%</span>':'')+'</strong></td>'
+            +(hasSFTag?'<td style="text-align:right;color:#fca5a5"><strong>'+sfTag.toFixed(1)+'g</strong></td>':'')
+            +(hasLysTag?'<td style="text-align:right;color:#93c5fd"><strong>'+lysTag+'mg</strong></td>':'')
+            +(hasArgTag?'<td style="text-align:right;color:#93c5fd"><strong>'+argTag+'mg</strong></td>':'')
           +'</tr>'
           +'</tbody></table>'
         +'</div>'
@@ -1518,17 +1518,17 @@ function zeigeAnalyseOverlay(rows,bewertungText){
   const totSF=rows.reduce((a,r)=>a+(+r.sf||0),0);
   const totLys=rows.reduce((a,r)=>a+(+r.lys||0),0);
   const totArg=rows.reduce((a,r)=>a+(+r.arg||0),0);
-  const sfHead=hasSF?'<th style="text-align:right;color:#e879f9">ges.FS</th>':'';
-  const lysHead=hasLys?'<th style="text-align:right;color:#60a5fa">Lys.</th>':'';
-  const argHead=hasArg?'<th style="text-align:right;color:#60a5fa">Argn.</th>':'';
-  const tableHtml='<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right;color:#f59e0b">kcal</th><th style="text-align:right;color:#22c55e">Eiw.</th><th style="text-align:right;color:#f43f5e">Zck.</th><th style="text-align:right;color:#ef4444">KH</th><th style="text-align:right;color:#a78bfa">Fett</th>'+sfHead+lysHead+argHead+'</tr></thead><tbody>'
+  const sfHead=hasSF?'<th style="text-align:right;color:#fca5a5">ges.FS</th>':'';
+  const lysHead=hasLys?'<th style="text-align:right;color:#93c5fd">Lys.</th>':'';
+  const argHead=hasArg?'<th style="text-align:right;color:#93c5fd">Argn.</th>':'';
+  const tableHtml='<table class="entries-table"><thead><tr><th>Lebensmittel</th><th style="text-align:right;color:#f59e0b">kcal</th><th style="text-align:right;color:#22c55e">Eiw.</th><th style="text-align:right;color:#ef4444">Zck.</th><th style="text-align:right;color:#3b82f6">KH</th><th style="text-align:right;color:#ef4444">Fett</th>'+sfHead+lysHead+argHead+'</tr></thead><tbody>'
     +rows.map(r=>{
       const sfCell=hasSF?`<td style="text-align:right">${r.sf!=null?r.sf.toFixed(1)+'g':'–'}</td>`:'';
       const lysCell=hasLys?`<td style="text-align:right">${r.lys!=null?r.lys+'mg':'–'}</td>`:'';
       const argCell=hasArg?`<td style="text-align:right">${r.arg!=null?r.arg+'mg':'–'}</td>`:'';
       return `<tr><td>${r.lebensmittel}${quelleBadge(r.quelle)}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.zucker}g</td><td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.fett}g</td>${sfCell}${lysCell}${argCell}</tr>`;
     }).join('')
-    +(rows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right;color:#f59e0b"><strong>${totKcal}</strong></td><td style="text-align:right;color:#22c55e"><strong>${totEiw.toFixed(1)}g</strong></td><td style="text-align:right;color:#f43f5e"><strong>${totZck.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totKH.toFixed(1)}g</strong></td><td style="text-align:right;color:#a78bfa"><strong>${totFett.toFixed(1)}g</strong></td>${hasSF?`<td style="text-align:right;color:#e879f9"><strong>${totSF.toFixed(1)}g</strong></td>`:''}${hasLys?`<td style="text-align:right;color:#60a5fa"><strong>${totLys}mg</strong></td>`:''}${hasArg?`<td style="text-align:right;color:#60a5fa"><strong>${totArg}mg</strong></td>`:''}</tr>`:'')
+    +(rows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right;color:#f59e0b"><strong>${totKcal}</strong></td><td style="text-align:right;color:#22c55e"><strong>${totEiw.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totZck.toFixed(1)}g</strong></td><td style="text-align:right;color:#3b82f6"><strong>${totKH.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totFett.toFixed(1)}g</strong></td>${hasSF?`<td style="text-align:right;color:#fca5a5"><strong>${totSF.toFixed(1)}g</strong></td>`:''}${hasLys?`<td style="text-align:right;color:#93c5fd"><strong>${totLys}mg</strong></td>`:''}${hasArg?`<td style="text-align:right;color:#93c5fd"><strong>${totArg}mg</strong></td>`:''}</tr>`:'')
     +'</tbody></table>';
   ov.innerHTML='<div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:1.2rem 1.1rem;max-width:480px;width:100%;max-height:85vh;overflow-y:auto">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.3rem">'
@@ -1756,17 +1756,18 @@ function exportCSV(){
 function pad(s,n){s=String(s);while(s.length<n)s=' '+s;return s;}
 function padR(s,n){s=String(s);while(s.length<n)s=s+' ';return s;}
 
-// Spaltenbreiten für Briefform (Courier)
-const BF={name:42,kcal:6,eiw:7,zck:7,kh:7,fat:7,sf:7,lys:7,arg:7};
-function briefVals(kcal,eiw,zck,kh,fat,sf,lys,arg){
+// Spaltenbreiten für Briefform (Courier) – ohne Lysin/Arginin, für den Arzt uninteressant
+const BF={name:42,kcal:6,eiw:7,zck:7,kh:7,fat:7,sf:7};
+const MAKROZIEL={eiw:30,fett:30,kh:40};
+function briefVals(kcal,eiw,zck,kh,fat,sf){
   return pad(String(kcal),BF.kcal)+pad(String(eiw),BF.eiw)+pad(String(zck),BF.zck)+pad(String(kh),BF.kh)+pad(String(fat),BF.fat)
-    +pad(sf!=null&&sf!==''?String(sf):'-',BF.sf)+pad(lys!=null&&lys!==''?String(lys):'-',BF.lys)+pad(arg!=null&&arg!==''?String(arg):'-',BF.arg);
+    +pad(sf!=null&&sf!==''?String(sf):'-',BF.sf);
 }
-function briefZeile(name,kcal,eiw,zck,kh,fat,sf,lys,arg){
-  return padR(String(name).slice(0,BF.name),BF.name)+briefVals(kcal,eiw,zck,kh,fat,sf,lys,arg);
+function briefZeile(name,kcal,eiw,zck,kh,fat,sf){
+  return padR(String(name).slice(0,BF.name),BF.name)+briefVals(kcal,eiw,zck,kh,fat,sf);
 }
 function wrapText(text,width){if(text.length<=width)return[text];const ws=text.split(' ');const ls=[];let c='';for(const w of ws){const n=c?c+' '+w:w;if(n.length<=width){c=n;}else{if(c)ls.push(c);c=w;}}if(c)ls.push(c);return ls.length?ls:[text.slice(0,width)];}
-function briefZeileWrap(indent,name,kcal,eiw,zck,kh,fat,sf,lys,arg){const nw=BF.name-indent.length;const vals=briefVals(kcal,eiw,zck,kh,fat,sf,lys,arg);const ls=wrapText(String(name),nw);const out=[];for(let i=0;i<ls.length-1;i++)out.push(indent+ls[i]);const last=ls[ls.length-1]||'';out.push(indent+padR(last,nw)+vals);return out.join('\n');}
+function briefZeileWrap(indent,name,kcal,eiw,zck,kh,fat,sf){const nw=BF.name-indent.length;const vals=briefVals(kcal,eiw,zck,kh,fat,sf);const ls=wrapText(String(name),nw);const out=[];for(let i=0;i<ls.length-1;i++)out.push(indent+ls[i]);const last=ls[ls.length-1]||'';out.push(indent+padR(last,nw)+vals);return out.join('\n');}
 
 function exportBrief(){
   const status=document.getElementById('export-status');
@@ -1774,9 +1775,10 @@ function exportBrief(){
   const gef=getExportTage();
   if(!gef.length){status.textContent='⚠️ Keine Einträge.';status.style.color='#f59e0b';return;}
   const tage={};gef.forEach(e=>{const d=e.datum.slice(0,10);if(!tage[d])tage[d]=[];tage[d].push(e);});
-  const hdr=briefZeile('Lebensmittel','kcal','Eiw.g','Zck.g','KH.g','Fett.g','ges.FS','Lys.mg','Arg.mg');
-  const hdrKurz=padR('',BF.name)+pad('kcal',BF.kcal)+pad('Eiw.g',BF.eiw)+pad('Zck.g',BF.zck)+pad('KH.g',BF.kh)+pad('Fett.g',BF.fat)+pad('ges.FS',BF.sf)+pad('Lys.mg',BF.lys)+pad('Arg.mg',BF.arg);
+  const hdr=briefZeile('Lebensmittel','kcal','Eiw.g','Zck.g','KH.g','Fett.g','ges.FS');
+  const hdrKurz=padR('',BF.name)+pad('kcal',BF.kcal)+pad('Eiw.g',BF.eiw)+pad('Zck.g',BF.zck)+pad('KH.g',BF.kh)+pad('Fett.g',BF.fat)+pad('ges.FS',BF.sf);
   const zeilen=['ERNÄHRUNGSPROTOKOLL',''];
+  zeilen.push('Makroziel: '+MAKROZIEL.eiw+'% Eiweiß · '+MAKROZIEL.fett+'% Fett · '+MAKROZIEL.kh+'% Kohlenhydrate    Kalorienziel: '+getZiel()+' kcal','');
   if(von||bis)zeilen.push('Zeitraum: '+(von?fmt(von):'')+(von&&bis?' bis ':bis?'bis ':'')+( bis?fmt(bis):''),'');
   zeilen.push(hdr);
   zeilen.push('-'.repeat(hdr.length));
@@ -1790,24 +1792,30 @@ function exportBrief(){
       const mehrere=zutaten&&zutaten.length>1;
       const hauptLabel=mehrere&&e.kategorie?e.kategorie:(e.lebensmittel||'');
       const esf=e.gesaettigt!=null?(+e.gesaettigt).toFixed(1):'';
-      const elys=e.lysin!=null?Math.round(+e.lysin):'';
-      const earg=e.arginin!=null?Math.round(+e.arginin):'';
-      zeilen.push(briefZeileWrap('  ',hauptLabel,Math.round(+e.kalorien||0),(+e.eiweiss||0).toFixed(1),(+e.zucker||0).toFixed(1),(+e.kohlenhydrate||0).toFixed(1),(+e.fett||0).toFixed(1),esf,elys,earg));
+      zeilen.push(briefZeileWrap('  ',hauptLabel,Math.round(+e.kalorien||0),(+e.eiweiss||0).toFixed(1),(+e.zucker||0).toFixed(1),(+e.kohlenhydrate||0).toFixed(1),(+e.fett||0).toFixed(1),esf));
       if(mehrere){
         zutaten.forEach(z=>{
           const zsf=z.sf!=null?(+z.sf).toFixed(1):'';
-          const zlys=z.lys!=null?Math.round(+z.lys):'';
-          const zarg=z.arg!=null?Math.round(+z.arg):'';
-          zeilen.push(briefZeileWrap('    ',z.lebensmittel||'',Math.round(+z.kalorien||0),(+z.eiweiss||0).toFixed(1),(+z.zucker||0).toFixed(1),(+z.kohlenhydrate||0).toFixed(1),(+z.fett||0).toFixed(1),zsf,zlys,zarg));
+          zeilen.push(briefZeileWrap('    ',z.lebensmittel||'',Math.round(+z.kalorien||0),(+z.eiweiss||0).toFixed(1),(+z.zucker||0).toFixed(1),(+z.kohlenhydrate||0).toFixed(1),(+z.fett||0).toFixed(1),zsf));
         });
       }
     });
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
-    const gkcal=Math.round(sum('kalorien')),geiw=sum('eiweiss').toFixed(1),gzck=sum('zucker').toFixed(1),gkh=sum('kohlenhydrate').toFixed(1),gfat=sum('fett').toFixed(1);
-    const gsf=sum('gesaettigt').toFixed(1),glys=Math.round(sum('lysin')),garg=Math.round(sum('arginin'));
+    const gkcalN=sum('kalorien'),geiwN=sum('eiweiss'),gzckN=sum('zucker'),gkhN=sum('kohlenhydrate'),gfatN=sum('fett');
+    const gkcal=Math.round(gkcalN),geiw=geiwN.toFixed(1),gzck=gzckN.toFixed(1),gkh=gkhN.toFixed(1),gfat=gfatN.toFixed(1);
+    const gsf=sum('gesaettigt').toFixed(1);
     zeilen.push('-'.repeat(hdr.length));
-    zeilen.push(briefZeile('GESAMT  '+fmtMitTag(datum),gkcal,geiw,gzck,gkh,gfat,gsf,glys,garg));
+    zeilen.push(briefZeile('GESAMT  '+fmtMitTag(datum),gkcal,geiw,gzck,gkh,gfat,gsf));
     zeilen.push(hdrKurz);
+    zeilen.push('');
+    const bewegung=getBewegung(datum),ziel=getZiel(datum),netto=Math.round(gkcalN-bewegung),diff=netto-ziel;
+    zeilen.push('Schritte: '+(getSchritte(datum)||0)+' (≈ '+bewegung+' kcal)    Netto: '+netto+' kcal    Zielabweichung: '+(diff>0?'+':'')+diff+' kcal (Ziel '+ziel+' kcal)');
+    const macroKcal=geiwN*4+gfatN*9+gkhN*4;
+    if(macroKcal>0){
+      const pEiw=Math.round(geiwN*4/macroKcal*100),pFat=Math.round(gfatN*9/macroKcal*100),pKH=Math.round(gkhN*4/macroKcal*100);
+      zeilen.push('Anteile: Eiweiß '+pEiw+'% · Fett '+pFat+'% · Kohlenhydrate '+pKH+'%  (Ziel: '+MAKROZIEL.eiw+'% / '+MAKROZIEL.fett+'% / '+MAKROZIEL.kh+'%)');
+    }
+    zeilen.push('');
   });
   const txt='﻿'+zeilen.join('\r\n');
   status.textContent='✅ Briefform exportiert.';status.style.color='#22c55e';
