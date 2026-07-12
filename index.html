@@ -1443,6 +1443,8 @@ function wiederholenEintrag(id){
   foodNames.forEach(t=>foods.push(t));
   // Kategorie aus Original-Eintrag übernehmen
   if(e.kategorie){setKategorie(e.kategorie);}
+  // Original-Datum vorschlagen statt immer heute – frei änderbar vor dem Speichern
+  if(e.datum){document.getElementById('datum').value=e.datum.slice(0,10);}
   renderFoodList();
   document.getElementById('result-box').classList.remove('show');
   pendingRows=[];
@@ -1778,10 +1780,12 @@ function briefZeile(name,kcal,eiw,fat,sf,kh,zck,plus){
 }
 function wrapText(text,width){if(text.length<=width)return[text];const ws=text.split(' ');const ls=[];let c='';for(const w of ws){const n=c?c+' '+w:w;if(n.length<=width){c=n;}else{if(c)ls.push(c);c=w;}}if(c)ls.push(c);return ls.length?ls:[text.slice(0,width)];}
 function briefZeileWrap(indent,name,kcal,eiw,fat,sf,kh,zck,plus){const nw=BF.name-indent.length;const vals=briefVals(kcal,eiw,fat,sf,kh,zck,plus);const ls=wrapText(String(name),nw);const out=[];for(let i=0;i<ls.length-1;i++)out.push(indent+ls[i]);const last=ls[ls.length-1]||'';out.push(indent+padR(last,nw)+vals);return out.join('\n');}
-// Zwei Zeilen: tatsächliche Makro-Anteile, darunter die Abweichung vom Makroziel (bündig unter der jeweiligen Prozentzahl)
+// Zwei Zeilen: "Anteile:"-Label vorn, dann tatsächliche Makro-Anteile; darunter (um das Label nach
+// rechts verschoben) die Abweichung vom Makroziel, bündig unter der jeweiligen Prozentzahl
 function anteileZeilen(pEiw,pFat,pKH){
+  const praefix='Anteile: ';
   const teile=[['Eiw.',pEiw,pEiw-MAKROZIEL.eiw],['Fett',pFat,pFat-MAKROZIEL.fett],['KH',pKH,pKH-MAKROZIEL.kh]];
-  let line1='',line2='';
+  let line1=praefix,line2='';
   teile.forEach((t,i)=>{
     const[label,pct,diff]=t;
     const pctStr=pct+'%';
@@ -1814,12 +1818,16 @@ function exportBrief(){
     const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
     const gkcalN=sum('kalorien'),geiwN=sum('eiweiss'),gzckN=sum('zucker'),gkhN=sum('kohlenhydrate'),gfatN=sum('fett');
     const bewegung=getBewegung(datum),ziel=getZiel(datum),netto=Math.round(gkcalN-bewegung),diff=netto-ziel;
-    zeilen.push('Schritte: '+(getSchritte(datum)||0)+' (≈ '+bewegung+' kcal)    Netto: '+netto+' kcal    Zielabweichung: '+(diff>0?'+':'')+diff+' kcal (Ziel '+ziel+' kcal)');
+    zeilen.push('Schritte: '+(getSchritte(datum)||0)+' (≈ '+bewegung+' kcal)    Zielabweichung: '+(diff>0?'+':'')+diff+' kcal (Ziel '+ziel+' kcal)');
     const macroKcal=geiwN*4+gfatN*9+gkhN*4;
     if(macroKcal>0){
       const pEiw=Math.round(geiwN*4/macroKcal*100),pFat=Math.round(gfatN*9/macroKcal*100),pKH=Math.round(gkhN*4/macroKcal*100);
       zeilen.push(...anteileZeilen(pEiw,pFat,pKH));
     }
+    zeilen.push('');
+    // Spaltenüberschrift auch pro Tag wiederholen – bei langen Listen sonst schwer zuzuordnen
+    zeilen.push(hdr);
+    zeilen.push('-'.repeat(hdr.length));
     zeilen.push('');
 
     // Nach Kategorien gruppieren: Frühstück, Mittag, Abendessen zuerst (in dieser Reihenfolge),
