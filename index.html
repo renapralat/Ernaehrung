@@ -1768,15 +1768,16 @@ function padR(s,n){s=String(s);while(s.length<n)s=s+' ';return s;}
 // Spaltenreihenfolge überall: Eiweiß, Fett, ges. Fettsäuren, Kohlenhydrate, Zucker
 const BF={name:42,kcal:6,eiw:7,fat:7,sf:7,kh:7,zck:7};
 const MAKROZIEL={eiw:30,fett:30,kh:40};
-function briefVals(kcal,eiw,fat,sf,kh,zck){
-  return pad(String(kcal),BF.kcal)+pad(String(eiw),BF.eiw)+pad(String(fat),BF.fat)
+function briefVals(kcal,eiw,fat,sf,kh,zck,plus){
+  const kcalStr=plus?'+'+pad(String(kcal),BF.kcal-1):pad(String(kcal),BF.kcal);
+  return kcalStr+pad(String(eiw),BF.eiw)+pad(String(fat),BF.fat)
     +pad(sf!=null&&sf!==''?String(sf):'-',BF.sf)+pad(String(kh),BF.kh)+pad(String(zck),BF.zck);
 }
-function briefZeile(name,kcal,eiw,fat,sf,kh,zck){
-  return padR(String(name).slice(0,BF.name),BF.name)+briefVals(kcal,eiw,fat,sf,kh,zck);
+function briefZeile(name,kcal,eiw,fat,sf,kh,zck,plus){
+  return padR(String(name).slice(0,BF.name),BF.name)+briefVals(kcal,eiw,fat,sf,kh,zck,plus);
 }
 function wrapText(text,width){if(text.length<=width)return[text];const ws=text.split(' ');const ls=[];let c='';for(const w of ws){const n=c?c+' '+w:w;if(n.length<=width){c=n;}else{if(c)ls.push(c);c=w;}}if(c)ls.push(c);return ls.length?ls:[text.slice(0,width)];}
-function briefZeileWrap(indent,name,kcal,eiw,fat,sf,kh,zck){const nw=BF.name-indent.length;const vals=briefVals(kcal,eiw,fat,sf,kh,zck);const ls=wrapText(String(name),nw);const out=[];for(let i=0;i<ls.length-1;i++)out.push(indent+ls[i]);const last=ls[ls.length-1]||'';out.push(indent+padR(last,nw)+vals);return out.join('\n');}
+function briefZeileWrap(indent,name,kcal,eiw,fat,sf,kh,zck,plus){const nw=BF.name-indent.length;const vals=briefVals(kcal,eiw,fat,sf,kh,zck,plus);const ls=wrapText(String(name),nw);const out=[];for(let i=0;i<ls.length-1;i++)out.push(indent+ls[i]);const last=ls[ls.length-1]||'';out.push(indent+padR(last,nw)+vals);return out.join('\n');}
 
 function exportBrief(){
   const status=document.getElementById('export-status');
@@ -1819,8 +1820,12 @@ function exportBrief(){
       return (ia>=0?ia:katOrder.length)-(ib>=0?ib:katOrder.length);
     });
     katNamen.forEach(kat=>{
-      const ksum=k=>gruppen[kat].reduce((a,e)=>a+(+e[k]||0),0);
-      zeilen.push(briefZeile(kat,Math.round(ksum('kalorien')),ksum('eiweiss').toFixed(1),ksum('fett').toFixed(1),ksum('gesaettigt').toFixed(1),ksum('kohlenhydrate').toFixed(1),ksum('zucker').toFixed(1)));
+      if(gruppen[kat].length>1){
+        const ksum=k=>gruppen[kat].reduce((a,e)=>a+(+e[k]||0),0);
+        zeilen.push(briefZeile(kat,Math.round(ksum('kalorien')),ksum('eiweiss').toFixed(1),ksum('fett').toFixed(1),ksum('gesaettigt').toFixed(1),ksum('kohlenhydrate').toFixed(1),ksum('zucker').toFixed(1)));
+      }else{
+        zeilen.push(kat);
+      }
       zeilen.push('-'.repeat(hdr.length));
       gruppen[kat].forEach(e=>{
         let zutaten=null;
@@ -1831,7 +1836,7 @@ function exportBrief(){
         if(mehrere){
           zutaten.forEach(z=>{
             const zsf=z.sf!=null?(+z.sf).toFixed(1):'';
-            zeilen.push(briefZeileWrap('    ',z.lebensmittel||'',Math.round(+z.kalorien||0),(+z.eiweiss||0).toFixed(1),(+z.fett||0).toFixed(1),zsf,(+z.kohlenhydrate||0).toFixed(1),(+z.zucker||0).toFixed(1)));
+            zeilen.push(briefZeileWrap('    ',z.lebensmittel||'',Math.round(+z.kalorien||0),(+z.eiweiss||0).toFixed(1),(+z.fett||0).toFixed(1),zsf,(+z.kohlenhydrate||0).toFixed(1),(+z.zucker||0).toFixed(1),true));
           });
         }
       });
