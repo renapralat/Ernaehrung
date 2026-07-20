@@ -304,7 +304,7 @@ function teileEingabe(val){
   // "N food mit jeweils M unit food2" → "N food und N×M unit food2"
   // z.B. "zwei Espresso doppio mit jeweils 110 ml Sojamilch" → "zwei Espresso doppio und 220 ml Sojamilch"
   const _ZJEW={ein:1,eine:1,einen:1,einem:1,einer:1,zwei:2,drei:3,vier:4,fünf:5,sechs:6,sieben:7,acht:8,neun:9,zehn:10};
-  val=val.replace(/\bmit\s+jeweils\s+(\d+(?:[.,]\d+)?)\s*(ml|l|g|kg|gramm)\b/gi,
+  val=val.replace(/\bmit\s+jeweils\s+(\d+(?:[.,]\d+)?)\s*(ml|l|g|kg|gramm|gram|gr)\b/gi,
     (m,amount,unit,offset,str)=>{
       const nums=(str.slice(0,offset).match(/\b(ein[e]?[nm]?r?|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|\d+)\b/gi)||[]);
       const last=nums[nums.length-1]||'1';
@@ -325,7 +325,7 @@ function teileEingabe(val){
     // (1) Zahl/Zahlwort + Maßeinheit (EL, TL, Stück etc.)
     +`(?:${ZAHL_P})\\s+(?:(?:${ADJ_P})\\s+)?(?:${MASS_P})\\b`
     // (2) Zahl + Gewichtseinheit + Lebensmittelwort (z.B. "10 g Butter" / "150ml Milch")
-    +'|\\d+(?:[.,]\\d+)?\\s*(?:g|ml|kg|l|gramm)\\s+[a-zA-ZäöüÄÖÜß]{3}'
+    +'|\\d+(?:[.,]\\d+)?\\s*(?:g|ml|kg|l|gramm|gram|gr)\\s+[a-zA-ZäöüÄÖÜß]{3}'
     // (3) Artikel + optionales Adjektiv + Lebensmittelwort (z.B. "eine mittlere Kartoffel")
     +`|(?:ein[e]?[nm]?|der|die|das)\\s+(?:(?:${ADJ_P})\\s+)?[a-zA-ZäöüÄÖÜß]{3,}`
     +')', 'i');
@@ -347,7 +347,7 @@ function sucheDBVorschlaege(q){
   let s=q.trim();
   // Mehrfach-Stripping: Zahl → Einheit → Zahlwort → Artikel → Maßwort (bis zu 4 Runden)
   const ZAHLWORT='halb[e]?[snrm]?|viertel|elf|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|zwölf|dreizehn|vierzehn|fünfzehn|sechzehn|siebzehn|achtzehn|neunzehn|zwanzig|dreißig|dreissig|vierzig|fünfzig|sechzig|siebzig|achtzig|neunzig|einhundert|hundertfünfzig|zweihundertfünfzig|zweihundert|dreihundert|vierhundert|fünfhundert|hundert';
-  const EINHEIT='g|ml|kg|l|gramm|gram|liter';
+  const EINHEIT='g|ml|kg|l|gramm|gram|gr|liter';
   const MASWORT='portion(?:en)?|stücke?|messlöffel|esslöffel|teelöffel|tl|el|scheibe[n]?|tasse[n]?|glas|gläser|kelle[n]?|becher|handvoll|prise[n]?|schüsse?';
   for(let i=0;i<4;i++){
     const prev=s;
@@ -359,7 +359,7 @@ function sucheDBVorschlaege(q){
     if(s===prev)break;
   }
   // Trailing-Stripping: "Quark 150g" → "Quark", "Kirschen 5" → "Kirschen"
-  s=s.replace(/\s+\d+(?:[.,]\d+)?\s*(?:g|ml|kg|l|gramm|gram)?\s*$/i,'');
+  s=s.replace(/\s+\d+(?:[.,]\d+)?\s*(?:g|ml|kg|l|gramm|gram|gr)?\s*$/i,'');
   s=s.toLowerCase().trim();
   if(!s)return[];
   // Stamm: deutsche Plural-Endungen abschneiden für Fuzzy-Matching
@@ -530,7 +530,7 @@ function parseFood(text){
   if(mVorne){let grams=parseFloat(mVorne[1].replace(',','.'));const unit=mVorne[2].toLowerCase();if(unit==='kg'||unit==='l')grams*=1000;return{name:mVorne[3].trim(),grams};}
   const mAnzahl=text.match(/^(\d+(?:[.,]\d+)?)\s+([^\d].+)$/i);
   if(mAnzahl){const n=parseFloat(mAnzahl[1].replace(',','.'));let aName=mAnzahl[2].trim().replace(/^(?:kleine?[n]?|große?[n]?|frische?[n]?|reife?[n]?|gute?[n]?)\s+/i,'');return{name:aName,grams:Math.round(n*100)};}
-  const mHinten=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|gramm|gram)?$/i);
+  const mHinten=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|gramm|gram|gr)?$/i);
   if(mHinten&&mHinten[2]){let grams=parseFloat(mHinten[2].replace(',','.'));const unit=(mHinten[3]||'g').toLowerCase();if(unit==='kg'||unit==='l')grams*=1000;return{name:mHinten[1].trim(),grams};}
   return{name:text.trim(),grams:100};
 }
@@ -908,7 +908,7 @@ async function berechneZeile(food,onStatus,grammsOverride){
   if(onStatus)onStatus(name,false);
   // Per-piece: wenn DB-Eintrag s-Feld hat, extrahiere Anzahl aus Freitext (auch "halbe", "eine" etc.)
   // NICHT bei echten Maßeinheiten (Esslöffel, Messlöffel usw.) – da zählt die Einheit selbst
-  const _hasUnit=/\b\d+\s*(g|ml|kg|l|gramm)\b/i.test(food);
+  const _hasUnit=/\b\d+\s*(g|ml|kg|l|gramm|gram|gr)\b/i.test(food);
   const _hasMassUnit=/\b(teelöffel|tl|esslöffel|el|messlöffel|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|prise[n]?|schüsse?)\b/i.test(food);
   const _dbE=sucheLokaleDB(name);
   let actualGrams=grams;
