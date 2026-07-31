@@ -35,9 +35,11 @@ Live-URL: [renapralat.github.io/Ernaehrung](https://renapralat.github.io/Ernaehr
 
 ### Mengenangaben
 
+Vollständige Liste aller erkannten Maßeinheiten und wie sie in Gramm umgerechnet werden:
+
 | Format | Beispiel | Ergebnis |
 |--------|----------|---------|
-| Gramm | `150 g Joghurt` | 150 g |
+| Gramm | `150 g Joghurt` (auch `gr`, `gramm`, `gram`) | 150 g |
 | Gramm (Zahlwort) | `zehn gramm Käse` | 10 g |
 | Kilogramm | `0,5 kg Kartoffeln` | 500 g |
 | Milliliter | `200 ml Milch` | 200 ml |
@@ -52,7 +54,7 @@ Live-URL: [renapralat.github.io/Ernaehrung](https://renapralat.github.io/Ernaehr
 | Handvoll | `eine Handvoll Nüsse` | 30 g |
 | Portion | `eine Portion Salat` | 150 g |
 | Prise | `eine Prise Salz` | 1 g |
-| Schuss | `ein Schuss Zitronensaft` | 25 g |
+| Schuss | `ein Schuss Zitronensaft` (auch `Schuß`, Mehrzahl `Schüsse`) | 25 g |
 | Stück | `zwei Stück Kuchen` | 200 g |
 | Anzahl | `fünf Kirschen` | 5 × Stückgewicht |
 | Bruchteil | `halbe Avocado` | 0,5 × Stückgewicht |
