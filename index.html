@@ -1248,12 +1248,14 @@ function aktualisiereBanner(){
 
 function matchSuche(name,s){if(!s)return true;const n=name.toLowerCase();s=s.toLowerCase();if(s.startsWith('*')&&s.endsWith('*'))return n.includes(s.slice(1,-1));if(s.startsWith('*'))return n.endsWith(s.slice(1));if(s.endsWith('*'))return n.startsWith(s.slice(0,-1));return n.includes(s);}
 
-function eintragKarte(e, datum, suche){
+// Zeilen eines Eintrags rekonstruieren: bei vorhandenen zutaten diese nutzen, sonst den
+// Eintrag selbst als eine Zeile. Wird sowohl für die Kartenansicht als auch für "Wiederholen"
+// genutzt, damit bereits bekannte Nährwerte ohne erneute Suche wiederverwendet werden können.
+function rowsAusEintrag(e){
   let zutaten=null;
   if(e.zutaten){try{zutaten=JSON.parse(e.zutaten);}catch(ex){}}
-  const multiRow=zutaten&&zutaten.length>1;
-  // Zeilen: bei vorhandenen zutaten diese nutzen, sonst Eintrag selbst als eine Zeile
-  const rows=zutaten&&zutaten.length>0 ? zutaten : [{
+  if(zutaten&&zutaten.length>0)return zutaten;
+  return [{
     lebensmittel:e.lebensmittel,kalorien:+e.kalorien||0,eiweiss:+e.eiweiss||0,
     zucker:+e.zucker||0,kohlenhydrate:+e.kohlenhydrate||0,fett:+e.fett||0,
     sf:(+e.gesaettigt||0)>0?+e.gesaettigt:null,
@@ -1261,6 +1263,13 @@ function eintragKarte(e, datum, suche){
     arg:(+e.arginin||0)>0?+e.arginin:null,
     quelle:e.quelle||null
   }];
+}
+
+function eintragKarte(e, datum, suche){
+  let zutaten=null;
+  if(e.zutaten){try{zutaten=JSON.parse(e.zutaten);}catch(ex){}}
+  const multiRow=zutaten&&zutaten.length>1;
+  const rows=rowsAusEintrag(e);
   const hasSF=rows.some(z=>z.sf!=null&&+z.sf!==0);
   const hasLys=rows.some(z=>(+z.lys||0)>0);
   const hasArg=rows.some(z=>(+z.arg||0)>0);
@@ -1412,18 +1421,9 @@ function renderEintraege(){
 
 // Zutaten-Freitexte aus einem gespeicherten Eintrag rekonstruieren (aus zutaten-JSON,
 // sonst Fallback über den lebensmittel-Text). Wird von Wiederholen genutzt.
-function itemsAusEintrag(e){
-  let items=[];
-  if(e.zutaten){
-    try{const z=JSON.parse(e.zutaten);if(z&&z.length>0)items=z.map(item=>item.lebensmittel).filter(Boolean);}catch(ex){}
-  }
-  if(!items.length)items=(e.lebensmittel||'').split(',').flatMap(s=>teileEingabe(s.trim())).filter(Boolean);
-  return items;
-}
-
-// Wie itemsAusEintrag(), aber inkl. einer zuvor per "Neu bewerten" korrigierten Grammzahl
-// (falls vorhanden) – damit eine einmal korrigierte Menge (z.B. "nur 25g vom Proteinshake,
-// nicht 100g") bei einer erneuten Neubewertung nicht wieder verloren geht.
+// Extrahiert die Lebensmittel-Freitexte samt einer zuvor per "Neu bewerten" korrigierten
+// Grammzahl (falls vorhanden) – damit eine einmal korrigierte Menge (z.B. "nur 25g vom
+// Proteinshake, nicht 100g") bei einer erneuten Neubewertung nicht wieder verloren geht.
 function itemsMitGrammAusEintrag(e){
   let items=[];
   if(e.zutaten){
@@ -1465,14 +1465,23 @@ function zeigeWiederholenDatumWahl(id,origDatum){
 function wiederholenMitDatum(id,datum){
   const e=eintraege.find(x=>String(x.id)===String(id));
   if(!e)return;
-  const foodNames=itemsAusEintrag(e);
-  foodNames.forEach(t=>foods.push(t));
+  // Bereits bekannte Nährwerte direkt übernehmen statt neu zu suchen – die Suche kann bei manchen
+  // Lebensmitteln inzwischen fehlschlagen, obwohl sie beim letzten Mal erfolgreich war, und beim
+  // Wiederholen ist ohnehin keine erneute Bewertung nötig (nur "Direkt speichern" mit denselben Werten).
+  rowsAusEintrag(e).forEach(r=>{
+    foods.push(r.lebensmittel);
+    pendingRows.push({
+      lebensmittel:r.lebensmittel,kalorien:+r.kalorien||0,eiweiss:+r.eiweiss||0,zucker:+r.zucker||0,
+      kohlenhydrate:+r.kohlenhydrate||0,fett:+r.fett||0,sf:r.sf!=null?+r.sf:null,
+      lys:r.lys!=null?+r.lys:null,arg:r.arg!=null?+r.arg:null,quelle:r.quelle||null,
+      grams:r.grams!=null?+r.grams:null
+    });
+  });
   // Kategorie aus Original-Eintrag übernehmen
   if(e.kategorie){setKategorie(e.kategorie);}
   document.getElementById('datum').value=datum;
   renderFoodList();
-  document.getElementById('result-box').classList.remove('show');
-  pendingRows=[];
+  showNWResults(pendingRows,[],[]);
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
