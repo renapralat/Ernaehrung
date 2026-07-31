@@ -317,7 +317,7 @@ function teileEingabe(val){
   // Dezimalkomma schützen: "0,1" nicht als Listentrennzeichen werten
   let teile=val.split(/\s+(?:und|sowie|außerdem|plus|an|mit(?!\s+\d))\s+|(?<!\d),(?!\d)\s*|&\s*/i);
   const ZAHL_P='ein[e]?[nm]?|halb[e]?[snrm]?|viertel|achtel|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf|dreizehn|vierzehn|fünfzehn|sechzehn|siebzehn|achtzehn|neunzehn|zwanzig|drei(?:ßig|ssig)|vierzig|fünfzig|sechzig|siebzig|achtzig|neunzig|einhundert|hundertfünfzig|zweihundert(?:fünfzig)?|dreihundert|vierhundert|fünfhundert|hundert|\\d+(?:[.,]\\d+)?';
-  const MASS_P='teelöffel|tl|esslöffel|el|messlöffel|tassen?|kellen?|gläser|glas|becher|scheiben?|handvoll|prisen?|schüsse?|portionen?|stücke?';
+  const MASS_P='teelöffel|tl|esslöffel|el|messlöffel|tassen?|kellen?|gläser|glas|becher|scheiben?|handvoll|prisen?|schuss|schuß|schüsse?|portionen?|stücke?';
   const ADJ_P='mittlere?[nrms]?|kleine?[nrms]?|große?[nrms]?|gute?[nrms]?|frische?[nrms]?|reife?[nrms]?|gehäufte?[nrms]?|gestrichene?[nrms]?|halbe?[nrms]?';
   // Sekundär-Split: drei Muster, die den Start eines neuen Lebensmittels mitten im Text erkennen
   const midSplit=new RegExp(
@@ -348,7 +348,7 @@ function sucheDBVorschlaege(q){
   // Mehrfach-Stripping: Zahl → Einheit → Zahlwort → Artikel → Maßwort (bis zu 4 Runden)
   const ZAHLWORT='halb[e]?[snrm]?|viertel|elf|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|zwölf|dreizehn|vierzehn|fünfzehn|sechzehn|siebzehn|achtzehn|neunzehn|zwanzig|dreißig|dreissig|vierzig|fünfzig|sechzig|siebzig|achtzig|neunzig|einhundert|hundertfünfzig|zweihundertfünfzig|zweihundert|dreihundert|vierhundert|fünfhundert|hundert';
   const EINHEIT='g|ml|kg|l|gramm|gram|gr|liter';
-  const MASWORT='portion(?:en)?|stücke?|messlöffel|esslöffel|teelöffel|tl|el|scheibe[n]?|tasse[n]?|glas|gläser|kelle[n]?|becher|handvoll|prise[n]?|schüsse?';
+  const MASWORT='portion(?:en)?|stücke?|messlöffel|esslöffel|teelöffel|tl|el|scheibe[n]?|tasse[n]?|glas|gläser|kelle[n]?|becher|handvoll|prise[n]?|schuss|schuß|schüsse?';
   for(let i=0;i<4;i++){
     const prev=s;
     s=s.replace(/^\d+(?:[.,]\d+)?\s*/,'');
@@ -422,7 +422,7 @@ function waehlVorschlagIdx(i){
   vn=vn.replace(/^(halb[e]?[snrm]?|viertel|achtel|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf|dreizehn|vierzehn|fünfzehn|sechzehn|siebzehn|achtzehn|neunzehn|zwanzig|drei(?:ßig|ssig)|vierzig|fünfzig|sechzig|siebzig|achtzig|neunzig|einhundert|hundertfünfzig|zweihundert|dreihundert|vierhundert|fünfhundert|hundert)\s+/i,(_,w)=>(_Z[w.toLowerCase()]||1)+' ');
   vn=vn.replace(/^(?:ein[e]?[nm]?)\s+/i,'1 ');
   const WEIGHT_U='g|ml|kg|l|gramm|gram|gr';
-  const MASS_U='teelöffel|tl|esslöffel|el|messlöffel|tassen?|kellen?|gläser|glas|becher|scheiben?|handvoll|prisen?|schüsse?|portionen?|stücke?';
+  const MASS_U='teelöffel|tl|esslöffel|el|messlöffel|tassen?|kellen?|gläser|glas|becher|scheiben?|handvoll|prisen?|schuss|schuß|schüsse?|portionen?|stücke?';
   // Gewichtseinheit erhalten ("zehn gramm" → "10g ", "150ml" → "150ml ")
   const mW=vn.match(new RegExp('^(\\d+(?:[.,]\\d+)?)\\s*('+WEIGHT_U+')\\b','i'));
   // Maßeinheit erhalten ("1 Teelöffel", "2 EL", "1 Scheibe")
@@ -510,7 +510,7 @@ const MASS={
   'handvoll':30,
   'portion':150,'portionen':150,
   'prise':1,'prisen':1,
-  'schuss':25,'schüsse':25,
+  'schuss':25,'schuß':25,'schüsse':25,
   'stück':100,'stücke':100,
 };
 
@@ -524,9 +524,9 @@ function parseFood(text){
   text=text.replace(/^(zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf|dreizehn|vierzehn|fünfzehn|sechzehn|siebzehn|achtzehn|neunzehn|zwanzig|dreißig|dreissig|vierzig|fünfzig|sechzig|siebzig|achtzig|neunzig|einhundert|hundertfünfzig|zweihundertfünfzig|zweihundert|dreihundert|vierhundert|fünfhundert|hundert)\s+/i,(_,w)=>ZAHL[w.toLowerCase()]+' ');
   text=text.replace(/^(?:der|die|das)\s+/i,'');
   text=text.replace(/^(?:ein[e]?[nm]?)\s+/i,'1 ');
-  const mMass=text.match(/^(\d+(?:[.,]\d+)?)\s+(?:gehäufte?|gestrichene?|große?|kleine?|gute?)?\s*(teelöffel|esslöffel|tl|el|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|portion(?:en)?|prise[n]?|schüsse?|stücke?)\s+(.+)$/i);
+  const mMass=text.match(/^(\d+(?:[.,]\d+)?)\s+(?:gehäufte?|gestrichene?|große?|kleine?|gute?)?\s*(teelöffel|esslöffel|tl|el|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|portion(?:en)?|prise[n]?|schuss|schuß|schüsse?|stücke?)\s+(.+)$/i);
   if(mMass){const anzahl=parseFloat(mMass[1].replace(',','.'));const gramsProEinheit=MASS[mMass[2].toLowerCase()]||15;return{name:mMass[3].trim(),grams:anzahl*gramsProEinheit};}
-  const mMassHinten=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s+(teelöffel|esslöffel|tl|el|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|portion(?:en)?|prise[n]?|schüsse?|stücke?)$/i);
+  const mMassHinten=text.match(/^(.+?)\s+(\d+(?:[.,]\d+)?)\s+(teelöffel|esslöffel|tl|el|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|portion(?:en)?|prise[n]?|schuss|schuß|schüsse?|stücke?)$/i);
   if(mMassHinten){const anzahl=parseFloat(mMassHinten[2].replace(',','.'));const gramsProEinheit=MASS[mMassHinten[3].toLowerCase()]||15;return{name:mMassHinten[1].trim(),grams:anzahl*gramsProEinheit};}
   const mVorne=text.match(/^(\d+(?:[.,]\d+)?)\s*(g|ml|kg|l|gramm|gram|gr)\s+(.+)$/i);
   if(mVorne){let grams=parseFloat(mVorne[1].replace(',','.'));const unit=mVorne[2].toLowerCase();if(unit==='kg'||unit==='l')grams*=1000;return{name:mVorne[3].trim(),grams};}
@@ -911,7 +911,7 @@ async function berechneZeile(food,onStatus,grammsOverride){
   // Per-piece: wenn DB-Eintrag s-Feld hat, extrahiere Anzahl aus Freitext (auch "halbe", "eine" etc.)
   // NICHT bei echten Maßeinheiten (Esslöffel, Messlöffel usw.) – da zählt die Einheit selbst
   const _hasUnit=hatExpliziteGewichtseinheit(food);
-  const _hasMassUnit=/\b(teelöffel|tl|esslöffel|el|messlöffel|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|prise[n]?|schüsse?)\b/i.test(food);
+  const _hasMassUnit=/\b(teelöffel|tl|esslöffel|el|messlöffel|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|prise[n]?|schuss|schuß|schüsse?)\b/i.test(food);
   const _dbE=sucheLokaleDB(name);
   let actualGrams=grams;
   // grammsOverride: eine zuvor per "Neu bewerten" korrigierte Menge hat Vorrang vor der aus dem Text geparsten/geschätzten Menge
