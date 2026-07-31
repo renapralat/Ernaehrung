@@ -910,7 +910,7 @@ async function berechneZeile(food,onStatus,grammsOverride){
   if(onStatus)onStatus(name,false);
   // Per-piece: wenn DB-Eintrag s-Feld hat, extrahiere Anzahl aus Freitext (auch "halbe", "eine" etc.)
   // NICHT bei echten Maßeinheiten (Esslöffel, Messlöffel usw.) – da zählt die Einheit selbst
-  const _hasUnit=/\b\d+\s*(g|ml|kg|l|gramm|gram|gr)\b/i.test(food);
+  const _hasUnit=hatExpliziteGewichtseinheit(food);
   const _hasMassUnit=/\b(teelöffel|tl|esslöffel|el|messlöffel|tasse[n]?|kelle[n]?|glas|gläser|becher|scheibe[n]?|handvoll|prise[n]?|schüsse?)\b/i.test(food);
   const _dbE=sucheLokaleDB(name);
   let actualGrams=grams;
@@ -988,10 +988,15 @@ function rundeAnzeige(zahl){
 }
 // Ob eine Mengenangabe im Text eine Volumeneinheit (ml/l/Liter) statt Gewicht war
 function istFluessigText(text){return /\d+(?:[.,]\d+)?\s*(?:ml|l|liter)\b/i.test(text||'');}
+// Ob im Text bereits eine exakte Gewichts-/Volumeneinheit stand (g/kg/ml/l/gramm/gr) – dann ist die
+// Menge schon eindeutig und muss nicht noch einmal wiederholt werden. Bei vagen Maßen (Teelöffel,
+// Esslöffel, Kelle, Stückzahl, "halbe" …) dagegen schon, da die genaue Grammzahl daraus erst berechnet wird.
+function hatExpliziteGewichtseinheit(text){return /\b\d+(?:[.,]\d+)?\s*(?:g|ml|kg|l|gramm|gram|gr)\b/i.test(text||'');}
 // Tatsächlich verwendete Menge lesbar anzeigen (g/kg bzw. ml/l, falls im Text eine Volumeneinheit stand) –
 // damit Mengenangaben wie "1 EL" oder "1 halbes X" auch im Protokoll als konkrete Menge sichtbar sind.
+// Stand die Menge schon explizit im Text (z.B. "100 Gramm Kammsteak"), wird nichts ergänzt.
 function formatMenge(grams,text){
-  if(grams==null)return '';
+  if(grams==null||hatExpliziteGewichtseinheit(text))return '';
   const istFluessig=istFluessigText(text);
   if(grams>=1000)return rundeAnzeige(grams/1000)+(istFluessig?'l':'kg');
   return Math.round(grams)+(istFluessig?'ml':'g');
