@@ -449,7 +449,8 @@ function schliessVorschlaege(){
 function extractCount(text){
   let t=text.trim();
   t=t.replace(/^(\d+)\s*\/\s*(\d+)\s+/,(_,n,d)=>(+n/+d)+' ');  // 1/8 → 0.125
-  t=t.replace(/^(halb[e]?[snrm]?)\s+/i,'0.5 ');
+  // "halb..." auch erkennen, wenn eine überflüssige führende Zahl/Artikel davorsteht ("1 halbes X", "eine halbe X")
+  t=t.replace(/^(?:(?:1|ein[e]?[nm]?)\s+)?(halb[e]?[snrm]?)\s+/i,'0.5 ');
   t=t.replace(/^viertel\s+/i,'0.25 ');
   t=t.replace(/^(?:ein[e]?[nm]?\s+)?achtel\s+/i,'0.125 ');
   const ZAHL={zwei:2,drei:3,vier:4,fünf:5,sechs:6,sieben:7,acht:8,neun:9,zehn:10,elf:11,zwölf:12,dreizehn:13,vierzehn:14,fünfzehn:15,sechzehn:16,siebzehn:17,achtzehn:18,neunzehn:19,zwanzig:20,dreißig:30,dreissig:30,vierzig:40,fünfzig:50,sechzig:60,siebzig:70,achtzig:80,neunzig:90,hundert:100,einhundert:100,hundertfünfzig:150,zweihundert:200,zweihundertfünfzig:250,dreihundert:300,vierhundert:400,fünfhundert:500};
@@ -515,7 +516,8 @@ const MASS={
 
 function parseFood(text){
   text=text.replace(/^(\d+)\s*\/\s*(\d+)\s+/,(_,n,d)=>(+n/+d)+' ');  // 1/8 → 0.125
-  text=text.replace(/^(halb[e]?[snr]?)\s+/i,'0.5 ');
+  // "halb..." auch erkennen, wenn eine überflüssige führende Zahl/Artikel davorsteht ("1 halbes X", "eine halbe X")
+  text=text.replace(/^(?:(?:1|ein[e]?[nm]?)\s+)?(halb[e]?[snr]?)\s+/i,'0.5 ');
   text=text.replace(/^viertel\s+/i,'0.25 ');
   text=text.replace(/^(?:ein[e]?[nm]?\s+)?achtel\s+/i,'0.125 ');
   const ZAHL={zwei:2,drei:3,vier:4,fünf:5,sechs:6,sieben:7,acht:8,neun:9,zehn:10,elf:11,zwölf:12,dreizehn:13,vierzehn:14,fünfzehn:15,sechzehn:16,siebzehn:17,achtzehn:18,neunzehn:19,zwanzig:20,dreißig:30,dreissig:30,vierzig:40,fünfzig:50,sechzig:60,siebzig:70,achtzig:80,neunzig:90,hundert:100,einhundert:100,hundertfünfzig:150,zweihundert:200,zweihundertfünfzig:250,dreihundert:300,vierhundert:400,fünfhundert:500};
