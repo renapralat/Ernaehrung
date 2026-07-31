@@ -981,6 +981,26 @@ function quelleBadge(q){
   return '';
 }
 
+// Rundet auf max. 1 Nachkommastelle, deutsches Komma, ohne überflüssige ",0"
+function rundeAnzeige(zahl){
+  const n=Math.round(zahl*10)/10;
+  return (Number.isInteger(n)?n.toFixed(0):n.toFixed(1)).replace('.',',');
+}
+// Ob eine Mengenangabe im Text eine Volumeneinheit (ml/l/Liter) statt Gewicht war
+function istFluessigText(text){return /\d+(?:[.,]\d+)?\s*(?:ml|l|liter)\b/i.test(text||'');}
+// Tatsächlich verwendete Menge lesbar anzeigen (g/kg bzw. ml/l, falls im Text eine Volumeneinheit stand) –
+// damit Mengenangaben wie "1 EL" oder "1 halbes X" auch im Protokoll als konkrete Menge sichtbar sind.
+function formatMenge(grams,text){
+  if(grams==null)return '';
+  const istFluessig=istFluessigText(text);
+  if(grams>=1000)return rundeAnzeige(grams/1000)+(istFluessig?'l':'kg');
+  return Math.round(grams)+(istFluessig?'ml':'g');
+}
+// Summe der als Flüssigkeit erkannten Mengen (ml) eines Eintrags – für die tägliche Getränke-Gesamtmenge
+function fluessigGramm(e){
+  return rowsAusEintrag(e).reduce((a,r)=>a+(r.grams!=null&&istFluessigText(r.lebensmittel)?+r.grams:0),0);
+}
+
 function lokaleBewertung(rows){
   const totEiw=rows.reduce((a,r)=>a+(+r.eiweiss||0),0);
   const totZck=rows.reduce((a,r)=>a+(+r.zucker||0),0);
@@ -1049,7 +1069,8 @@ function showNWResults(rows,kiGeschaetzt,nichtGefunden){
       const sfCell=hasSF?`<td style="text-align:right">${r.sf!=null?r.sf.toFixed(1)+'g':'–'}</td>`:'';
       const lysCell=hasLys?`<td style="text-align:right">${r.lys!=null?r.lys+'mg':'–'}</td>`:'';
       const argCell=hasArg?`<td style="text-align:right">${r.arg!=null?r.arg+'mg':'–'}</td>`:'';
-      return `<tr><td>${r.lebensmittel}${quelleBadge(r.quelle)}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.fett}g</td>${sfCell}<td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.zucker}g</td>${lysCell}${argCell}</tr>`;
+      const menge=formatMenge(r.grams,r.lebensmittel);
+      return `<tr><td>${r.lebensmittel}${menge?` <span style="color:#64748b;font-size:0.72rem">(${menge})</span>`:''}${quelleBadge(r.quelle)}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.fett}g</td>${sfCell}<td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.zucker}g</td>${lysCell}${argCell}</tr>`;
     }).join('')
     +(rows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right;color:#f59e0b"><strong>${totKcal}</strong></td><td style="text-align:right;color:#22c55e"><strong>${totEiw.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totFett.toFixed(1)}g</strong></td>${sfTot}<td style="text-align:right;color:#3b82f6"><strong>${totKH.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totZck.toFixed(1)}g</strong></td>${lysTot}${argTot}</tr>`:'')
     +'</tbody></table>'
@@ -1186,7 +1207,10 @@ async function speichernEintrag(){
       ki_bewertet: !!pendingKIMode,
       gesaettigt: _hasSF?+pendingRows.reduce((a,r)=>a+(+r.sf||0),0).toFixed(1):null,
       lysin: _hasLys?Math.round(pendingRows.reduce((a,r)=>a+(+r.lys||0),0)):null,
-      arginin: _hasArg?Math.round(pendingRows.reduce((a,r)=>a+(+r.arg||0),0)):null
+      arginin: _hasArg?Math.round(pendingRows.reduce((a,r)=>a+(+r.arg||0),0)):null,
+      // Menge (g/ml) nur bei Einzel-Lebensmitteln sinnvoll auf oberster Ebene – bei mehreren steckt
+      // sie bereits pro Zutat in "zutaten"
+      grams: pendingRows.length===1&&pendingRows[0].grams!=null?+pendingRows[0].grams:null
     };
     const r=await fetch(URL_BASE,{method:'POST',headers:H,body:JSON.stringify(gesamt)});
     if(!r.ok)throw new Error('HTTP '+r.status);
@@ -1263,7 +1287,8 @@ function rowsAusEintrag(e){
     sf:(+e.gesaettigt||0)>0?+e.gesaettigt:null,
     lys:(+e.lysin||0)>0?+e.lysin:null,
     arg:(+e.arginin||0)>0?+e.arginin:null,
-    quelle:e.quelle||null
+    quelle:e.quelle||null,
+    grams:e.grams!=null?+e.grams:null
   }];
 }
 
@@ -1291,8 +1316,9 @@ function eintragKarte(e, datum, suche){
       const zSF=hasSF?'<td style="text-align:right">'+(z.sf!=null&&+z.sf!==0?(+z.sf).toFixed(1)+'g':'–')+'</td>':'';
       const zLys=hasLys?'<td style="text-align:right">'+((+z.lys||0)>0?Math.round(+z.lys)+'mg':'–')+'</td>':'';
       const zArg=hasArg?'<td style="text-align:right">'+((+z.arg||0)>0?Math.round(+z.arg)+'mg':'–')+'</td>':'';
+      const zMenge=formatMenge(z.grams,z.lebensmittel);
       return '<tr>'
-        +'<td>'+z.lebensmittel+quelleBadge(z.quelle)+'</td>'
+        +'<td>'+z.lebensmittel+(zMenge?' <span style="color:#64748b;font-size:0.72rem">('+zMenge+')</span>':'')+quelleBadge(z.quelle)+'</td>'
         +'<td style="text-align:right">'+Math.round(+z.kalorien||0)+'</td>'
         +'<td style="text-align:right">'+(+z.eiweiss||0).toFixed(1)+'g</td>'
         +'<td style="text-align:right">'+(+z.fett||0).toFixed(1)+'g</td>'
@@ -1354,6 +1380,7 @@ function renderEintraege(){
     const hasLysTag=tage[datum].some(e=>e.lysin!=null);
     const hasArgTag=tage[datum].some(e=>e.arginin!=null);
     const eiwN=sum('eiweiss'),fatN=sum('fett'),khN=sum('kohlenhydrate');
+    const fluessigTag=tage[datum].reduce((a,e)=>a+fluessigGramm(e),0);
     const macroKcal=eiwN*4+fatN*9+khN*4;
     const pEiw=macroKcal>0?Math.round(eiwN*4/macroKcal*100):0;
     const pFat=macroKcal>0?Math.round(fatN*9/macroKcal*100):0;
@@ -1388,6 +1415,8 @@ function renderEintraege(){
           +'<span style="color:#475569">→</span>'
           +'<span id="ampel-tag-'+datum+'" style="font-size:0.8rem">'+ampelNetto(kcal-getBewegung(datum),getZiel(datum))+'</span>'
         +'</div>'
+        // Zeile 2b: Getränke (Summe aller Positionen mit Volumeneinheit ml/l)
+        +(fluessigTag>0?'<div style="margin-top:4px;font-size:0.75rem;color:#64748b">🥤 Getränke: '+rundeAnzeige(fluessigTag>=1000?fluessigTag/1000:fluessigTag)+(fluessigTag>=1000?' l':' ml')+'</div>':'')
         // Tagessumme als Tabelle
         +'<div style="margin-top:5px;padding-top:4px;border-top:1px solid rgba(59,130,246,0.15);overflow-x:auto">'
           +'<table class="entries-table"><thead><tr>'
@@ -1572,7 +1601,8 @@ function zeigeAnalyseOverlay(rows,bewertungText){
       const sfCell=hasSF?`<td style="text-align:right">${r.sf!=null?r.sf.toFixed(1)+'g':'–'}</td>`:'';
       const lysCell=hasLys?`<td style="text-align:right">${r.lys!=null?r.lys+'mg':'–'}</td>`:'';
       const argCell=hasArg?`<td style="text-align:right">${r.arg!=null?r.arg+'mg':'–'}</td>`:'';
-      return `<tr><td>${r.lebensmittel}${quelleBadge(r.quelle)}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.fett}g</td>${sfCell}<td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.zucker}g</td>${lysCell}${argCell}</tr>`;
+      const menge=formatMenge(r.grams,r.lebensmittel);
+      return `<tr><td>${r.lebensmittel}${menge?` <span style="color:#64748b;font-size:0.72rem">(${menge})</span>`:''}${quelleBadge(r.quelle)}</td><td style="text-align:right">${r.kalorien}</td><td style="text-align:right">${r.eiweiss}g</td><td style="text-align:right">${r.fett}g</td>${sfCell}<td style="text-align:right">${r.kohlenhydrate}g</td><td style="text-align:right">${r.zucker}g</td>${lysCell}${argCell}</tr>`;
     }).join('')
     +(rows.length>1?`<tr class="total-row"><td><strong>Gesamt</strong></td><td style="text-align:right;color:#f59e0b"><strong>${totKcal}</strong></td><td style="text-align:right;color:#22c55e"><strong>${totEiw.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totFett.toFixed(1)}g</strong></td>${hasSF?`<td style="text-align:right;color:#fca5a5"><strong>${totSF.toFixed(1)}g</strong></td>`:''}<td style="text-align:right;color:#3b82f6"><strong>${totKH.toFixed(1)}g</strong></td><td style="text-align:right;color:#ef4444"><strong>${totZck.toFixed(1)}g</strong></td>${hasLys?`<td style="text-align:right;color:#93c5fd"><strong>${totLys}mg</strong></td>`:''}${hasArg?`<td style="text-align:right;color:#93c5fd"><strong>${totArg}mg</strong></td>`:''}</tr>`:'')
     +'</tbody></table>';
@@ -1855,6 +1885,8 @@ function exportBrief(){
     const gkcalN=sum('kalorien'),geiwN=sum('eiweiss'),gzckN=sum('zucker'),gkhN=sum('kohlenhydrate'),gfatN=sum('fett');
     const bewegung=getBewegung(datum),ziel=getZiel(datum),netto=Math.round(gkcalN-bewegung),diff=netto-ziel;
     zeilen.push('Schritte: '+(getSchritte(datum)||0)+' (≈ '+bewegung+' kcal)    Zielabweichung: '+(diff>0?'+':'')+diff+' kcal (Ziel '+ziel+' kcal)');
+    const fluessigTag=tage[datum].reduce((a,e)=>a+fluessigGramm(e),0);
+    if(fluessigTag>0)zeilen.push('Getränke: '+rundeAnzeige(fluessigTag>=1000?fluessigTag/1000:fluessigTag)+(fluessigTag>=1000?' l':' ml'));
     const macroKcal=geiwN*4+gfatN*9+gkhN*4;
     if(macroKcal>0){
       const pEiw=Math.round(geiwN*4/macroKcal*100),pFat=Math.round(gfatN*9/macroKcal*100),pKH=Math.round(gkhN*4/macroKcal*100);
@@ -1869,21 +1901,28 @@ function exportBrief(){
     // Nach Kategorien gruppieren: Frühstück, Mittag, Abendessen zuerst (in dieser Reihenfolge),
     // danach Snack/Gaststätte/eigene Kategorien/ohne Kategorie in beliebiger Reihenfolge
     const briefSortiert=[...tage[datum]].sort((a,b)=>katPrio(a)-katPrio(b));
-    const gruppen={};
+    // Gruppieren nach Kategorie – normalisiert (getrimmt, Groß-/Kleinschreibung egal), damit z.B.
+    // "Getränke" und "getränke" nicht versehentlich als zwei getrennte Gruppen erscheinen. Angezeigt
+    // wird jeweils die Schreibweise des ersten Eintrags des Tages mit dieser Kategorie.
+    const gruppen={},gruppenLabel={};
     briefSortiert.forEach(e=>{
-      const key=e.kategorie||'Ohne Kategorie';
+      const roh=(e.kategorie||'Ohne Kategorie').trim()||'Ohne Kategorie';
+      const key=roh.toLowerCase();
+      if(!gruppenLabel[key])gruppenLabel[key]=roh;
       (gruppen[key]=gruppen[key]||[]).push(e);
     });
+    const katOrderLower=katOrder.map(k=>k.toLowerCase());
     const katNamen=Object.keys(gruppen).sort((a,b)=>{
-      const ia=katOrder.indexOf(a),ib=katOrder.indexOf(b);
+      const ia=katOrderLower.indexOf(a),ib=katOrderLower.indexOf(b);
       return (ia>=0?ia:katOrder.length)-(ib>=0?ib:katOrder.length);
     });
     katNamen.forEach(kat=>{
+      const label=gruppenLabel[kat];
       if(gruppen[kat].length>1){
         const ksum=k=>gruppen[kat].reduce((a,e)=>a+(+e[k]||0),0);
-        zeilen.push(briefZeile(kat,Math.round(ksum('kalorien')),ksum('eiweiss').toFixed(1),ksum('fett').toFixed(1),ksum('gesaettigt').toFixed(1),ksum('kohlenhydrate').toFixed(1),ksum('zucker').toFixed(1)));
+        zeilen.push(briefZeile(label,Math.round(ksum('kalorien')),ksum('eiweiss').toFixed(1),ksum('fett').toFixed(1),ksum('gesaettigt').toFixed(1),ksum('kohlenhydrate').toFixed(1),ksum('zucker').toFixed(1)));
       }else{
-        zeilen.push(kat);
+        zeilen.push(label);
       }
       zeilen.push('-'.repeat(hdr.length));
       gruppen[kat].forEach(e=>{
@@ -1891,11 +1930,17 @@ function exportBrief(){
         if(e.zutaten){try{zutaten=JSON.parse(e.zutaten);}catch(ex){}}
         const mehrere=zutaten&&zutaten.length>1;
         const esf=e.gesaettigt!=null?(+e.gesaettigt).toFixed(1):'';
-        zeilen.push(briefZeileWrap('  ',e.lebensmittel||'',Math.round(+e.kalorien||0),(+e.eiweiss||0).toFixed(1),(+e.fett||0).toFixed(1),esf,(+e.kohlenhydrate||0).toFixed(1),(+e.zucker||0).toFixed(1)));
+        // Tatsächliche Menge (g/ml) zum Namen ergänzen, damit Angaben wie "1 EL" oder "1 halbes X" auch
+        // im Brief als konkrete Menge sichtbar sind – bei Mehrfach-Einträgen nur pro Zutat, nicht summiert.
+        const eMenge=mehrere?'':formatMenge(e.grams,e.lebensmittel);
+        const eName=(e.lebensmittel||'')+(eMenge?' ('+eMenge+')':'');
+        zeilen.push(briefZeileWrap('  ',eName,Math.round(+e.kalorien||0),(+e.eiweiss||0).toFixed(1),(+e.fett||0).toFixed(1),esf,(+e.kohlenhydrate||0).toFixed(1),(+e.zucker||0).toFixed(1)));
         if(mehrere){
           zutaten.forEach(z=>{
             const zsf=z.sf!=null?(+z.sf).toFixed(1):'';
-            zeilen.push(briefZeileWrap('    ',z.lebensmittel||'',Math.round(+z.kalorien||0),(+z.eiweiss||0).toFixed(1),(+z.fett||0).toFixed(1),zsf,(+z.kohlenhydrate||0).toFixed(1),(+z.zucker||0).toFixed(1),true));
+            const zMenge=formatMenge(z.grams,z.lebensmittel);
+            const zName=(z.lebensmittel||'')+(zMenge?' ('+zMenge+')':'');
+            zeilen.push(briefZeileWrap('    ',zName,Math.round(+z.kalorien||0),(+z.eiweiss||0).toFixed(1),(+z.fett||0).toFixed(1),zsf,(+z.kohlenhydrate||0).toFixed(1),(+z.zucker||0).toFixed(1),true));
           });
         }
       });

@@ -25,6 +25,9 @@ Live-URL: [renapralat.github.io/Ernaehrung](https://renapralat.github.io/Ernaehr
 - **KI-Bewertung** der Mahlzeit (Qualität, Arginin/Lysin-Verhältnis)
 - **Farbcodierung** der Nährwerte, überall einheitlich: Eiweiß grün, Fett und Zucker kräftig rot, Kohlenhydrate blau, gesättigte Fettsäuren schwach rot, Lysin/Arginin schwach blau
 - **Einheitliche Reihenfolge** der Nährwerte überall (App und Briefform): Eiweiß, Fett, gesättigte Fettsäuren, Kohlenhydrate, Zucker
+- **Tatsächliche Menge sichtbar**: hinter jedem Lebensmittel steht zusätzlich die daraus berechnete Menge in g/kg bzw. ml/l (z.B. „1 EL Proteinoform 25+ (15g)"), sowohl in der App als auch in der Briefform – damit bei unscharfen Maßangaben (Esslöffel, Kelle, „ein halbes …") trotzdem die konkrete Menge nachvollziehbar bleibt
+- **Getränke-Tagesmenge**: alle Positionen, die in ml oder l erfasst wurden, werden pro Tag zu einer Gesamtmenge aufsummiert und sowohl in der Tagesansicht ("🥤 Getränke: …") als auch in der Briefform angezeigt
+- **Kategorien werden beim Export unabhängig von Groß-/Kleinschreibung zusammengefasst** (z.B. "Getränke" und "getränke" landen in derselben Gruppe)
 
 ---
 
