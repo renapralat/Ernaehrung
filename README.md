@@ -4,9 +4,12 @@ Persönliches Ernährungstagebuch als single-page Web-App — optimiert für **S
 Live-URL: [renapralat.github.io/Ernaehrung](https://renapralat.github.io/Ernaehrung/)
 
 > **KI-Funktionen aktuell deaktiviert**: GitHub Models wurde am 30.07.2026 endgültig abgeschaltet.
-> Die betroffenen Buttons und die Modellauswahl sind ausgegraut, aber nicht entfernt – die Suche
-> funktioniert weiterhin über eigene Datenbank → Open Food Facts. Anleitung zur Reaktivierung mit
-> einem neuen Anbieter: Abschnitt [„KI reaktivieren"](#ki-reaktivieren-schritt-für-schritt) unten.
+> Die betroffenen Buttons („💬 Nur Bewertung", „🤖 KI recherchieren & speichern", „🤖 Werte per KI
+> ermitteln") und die Modellauswahl sind ausgegraut, aber nicht entfernt. Der frühere „🤖 KI
+> Analyse"-Button heißt jetzt „📊 Analysieren" und bleibt aktiv – er braucht für die reine
+> Nährwertberechnung (eigene Datenbank → Open Food Facts) keine KI und dient weiterhin als
+> Vorschau vor dem Speichern. Anleitung zur KI-Reaktivierung mit einem neuen Anbieter: Abschnitt
+> [„KI reaktivieren"](#ki-reaktivieren-schritt-für-schritt) unten.
 
 ---
 
@@ -127,8 +130,11 @@ Datenverlust reaktiviert werden kann, sobald ein neuer KI-Anbieter angebunden is
 2. Die vier `fetch('https://models.inference.ai.azure.com/chat/completions', …)`-Aufrufe (Suche
    nach `models.inference.ai.azure.com`) auf den neuen Anbieter/Endpunkt umstellen – inkl. Anpassung
    von `Authorization`-Header, Request-Body-Format und Modellnamen an dessen API.
-3. Die `disabled`- und `title`-Attribute bei den vier KI-Buttons (🤖 KI Analyse, 💬 Nur Bewertung,
-   🤖 KI recherchieren & speichern, 🤖 Werte per KI ermitteln) sowie bei `#ki-model-select` entfernen.
+3. Die `disabled`- und `title`-Attribute bei den drei KI-Buttons (💬 Nur Bewertung, 🤖 KI
+   recherchieren & speichern, 🤖 Werte per KI ermitteln) sowie bei `#ki-model-select` entfernen.
+   „📊 Analysieren" (früher „🤖 KI Analyse") ist bereits aktiv, da die reine Nährwertberechnung
+   keine KI braucht – lässt sich bei Bedarf wieder umbenennen, sobald KI-Bewertungstexte dazu
+   angezeigt werden.
 4. Falls der neue Anbieter andere Modellnamen nutzt: Die `<option>`-Werte in `#ki-model-select`
    sowie den Default in `getKiModel()` (aktuell `gpt-4o-mini`) entsprechend anpassen.
 
