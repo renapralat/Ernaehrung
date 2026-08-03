@@ -20,10 +20,14 @@ input[type="text"],input[type="date"] { background:#0f172a; color:#f1f5f9; borde
 input:focus{outline:none;border-color:#3b82f6;}
 input[type="date"]{color-scheme:dark;cursor:pointer;}
 button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.15s;}
+/* KI-Funktionen deaktiviert seit Abschaltung von GitHub Models (30.07.2026) – bewusst nur ausgegraut,
+   nicht entfernt, damit sie bei einem neuen KI-Anbieter jederzeit wieder aktiviert werden können. */
+button:disabled{opacity:0.5;filter:saturate(0.3);cursor:not-allowed;}
 .btn-primary{background:#3b82f6;color:#fff;} .btn-primary:hover{background:#2563eb;}
 .btn-primary:disabled{background:#334155;color:#64748b;cursor:not-allowed;}
 .btn-success{background:#22c55e;color:#fff;}
 .btn-ghost{background:#334155;color:#cbd5e1;} .btn-ghost:hover{background:#475569;}
+.btn-ghost:disabled:hover{background:#334155;}
 .btn-ki{background:rgba(74,222,128,0.15);color:#4ade80;border:1px solid rgba(74,222,128,0.35);} .btn-ki:hover{background:rgba(74,222,128,0.25);}
 .btn-ki:disabled{background:#334155;color:#64748b;cursor:not-allowed;border-color:#334155;}
 .btn-icon-sq{padding:0.55rem 0.7rem;flex:0 0 auto;}
@@ -219,8 +223,8 @@ button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;
 
     <!-- Analyze buttons -->
     <div class="analyze-row">
-      <button class="btn-ki" id="ki-btn" onclick="analyzeKI()">🤖 KI Analyse</button>
-      <button class="btn-ghost" id="bewertung-btn" onclick="nurBewertung()">💬 Nur Bewertung</button>
+      <button class="btn-ki" id="ki-btn" onclick="analyzeKI()" disabled title="KI aktuell nicht verfügbar – GitHub Models wurde am 30.07.2026 abgeschaltet">🤖 KI Analyse</button>
+      <button class="btn-ghost" id="bewertung-btn" onclick="nurBewertung()" disabled title="KI aktuell nicht verfügbar – GitHub Models wurde am 30.07.2026 abgeschaltet">💬 Nur Bewertung</button>
     </div>
     <button class="btn-success" style="width:100%;margin-bottom:0.65rem" onclick="schnellSpeichern()">💾 Direkt speichern</button>
 
@@ -736,7 +740,7 @@ function zeigeEigenLMFormular(id){
       +' style="width:100%;box-sizing:border-box;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:5px 7px;font-size:0.85rem"/>'
       +'<div id="eigen-lm-vorschlaege" style="display:none;position:absolute;top:100%;left:0;right:0;background:#1e293b;border:1px solid #334155;border-radius:8px;margin-top:2px;max-height:200px;overflow-y:auto;z-index:60"></div>'
     +'</label>'
-    +'<button type="button" id="eigen-lm-ki-btn" onclick="kiFormularAusfuellen()" style="width:100%;padding:0.4rem;margin-bottom:0.65rem;border-radius:8px;border:1px solid #f59e0b;background:rgba(245,158,11,0.12);color:#f59e0b;font-size:0.8rem;font-weight:600;cursor:pointer">🤖 Werte per KI ermitteln</button>'
+    +'<button type="button" id="eigen-lm-ki-btn" onclick="kiFormularAusfuellen()" disabled title="KI aktuell nicht verfügbar – GitHub Models wurde am 30.07.2026 abgeschaltet" style="width:100%;padding:0.4rem;margin-bottom:0.65rem;border-radius:8px;border:1px solid #f59e0b;background:rgba(245,158,11,0.12);color:#f59e0b;font-size:0.8rem;font-weight:600;cursor:pointer">🤖 Werte per KI ermitteln</button>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.6rem">'
       +eigenLMFeld('kcal/100g','eigen-lm-kcal',x?x.k:'',1)
       +eigenLMFeld('Portion (g)','eigen-lm-portion',x?x.s:'',1)
@@ -960,7 +964,8 @@ async function analyzeAndShow(autoRecherche){
   if(autoRecherche===undefined)autoRecherche=true;
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
   const btn=document.getElementById('analyze-btn');
-  const kibtn=document.getElementById('ki-btn');
+  // #ki-btn bleibt bei deaktivierter KI dauerhaft ausgegraut – nicht mit anfassen
+  const kibtn=KI_AKTIV?document.getElementById('ki-btn'):null;
   if(btn){btn.disabled=true;}if(kibtn)kibtn.disabled=true;
   const orig=kibtn?kibtn.innerHTML:'';
   try{
@@ -1043,7 +1048,7 @@ function nichtGefundenHTML(list){
   return '<div style="margin-bottom:0.35rem"><div style="margin-bottom:0.25rem">⚠️ Nicht gefunden (0 kcal):</div>'
     +list.map((nf,i)=>'<div style="display:flex;align-items:center;gap:0.5rem;margin:0.2rem 0;flex-wrap:wrap">'
       +'<span>'+nf.food+'</span>'
-      +'<button class="btn-ghost" style="font-size:0.68rem;padding:0.2rem 0.5rem" onclick="kiRechercheUndSpeichern('+i+')">🤖 KI recherchieren &amp; speichern</button>'
+      +'<button class="btn-ghost" style="font-size:0.68rem;padding:0.2rem 0.5rem" onclick="kiRechercheUndSpeichern('+i+')" disabled title="KI aktuell nicht verfügbar – GitHub Models wurde am 30.07.2026 abgeschaltet">🤖 KI recherchieren &amp; speichern</button>'
     +'</div>').join('')
   +'</div>';
 }
@@ -1091,6 +1096,9 @@ function showNWResults(rows,kiGeschaetzt,nichtGefunden){
 async function analyzeKI(autoRecherche){
   if(autoRecherche===undefined)autoRecherche=true;
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
+  // Solange KI_AKTIV false ist, den Button (dauerhaft ausgegraut) unangetastet lassen und direkt
+  // ohne KI weiterrechnen – kein Umschalten von disabled, damit der Button ausgegraut bleibt.
+  if(!KI_AKTIV){await analyzeAndShow(autoRecherche);return;}
   const token=loadToken();
   const btn=document.getElementById('ki-btn');
   const orig=btn?btn.innerHTML:'';
@@ -2089,7 +2097,14 @@ function clearSuche(){document.getElementById('suche').value='';renderEintraege(
 
 // ─── Token management ─────────────────────────────────────────────────────────
 
-function loadToken(){return localStorage.getItem('github_ki_token')||'';}
+// Zentraler Schalter für alle KI-Funktionen. GitHub Models (der bisher genutzte Dienst) wurde am
+// 30.07.2026 endgültig abgeschaltet, daher aktuell auf false. loadToken() liefert dadurch überall
+// '' zurück, auch wenn ein Token gespeichert ist – das Token bleibt aber erhalten (nichts wird
+// gelöscht) und alle KI-Codepfade greifen automatisch wieder, sobald hier auf true umgestellt und
+// ggf. ein neuer Anbieter/Endpunkt eingetragen wird. Die zugehörigen Buttons sind bewusst nur
+// ausgegraut (disabled-Attribut), nicht entfernt.
+const KI_AKTIV=false;
+function loadToken(){return KI_AKTIV?(localStorage.getItem('github_ki_token')||''):'';}
 function getKiModel(){return localStorage.getItem('ki-model')||'gpt-4o-mini';}
 function setKiModel(v){localStorage.setItem('ki-model',v);}
 function initKiModelSelect(){const s=document.getElementById('ki-model-select');if(s)s.value=getKiModel();}
@@ -2106,12 +2121,13 @@ function toggleTokenForm(){
   const f=document.getElementById('ki-token-form');
   const open=f.style.display==='none';
   f.style.display=open?'block':'none';
-  if(open){const t=loadToken();if(t)document.getElementById('ki-token-input').value=t;}
+  if(open){const t=localStorage.getItem('github_ki_token')||'';if(t)document.getElementById('ki-token-input').value=t;}
 }
 function updateKiStatus(){
-  const t=loadToken();
   const badge=document.getElementById('ki-badge');
   const txt=document.getElementById('ki-status-text');
+  if(!KI_AKTIV){badge.className='dot warn';txt.textContent='Suche: 📋 eigene DB → 🌐 Open Food Facts (KI deaktiviert – GitHub Models abgeschaltet)';txt.style.color='#f59e0b';return;}
+  const t=loadToken();
   if(t){badge.className='dot ok';txt.textContent='Suche: 📋 eigene DB → 🌐 Open Food Facts → 🤖 KI (Token aktiv)';txt.style.color='#22c55e';}
   else{badge.className='dot warn';txt.textContent='Suche: 📋 eigene DB → 🌐 Open Food Facts (kein KI-Token)';txt.style.color='#f59e0b';}
 }
