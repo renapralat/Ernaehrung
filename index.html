@@ -701,6 +701,7 @@ function zeigeEigeneLebensmittel(){
       +'<div style="font-size:0.7rem;color:#94a3b8">'+x.k+' kcal/100g'+(x.s?' · Portion ≈ '+x.s+'g':'')+'</div>'
     +'</div>'
     +'<div style="display:flex;gap:0.35rem;flex-shrink:0">'
+      +'<button class="btn-rep" style="padding:0.25rem 0.55rem" onclick="kopiereEigenesLM(\''+x.id+'\')" title="Als Vorlage für ein neues, ähnliches Lebensmittel kopieren">📋</button>'
       +'<button class="btn-rep" style="padding:0.25rem 0.55rem" onclick="zeigeEigenLMFormular(\''+x.id+'\')" title="Bearbeiten">✎</button>'
       +'<button class="btn-del-sm" onclick="loescheEigenesLebensmittel(\''+x.id+'\')" title="Löschen">✕</button>'
     +'</div>'
@@ -719,6 +720,14 @@ function zeigeEigeneLebensmittel(){
   document.body.appendChild(ov);
 }
 
+// Ähnliches eigenes Lebensmittel als Vorlage für einen neuen Eintrag nutzen (z.B. andere Marke/Variante) –
+// öffnet das Formular mit den Werten vorausgefüllt, speichert aber als komplett neuen Eintrag.
+function kopiereEigenesLM(id){
+  const x=customDB.find(e=>String(e.id)===String(id));
+  if(!x)return;
+  zeigeEigenLMFormular(null,{n:x.n+' (Kopie)',k:x.k,e:x.e,z:x.z,kh:x.kh,f:x.f,sf:x.sf,lys:x.lys,arg:x.arg,s:x.s});
+}
+
 function eigenLMFeld(label,id,val,step){
   return '<label style="display:flex;flex-direction:column;font-size:0.68rem;color:#94a3b8;gap:2px">'+label
     +'<input type="number" step="'+(step||'0.1')+'" id="'+id+'" value="'+(val??'')+'"'
@@ -726,21 +735,24 @@ function eigenLMFeld(label,id,val,step){
   +'</label>';
 }
 
-function zeigeEigenLMFormular(id){
+// vorlage: optionale Werte zum Vorausfüllen eines NEUEN Eintrags (Kopie, "nicht gefunden" oder
+// "als eigenes Lebensmittel speichern" aus Neu bewerten) – anders als beim Bearbeiten (id gesetzt)
+// wird beim Speichern trotzdem ein neuer Eintrag angelegt (POST), nicht der Original-Eintrag verändert.
+function zeigeEigenLMFormular(id,vorlage){
   document.getElementById('eigene-lm-form-overlay')?.remove();
-  const x=id?customDB.find(e=>String(e.id)===String(id)):null;
+  const x=id?customDB.find(e=>String(e.id)===String(id)):(vorlage||null);
   const ov=document.createElement('div');
   ov.id='eigene-lm-form-overlay';
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:10000;display:flex;align-items:center;justify-content:center;padding:1rem;overflow-y:auto';
   ov.innerHTML='<div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:1.2rem 1.1rem;max-width:420px;width:100%;max-height:85vh;overflow-y:auto">'
-    +'<div style="font-weight:700;color:#f1f5f9;margin-bottom:0.75rem">'+(x?'✎ Lebensmittel bearbeiten':'+ Neues Lebensmittel')+'</div>'
+    +'<div style="font-weight:700;color:#f1f5f9;margin-bottom:0.75rem">'+(id?'✎ Lebensmittel bearbeiten':'+ Neues Lebensmittel')+'</div>'
     +'<label style="display:flex;flex-direction:column;font-size:0.68rem;color:#94a3b8;gap:2px;margin-bottom:0.4rem;position:relative">Name'
       +'<input type="text" id="eigen-lm-name" value="'+(x?x.n.replace(/"/g,'&quot;'):'')+'" placeholder="z.B. Rotes Thai-Curry Restaurant" autocomplete="off"'
-      +(x?'':' oninput="zeigeEigenLMVorschlaege(this.value)" onblur="setTimeout(schliessEigenLMVorschlaege,320)"')
+      +(id?'':' oninput="zeigeEigenLMVorschlaege(this.value)" onblur="setTimeout(schliessEigenLMVorschlaege,320)"')
       +' style="width:100%;box-sizing:border-box;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:5px 7px;font-size:0.85rem"/>'
       +'<div id="eigen-lm-vorschlaege" style="display:none;position:absolute;top:100%;left:0;right:0;background:#1e293b;border:1px solid #334155;border-radius:8px;margin-top:2px;max-height:200px;overflow-y:auto;z-index:60"></div>'
     +'</label>'
-    +'<button type="button" id="eigen-lm-ki-btn" onclick="kiFormularAusfuellen()" disabled title="KI aktuell nicht verfügbar – GitHub Models wurde am 30.07.2026 abgeschaltet" style="width:100%;padding:0.4rem;margin-bottom:0.65rem;border-radius:8px;border:1px solid #f59e0b;background:rgba(245,158,11,0.12);color:#f59e0b;font-size:0.8rem;font-weight:600;cursor:pointer">🤖 Werte per KI ermitteln</button>'
+    +'<button type="button" id="eigen-lm-ki-btn" onclick="kiFormularAusfuellen()" title="Sucht zuerst in deiner Lebensmitteldatenbank, dann bei Open Food Facts" style="width:100%;padding:0.4rem;margin-bottom:0.65rem;border-radius:8px;border:1px solid #f59e0b;background:rgba(245,158,11,0.12);color:#f59e0b;font-size:0.8rem;font-weight:600;cursor:pointer">🔍 Werte übernehmen</button>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.6rem">'
       +eigenLMFeld('kcal/100g','eigen-lm-kcal',x?x.k:'',1)
       +eigenLMFeld('Portion (g)','eigen-lm-portion',x?x.s:'',1)
@@ -754,7 +766,7 @@ function zeigeEigenLMFormular(id){
     +'</div>'
     +'<div style="font-size:0.68rem;color:#64748b;margin-bottom:0.75rem">Alle Werte außer Name und kcal sind optional – Portion (g) aber am besten immer angeben, sonst gilt später der pauschale Standardwert (150g) für „eine Portion".</div>'
     +'<div style="display:flex;gap:0.5rem">'
-      +'<button onclick="speichereEigenesLebensmittel('+(x?'\''+x.id+'\'':'null')+')" style="flex:1;padding:0.5rem;border-radius:8px;border:1px solid #22c55e;background:rgba(34,197,94,0.15);color:#4ade80;font-size:0.85rem;font-weight:700;cursor:pointer">Speichern</button>'
+      +'<button onclick="speichereEigenesLebensmittel('+(id?'\''+id+'\'':'null')+')" style="flex:1;padding:0.5rem;border-radius:8px;border:1px solid #22c55e;background:rgba(34,197,94,0.15);color:#4ade80;font-size:0.85rem;font-weight:700;cursor:pointer">Speichern</button>'
       +'<button onclick="document.getElementById(\'eigene-lm-form-overlay\').remove()" style="padding:0.5rem 0.9rem;border-radius:8px;border:1px solid #334155;background:transparent;color:#94a3b8;font-size:0.85rem;cursor:pointer">Abbrechen</button>'
     +'</div>'
   +'</div>';
@@ -801,11 +813,25 @@ async function kiFormularAusfuellen(){
   if(!name){alert('Bitte zuerst einen Namen eingeben.');nameEl.focus();return;}
   const btn=document.getElementById('eigen-lm-ki-btn');
   const orig=btn?btn.innerHTML:'';
-  if(btn){btn.disabled=true;btn.innerHTML='<span class="loading"></span> Wird ermittelt…';}
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="loading"></span> Wird gesucht…';}
   try{
-    // Erst Open Food Facts probieren (echte Produktdatenbank, kein Token nötig, genauer bei Markenprodukten) -
-    // vorher hat dieser Button direkt und ausschließlich die KI gefragt, die kein Internet hat und deshalb bei
-    // Markenprodukten wie "dm sportness" oft nichts Brauchbares wusste, obwohl Open Food Facts es kennt.
+    // Erst die eigene Lebensmitteldatenbank durchsuchen (lebensmittel.js + bereits vorhandene eigene
+    // Lebensmittel) – dort stehen auch ges. Fettsäuren/Lysin/Arginin/Portionsgröße direkt zur Verfügung,
+    // die searchOpenFoodFacts() beim direkten Aufruf sonst nicht durchreicht.
+    const lokal=sucheLokaleDB(name);
+    if(lokal){
+      document.getElementById('eigen-lm-kcal').value=lokal.k;
+      document.getElementById('eigen-lm-eiweiss').value=lokal.e;
+      document.getElementById('eigen-lm-zucker').value=lokal.z;
+      document.getElementById('eigen-lm-kh').value=lokal.kh;
+      document.getElementById('eigen-lm-fett').value=lokal.f||0;
+      if(lokal.sf!=null)document.getElementById('eigen-lm-sf').value=lokal.sf;
+      if(lokal.lys!=null)document.getElementById('eigen-lm-lys').value=lokal.lys;
+      if(lokal.arg!=null)document.getElementById('eigen-lm-arg').value=lokal.arg;
+      if(lokal.s!=null)document.getElementById('eigen-lm-portion').value=lokal.s;
+      return;
+    }
+    // Nichts lokal gefunden -> Open Food Facts probieren (kein Token nötig, genauer bei Markenprodukten)
     const offResult=await searchOpenFoodFacts(name);
     const offGefunden=offResult&&offResult.data&&(+offResult.data['energy-kcal_100g']||0)>0;
     if(offGefunden){
@@ -818,13 +844,13 @@ async function kiFormularAusfuellen(){
     }
     const token=loadToken();
     if(!offGefunden&&!token){
-      alert('Weder bei Open Food Facts gefunden, noch ein KI-Token hinterlegt (⚙️ oben rechts). Bitte von Hand eintragen.');
+      alert('Weder in der eigenen Datenbank noch bei Open Food Facts gefunden. Bitte von Hand eintragen.');
       return;
     }
     if(!offGefunden){
       // Nichts bei Open Food Facts gefunden -> komplett auf KI-Schätzung ausweichen
       const werte=await kiVolleRecherche(name,token);
-      if(!werte||!werte.kalorien){alert('Weder bei Open Food Facts noch per KI plausible Werte für "'+name+'" gefunden. Bitte von Hand eintragen.');return;}
+      if(!werte||!werte.kalorien){alert('Weder lokal noch bei Open Food Facts noch per KI plausible Werte für "'+name+'" gefunden. Bitte von Hand eintragen.');return;}
       document.getElementById('eigen-lm-kcal').value=werte.kalorien;
       document.getElementById('eigen-lm-eiweiss').value=werte.eiweiss;
       document.getElementById('eigen-lm-zucker').value=werte.zucker;
@@ -849,7 +875,7 @@ async function kiFormularAusfuellen(){
         }
       }catch(ex){/* Ergänzung optional - die Open-Food-Facts-Werte sind schon eingetragen */}
     }
-  }catch(e){alert('Fehler bei der Ermittlung: '+e.message);}
+  }catch(e){alert('Fehler bei der Suche: '+e.message);}
   finally{if(btn){btn.innerHTML=orig;btn.disabled=false;}}
 }
 
@@ -926,6 +952,9 @@ async function berechneZeile(food,onStatus,grammsOverride){
     // Fallback: "Name 2 Portionen" oder "Name 3 Stücke" (Zahl nicht am Anfang)
     if(cnt==null){const m2=food.match(/\b(\d+(?:[.,]\d+)?)\s+(?:portion(?:en)?|stücke?|messlöffel)/i);if(m2)cnt=parseFloat(m2[1].replace(',','.'));}
     if(cnt!=null)actualGrams=Math.round(cnt*_dbE.s);
+    // Gar keine Zahl angegeben (z.B. nur "Joghurt") -> hinterlegte Portionsgröße nutzen statt der
+    // generischen 100g-Annahme aus parseFood()
+    else actualGrams=_dbE.s;
   }
   const offResult=await searchOpenFoodFacts(name);
   let n=offResult?.data||null;
@@ -1048,8 +1077,17 @@ function nichtGefundenHTML(list){
     +list.map((nf,i)=>'<div style="display:flex;align-items:center;gap:0.5rem;margin:0.2rem 0;flex-wrap:wrap">'
       +'<span>'+nf.food+'</span>'
       +'<button class="btn-ghost" style="font-size:0.68rem;padding:0.2rem 0.5rem" onclick="kiRechercheUndSpeichern('+i+')" disabled title="KI aktuell nicht verfügbar – GitHub Models wurde am 30.07.2026 abgeschaltet">🤖 KI recherchieren &amp; speichern</button>'
+      +'<button class="btn-ghost" style="font-size:0.68rem;padding:0.2rem 0.5rem" onclick="neuesLMausNichtGefunden('+i+')" title="Name übernehmen und als eigenes Lebensmittel anlegen">+ Neu anlegen</button>'
     +'</div>').join('')
   +'</div>';
+}
+
+// Ein nicht gefundenes Lebensmittel direkt mit übernommenem Namen als eigenes Lebensmittel anlegen,
+// statt den Namen manuell nochmal abtippen zu müssen.
+function neuesLMausNichtGefunden(i){
+  const nf=lastNichtGefunden[i];
+  if(!nf)return;
+  zeigeEigenLMFormular(null,{n:nf.name});
 }
 
 function showNWResults(rows,kiGeschaetzt,nichtGefunden){
@@ -1676,7 +1714,10 @@ function zeigeNeubewertungOverlay(id,rows){
   neubewAktuelleRows=rows;
   const rowHtml=rows.map((r,i)=>
     '<div style="border:1px solid #334155;border-radius:8px;padding:0.5rem 0.6rem;margin-bottom:0.5rem">'
-    +'<div style="font-size:0.85rem;color:#f1f5f9;margin-bottom:0.35rem">'+r.lebensmittel+quelleBadge(r.quelle)+'</div>'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;gap:0.4rem;margin-bottom:0.35rem">'
+      +'<div style="font-size:0.85rem;color:#f1f5f9">'+r.lebensmittel+quelleBadge(r.quelle)+'</div>'
+      +'<button type="button" onclick="neubewAlsEigenesLM('+i+')" style="font-size:0.65rem;padding:0.15rem 0.4rem;border-radius:6px;border:1px solid #334155;background:transparent;color:#94a3b8;cursor:pointer;flex-shrink:0" title="Mit dieser Menge als Portionsgröße in „Eigene Lebensmittel" speichern">📋 als eigenes LM</button>'
+    +'</div>'
     +'<label style="display:flex;flex-direction:column;font-size:0.65rem;color:#60a5fa;gap:2px;max-width:150px;margin-bottom:0.4rem">Menge (Gramm)'
       +'<input type="number" step="1" value="'+(r.grams??100)+'" data-i="'+i+'" data-k="grams" onchange="neubewGrammGeaendert('+i+',this.value)"'
       +' style="width:100%;box-sizing:border-box;background:#0f172a;border:1px solid #60a5fa;border-radius:5px;color:#e2e8f0;padding:4px 6px;font-size:0.85rem;font-weight:600"/>'
@@ -1701,6 +1742,32 @@ function zeigeNeubewertungOverlay(id,rows){
   +'</div>';
   ov.addEventListener('click',ev=>{if(ev.target===ov)ov.remove();});
   document.body.appendChild(ov);
+}
+
+// Eine Zeile aus "Neu bewerten" mit der aktuell eingestellten Menge als Portionsgröße in die eigene
+// Lebensmitteldatenbank übernehmen. Existiert das Lebensmittel dort schon (Name), wird stattdessen
+// direkt zum Bearbeiten dorthin verzweigt und nur die Portionsgröße vorausgefüllt.
+function neubewAlsEigenesLM(i){
+  const r=neubewAktuelleRows[i];
+  if(!r)return;
+  const name=parseFood(r.lebensmittel).name||r.lebensmittel;
+  const grams=r.grams||100;
+  const existing=customDB.find(e=>e.n.toLowerCase()===name.toLowerCase());
+  if(existing){
+    zeigeEigenLMFormular(existing.id);
+    setTimeout(()=>{const el=document.getElementById('eigen-lm-portion');if(el)el.value=grams;},80);
+    return;
+  }
+  // Werte auf 100g hochrechnen (eigene_lebensmittel speichert pro 100g) – bevorzugt aus den
+  // Basiswerten der Suche, sonst aus den aktuell angezeigten (ggf. editierten) Zeilenwerten
+  let vorlage;
+  if(r.basis){
+    vorlage={n:name,k:r.basis.k,e:r.basis.e,z:r.basis.z,kh:r.basis.kh,f:r.basis.f,sf:r.basis.sf,lys:r.basis.lys,arg:r.basis.arg,s:grams};
+  }else{
+    const faktor=grams>0?100/grams:1;
+    vorlage={n:name,k:Math.round((+r.kalorien||0)*faktor),e:+((+r.eiweiss||0)*faktor).toFixed(1),z:+((+r.zucker||0)*faktor).toFixed(1),kh:+((+r.kohlenhydrate||0)*faktor).toFixed(1),f:+((+r.fett||0)*faktor).toFixed(1),sf:r.sf!=null?+((+r.sf)*faktor).toFixed(1):null,lys:r.lys!=null?Math.round((+r.lys)*faktor):null,arg:r.arg!=null?Math.round((+r.arg)*faktor):null,s:grams};
+  }
+  zeigeEigenLMFormular(null,vorlage);
 }
 
 async function speichereNeubewertung(id){
