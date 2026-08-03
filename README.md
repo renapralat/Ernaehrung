@@ -130,11 +130,12 @@ Datenverlust reaktiviert werden kann, sobald ein neuer KI-Anbieter angebunden is
 2. Die vier `fetch('https://models.inference.ai.azure.com/chat/completions', …)`-Aufrufe (Suche
    nach `models.inference.ai.azure.com`) auf den neuen Anbieter/Endpunkt umstellen – inkl. Anpassung
    von `Authorization`-Header, Request-Body-Format und Modellnamen an dessen API.
-3. Die `disabled`- und `title`-Attribute bei den drei KI-Buttons (💬 Nur Bewertung, 🤖 KI
-   recherchieren & speichern, 🤖 Werte per KI ermitteln) sowie bei `#ki-model-select` entfernen.
-   „📊 Analysieren" (früher „🤖 KI Analyse") ist bereits aktiv, da die reine Nährwertberechnung
-   keine KI braucht – lässt sich bei Bedarf wieder umbenennen, sobald KI-Bewertungstexte dazu
-   angezeigt werden.
+3. Die `disabled`- und `title`-Attribute bei den zwei verbliebenen KI-Buttons (💬 Nur Bewertung,
+   🤖 KI recherchieren & speichern) sowie bei `#ki-model-select` entfernen. „📊 Analysieren" (früher
+   „🤖 KI Analyse") und „🔍 Werte übernehmen" (früher „🤖 Werte per KI ermitteln") sind bereits aktiv,
+   da beide zuerst die eigene Datenbank/Open Food Facts nutzen und keine KI zwingend brauchen – ihre
+   bestehende KI-Ergänzung (z.B. Portionsgröße/Lysin/Arginin, falls lokal nicht bekannt) greift
+   automatisch wieder, sobald `KI_AKTIV` auf `true` steht.
 4. Falls der neue Anbieter andere Modellnamen nutzt: Die `<option>`-Werte in `#ki-model-select`
    sowie den Default in `getKiModel()` (aktuell `gpt-4o-mini`) entsprechend anpassen.
 
@@ -143,11 +144,17 @@ allerdings wird für einen neuen Anbieter ohnehin ein neuer, passender API-Key b
 
 ### Fehlende Werte nachtragen
 
-Wird ein Lebensmittel weder in der eigenen DB noch bei Open Food Facts gefunden ("Nicht gefunden (0 kcal)"), startet die KI-Recherche automatisch (kein Klick nötig) und fragt gezielt nach den Nährwerten inkl. realistischer Portionsgröße (gesättigte Fettsäuren, Lysin, Arginin, Portion in Gramm). Vor dem Speichern in `eigene_lebensmittel` zeigt die App die ermittelten Werte zur Kontrolle an – erst nach Bestätigung wird gespeichert. Ein GitHub-Token (⚙️ oben rechts) wird dafür benötigt; ohne Token bleibt der manuelle „🤖 KI recherchieren & speichern"-Button als Fallback.
+Wird ein Lebensmittel weder in der eigenen DB noch bei Open Food Facts gefunden ("Nicht gefunden (0 kcal)"), erscheint direkt daneben ein „+ Neu anlegen"-Button – öffnet das Formular für ein neues eigenes Lebensmittel mit bereits übernommenem Namen, sodass er nicht nochmal abgetippt werden muss. (Die automatische KI-Recherche für diesen Fall ist aktuell deaktiviert, siehe „KI reaktivieren" oben.)
 
 ### Eigene Lebensmittel verwalten
 
-Über „📋 Eigene Lebensmittel" (⚙️-Leiste oben) lässt sich die Zusatz-Datenbank jederzeit einsehen: neue Lebensmittel von Hand anlegen (z.B. von der Verpackung abgelesene Werte), bestehende Einträge korrigieren (✎) oder löschen (✕) – unabhängig von der automatischen KI-Recherche. Im Formular gibt es zusätzlich den Button „🤖 Werte per KI ermitteln" – trägt den Namen ein, die App fragt zuerst Open Food Facts (kein Token nötig) und lässt die KI danach nur noch gesättigte Fettsäuren/Lysin/Arginin/Portionsgröße ergänzen, die Open Food Facts nie liefert. Beim Tippen des Namens schlägt die App außerdem bereits vorhandene eigene Lebensmittel vor, um Duplikate zu vermeiden – ein Klick auf einen Vorschlag öffnet den bestehenden Eintrag zum Bearbeiten statt einen neuen anzulegen. Die Werte bleiben vor dem Speichern editierbar. `lebensmittel.js` bleibt davon immer unberührt.
+Über „📋 Eigene Lebensmittel" (⚙️-Leiste oben) lässt sich die Zusatz-Datenbank jederzeit einsehen: neue Lebensmittel von Hand anlegen (z.B. von der Verpackung abgelesene Werte), bestehende Einträge korrigieren (✎), **kopieren (📋)** – praktisch für ähnliche Varianten/Marken, öffnet das Formular mit den Werten der Vorlage vorausgefüllt, speichert aber als komplett neuen Eintrag – oder löschen (✕).
+
+Im Formular gibt es außerdem den Button „🔍 Werte übernehmen": trägt den Namen ein, die App sucht zuerst in der eigenen Datenbank (`lebensmittel.js` + bereits gespeicherte eigene Lebensmittel – inkl. gesättigter Fettsäuren, Lysin, Arginin und Portionsgröße, falls dort hinterlegt), erst wenn dort nichts gefunden wird bei Open Food Facts (liefert nur die Hauptwerte, keine Portionsgröße). Beim Tippen des Namens schlägt die App außerdem bereits vorhandene eigene Lebensmittel vor, um Duplikate zu vermeiden – ein Klick auf einen Vorschlag öffnet den bestehenden Eintrag zum Bearbeiten statt einen neuen anzulegen. Die Werte bleiben vor dem Speichern editierbar. `lebensmittel.js` bleibt davon immer unberührt.
+
+**Menge ohne Zahlangabe**: wird beim Erfassen gar keine Zahl genannt (z.B. nur „Joghurt"), nutzt die App automatisch die hinterlegte Portionsgröße des Lebensmittels (statt der generischen 100g-Annahme) – genauso, als hätte man „eine Portion" gesagt. Ohne hinterlegte Portionsgröße gilt weiterhin 100g.
+
+**Aus „Neu bewerten" heraus speichern**: bei jeder Zeile gibt es den Button „📋 als eigenes LM" – übernimmt die (ggf. korrigierte) Menge als Portionsgröße. Gibt es das Lebensmittel unter diesem Namen noch nicht in der eigenen Datenbank, öffnet sich das Formular vorausgefüllt (Werte auf 100g umgerechnet) zum Anlegen; existiert es bereits, verzweigt die App direkt zum Bearbeiten dorthin und schlägt die neue Portionsgröße vor.
 
 ### Einträge neu bewerten
 
