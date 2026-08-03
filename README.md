@@ -3,6 +3,13 @@
 Persönliches Ernährungstagebuch als single-page Web-App — optimiert für **Spracheingabe**.  
 Live-URL: [renapralat.github.io/Ernaehrung](https://renapralat.github.io/Ernaehrung/)
 
+> **KI-Funktionen aktuell deaktiviert**: GitHub Models (der bisher genutzte Dienst für KI-Bewertung
+> und KI-Recherche) wurde am 30.07.2026 endgültig abgeschaltet. Die entsprechenden Buttons sind
+> ausgegraut, aber nicht entfernt – die Suche funktioniert weiterhin über eigene Datenbank →
+> Open Food Facts. Um die KI mit einem neuen Anbieter zu reaktivieren: `KI_AKTIV` in `index.html`
+> auf `true` setzen und die Fetch-Aufrufe (aktuell `models.inference.ai.azure.com`) auf den neuen
+> Endpunkt umstellen.
+
 ---
 
 ## Funktionen
