@@ -22,7 +22,7 @@ input[type="date"]{color-scheme:dark;cursor:pointer;}
 button{border:none;border-radius:8px;padding:0.55rem 0.9rem;font-family:inherit;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.15s;}
 /* KI-Funktionen deaktiviert seit Abschaltung von GitHub Models (30.07.2026) – bewusst nur ausgegraut,
    nicht entfernt, damit sie bei einem neuen KI-Anbieter jederzeit wieder aktiviert werden können. */
-button:disabled{opacity:0.5;filter:saturate(0.3);cursor:not-allowed;}
+button:disabled,select:disabled{opacity:0.5;filter:saturate(0.3);cursor:not-allowed;}
 .btn-primary{background:#3b82f6;color:#fff;} .btn-primary:hover{background:#2563eb;}
 .btn-primary:disabled{background:#334155;color:#64748b;cursor:not-allowed;}
 .btn-success{background:#22c55e;color:#fff;}
@@ -154,7 +154,7 @@ button:disabled{opacity:0.5;filter:saturate(0.3);cursor:not-allowed;}
     <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
       <span id="ki-badge" class="dot warn" style="flex-shrink:0"></span>
       <span id="ki-status-text" style="font-size:0.75rem;color:#f59e0b;flex:1;min-width:120px">Kein Token – nur lokale DB</span>
-      <select id="ki-model-select" onchange="setKiModel(this.value)"
+      <select id="ki-model-select" onchange="setKiModel(this.value)" disabled title="KI aktuell nicht verfügbar – GitHub Models wurde am 30.07.2026 abgeschaltet"
         style="background:#0f172a;color:#f1f5f9;border:1px solid #334155;border-radius:6px;padding:0.25rem 0.4rem;font-size:0.75rem;font-family:inherit;flex-shrink:0">
         <option value="gpt-4o-mini">GPT-4o Mini</option>
         <option value="gpt-4o">GPT-4o</option>

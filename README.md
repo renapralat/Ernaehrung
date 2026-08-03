@@ -3,12 +3,10 @@
 Persönliches Ernährungstagebuch als single-page Web-App — optimiert für **Spracheingabe**.  
 Live-URL: [renapralat.github.io/Ernaehrung](https://renapralat.github.io/Ernaehrung/)
 
-> **KI-Funktionen aktuell deaktiviert**: GitHub Models (der bisher genutzte Dienst für KI-Bewertung
-> und KI-Recherche) wurde am 30.07.2026 endgültig abgeschaltet. Die entsprechenden Buttons sind
-> ausgegraut, aber nicht entfernt – die Suche funktioniert weiterhin über eigene Datenbank →
-> Open Food Facts. Um die KI mit einem neuen Anbieter zu reaktivieren: `KI_AKTIV` in `index.html`
-> auf `true` setzen und die Fetch-Aufrufe (aktuell `models.inference.ai.azure.com`) auf den neuen
-> Endpunkt umstellen.
+> **KI-Funktionen aktuell deaktiviert**: GitHub Models wurde am 30.07.2026 endgültig abgeschaltet.
+> Die betroffenen Buttons und die Modellauswahl sind ausgegraut, aber nicht entfernt – die Suche
+> funktioniert weiterhin über eigene Datenbank → Open Food Facts. Anleitung zur Reaktivierung mit
+> einem neuen Anbieter: Abschnitt [„KI reaktivieren"](#ki-reaktivieren-schritt-für-schritt) unten.
 
 ---
 
@@ -114,8 +112,28 @@ Das `s`-Feld (Stückgewicht) wird für Mengenangaben ohne Einheit genutzt:
 
 - **Datenbank**: Supabase (PostgreSQL), Tabelle `ernaehrung`
 - **Zusatz-Datenbank**: Tabelle `eigene_lebensmittel` – per KI recherchierte oder von Hand angelegte Lebensmittel, die weder in `lebensmittel.js` noch bei Open Food Facts gefunden wurden. Wird beim App-Start geladen und bei der Suche **zuerst** durchsucht (vor `lebensmittel.js`), da sie persönlich kuratiert ist. `lebensmittel.js` wird dadurch nie automatisch verändert.
-- **KI**: GitHub Models (GPT-4o-mini, konfigurierbar)
+- **KI**: GitHub Models (GPT-4o-mini, konfigurierbar) – **seit 30.07.2026 deaktiviert**, siehe unten
 - **Nährwert-Fallback**: Open Food Facts API
+
+### KI reaktivieren (Schritt-für-Schritt)
+
+GitHub Models wurde am 30.07.2026 endgültig abgeschaltet (offizielle GitHub-Ankündigung). Damit
+funktionieren KI-Bewertungstext, KI-Recherche und die KI-Modellauswahl nicht mehr – die Buttons
+und die Modellauswahl sind deshalb bewusst nur **ausgegraut** (nicht entfernt), damit alles ohne
+Datenverlust reaktiviert werden kann, sobald ein neuer KI-Anbieter angebunden ist:
+
+1. In `index.html` die Konstante `const KI_AKTIV=false;` (Suche nach `KI_AKTIV`, direkt vor
+   `function loadToken()`) auf `true` setzen.
+2. Die vier `fetch('https://models.inference.ai.azure.com/chat/completions', …)`-Aufrufe (Suche
+   nach `models.inference.ai.azure.com`) auf den neuen Anbieter/Endpunkt umstellen – inkl. Anpassung
+   von `Authorization`-Header, Request-Body-Format und Modellnamen an dessen API.
+3. Die `disabled`- und `title`-Attribute bei den vier KI-Buttons (🤖 KI Analyse, 💬 Nur Bewertung,
+   🤖 KI recherchieren & speichern, 🤖 Werte per KI ermitteln) sowie bei `#ki-model-select` entfernen.
+4. Falls der neue Anbieter andere Modellnamen nutzt: Die `<option>`-Werte in `#ki-model-select`
+   sowie den Default in `getKiModel()` (aktuell `gpt-4o-mini`) entsprechend anpassen.
+
+Das gespeicherte GitHub-Token wird dabei nicht gelöscht (nur `loadToken()` ignoriert es aktuell) –
+allerdings wird für einen neuen Anbieter ohnehin ein neuer, passender API-Key benötigt.
 
 ### Fehlende Werte nachtragen
 
