@@ -223,7 +223,7 @@ button:disabled,select:disabled{opacity:0.5;filter:saturate(0.3);cursor:not-allo
 
     <!-- Analyze buttons -->
     <div class="analyze-row">
-      <button class="btn-ki" id="ki-btn" onclick="analyzeKI()" disabled title="KI aktuell nicht verfügbar – GitHub Models wurde am 30.07.2026 abgeschaltet">🤖 KI Analyse</button>
+      <button class="btn-ki" id="ki-btn" onclick="analyzeKI()" title="Nährwerte berechnen und vor dem Speichern prüfen">📊 Analysieren</button>
       <button class="btn-ghost" id="bewertung-btn" onclick="nurBewertung()" disabled title="KI aktuell nicht verfügbar – GitHub Models wurde am 30.07.2026 abgeschaltet">💬 Nur Bewertung</button>
     </div>
     <button class="btn-success" style="width:100%;margin-bottom:0.65rem" onclick="schnellSpeichern()">💾 Direkt speichern</button>
@@ -964,8 +964,7 @@ async function analyzeAndShow(autoRecherche){
   if(autoRecherche===undefined)autoRecherche=true;
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
   const btn=document.getElementById('analyze-btn');
-  // #ki-btn bleibt bei deaktivierter KI dauerhaft ausgegraut – nicht mit anfassen
-  const kibtn=KI_AKTIV?document.getElementById('ki-btn'):null;
+  const kibtn=document.getElementById('ki-btn');
   if(btn){btn.disabled=true;}if(kibtn)kibtn.disabled=true;
   const orig=kibtn?kibtn.innerHTML:'';
   try{
@@ -1096,8 +1095,8 @@ function showNWResults(rows,kiGeschaetzt,nichtGefunden){
 async function analyzeKI(autoRecherche){
   if(autoRecherche===undefined)autoRecherche=true;
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
-  // Solange KI_AKTIV false ist, den Button (dauerhaft ausgegraut) unangetastet lassen und direkt
-  // ohne KI weiterrechnen – kein Umschalten von disabled, damit der Button ausgegraut bleibt.
+  // Solange KI_AKTIV false ist, direkt die reine DB/Open-Food-Facts-Analyse nutzen (kein KI-Token-
+  // Handling nötig) – analyzeAndShow() übernimmt dabei ganz normal das Umschalten von #ki-btn.
   if(!KI_AKTIV){await analyzeAndShow(autoRecherche);return;}
   const token=loadToken();
   const btn=document.getElementById('ki-btn');
