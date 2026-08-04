@@ -160,6 +160,8 @@ Im Formular gibt es außerdem den Button „🔍 Werte übernehmen": trägt den 
 
 Am Eintrag steht neben ↩ Wiederholen und ✕ jetzt auch 🔄 Neu bewerten. Es sucht die Nährwerte für die im Eintrag gespeicherten Lebensmittel automatisch neu (z.B. weil inzwischen ein fehlendes Lebensmittel ergänzt wurde), zeigt das Ergebnis in bearbeitbaren Feldern zur Kontrolle an und überschreibt beim Speichern direkt den bestehenden Eintrag – Datum und Kategorie bleiben unverändert, es muss nichts neu eingegeben werden.
 
+**Mehrere Einträge auf einmal neu bewerten**: über der Liste erscheint – sobald es passende Einträge gibt – ein Button „🔄 … neu bewerten". Er bezieht sich auf genau das, was gerade zu sehen ist: mit Suchbegriff (z.B. ein Lebensmittelname, dessen Werte korrigiert wurden) werden nur die Treffer neu bewertet, ohne Suchbegriff alle Einträge. Anders als beim einzelnen 🔄 Neu bewerten gibt es dabei keine Vorschau zum Nachbearbeiten pro Eintrag – nach einer einmaligen Sicherheitsabfrage werden alle betroffenen Einträge automatisch neu ermittelt und direkt gespeichert. Praktisch z.B., wenn ein Lebensmittel in „Eigene Lebensmittel" falsch hinterlegt war und mehrere Tagebuch-Einträge davon betroffen sind.
+
 ---
 
 ## Warnungen

@@ -200,6 +200,11 @@ button:disabled,select:disabled{opacity:0.5;filter:saturate(0.3);cursor:not-allo
       <button class="btn-ghost btn-icon-sq" onclick="clearSuche()" title="Suche löschen">✕</button>
     </div>
 
+    <!-- Bulk-Neubewertung: nur sichtbar, wenn Einträge zur aktuellen Suche (oder generell) vorhanden sind -->
+    <div id="bulk-neubew-row" style="display:none;margin:-0.3rem 0 0.6rem;text-align:right">
+      <button id="bulk-neubew-btn" class="btn-ghost" onclick="alleTrefferNeuBewerten()" style="font-size:0.72rem;padding:0.3rem 0.65rem;border-radius:6px;border:1px solid #334155;background:transparent;color:#94a3b8;cursor:pointer"></button>
+    </div>
+
     <!-- Date (icon only, no label) -->
     <div class="icon-row">
       <span class="field-icon">📅</span>
@@ -1413,13 +1418,14 @@ function renderEintraege(){
   eintraege.forEach(e=>{const d=e.datum?e.datum.slice(0,10):'?';if(!tage[d])tage[d]=[];tage[d].push(e);});
   const sortierteTage=Object.keys(tage).sort().reverse();
   if(!sortierteTage.length){container.innerHTML='<div class="empty-hint">Noch keine Einträge.</div>';return;}
-  let html='',irgendwas=false,erster=true;
+  let html='',irgendwas=false,erster=true,gesamtTreffer=0;
   sortierteTage.forEach(datum=>{
     const datumStr=fmtMitTag(datum);
     const tagTrifft=suche&&(matchSuche(fmt(datum),suche)||matchSuche(datumStr,suche));
     const gefiltert=suche?tage[datum].filter(e=>
       tagTrifft||matchSuche(e.lebensmittel||'',suche)||matchSuche(e.kategorie||'',suche)
     ):tage[datum];
+    gesamtTreffer+=gefiltert.length;
     if(!gefiltert.length)return;
     irgendwas=true;
     const sortiert=[...gefiltert].sort((a,b)=>katPrio(a)-katPrio(b));
@@ -1498,6 +1504,16 @@ function renderEintraege(){
     +'</div>';
   });
   container.innerHTML=irgendwas?html:'<div class="empty-hint">Keine Einträge für diese Suche.</div>';
+  const bulkBtn=document.getElementById('bulk-neubew-btn'),bulkRow=document.getElementById('bulk-neubew-row');
+  if(bulkBtn&&bulkRow){
+    if(gesamtTreffer>0){
+      bulkRow.style.display='block';
+      bulkBtn.textContent='🔄 '+(suche?(gesamtTreffer+' Treffer neu bewerten'):('alle '+gesamtTreffer+' Einträge neu bewerten'));
+      bulkBtn.title=(suche?('Alle '+gesamtTreffer+' aktuell gefundenen Einträge'):('ALLE '+gesamtTreffer+' Einträge'))+' automatisch neu bewerten und direkt speichern (ohne einzelne Bestätigung).';
+    }else{
+      bulkRow.style.display='none';
+    }
+  }
 }
 
 // Zutaten-Freitexte aus einem gespeicherten Eintrag rekonstruieren (aus zutaten-JSON,
@@ -1589,6 +1605,73 @@ async function neuBewertenEintrag(id){
     document.getElementById('neubew-overlay')?.remove();
     alert('Fehler bei der Neubewertung: '+ex.message);
   }
+}
+
+// ─── Bulk-Neubewertung: alle aktuell gefilterten (Suche) oder alle Einträge in einem Rutsch
+// neu bewerten und direkt speichern – z.B. wenn ein Lebensmittel falsch hinterlegt war und
+// nachträglich korrigiert wurde, damit nicht jeder betroffene Eintrag einzeln neu bewertet
+// werden muss. Nutzt denselben Filter wie renderEintraege() ("was gerade angezeigt wird").
+function gefilterteEintraegeFlat(){
+  const suche=document.getElementById('suche').value.trim();
+  if(!suche)return eintraege.slice();
+  const tage={};
+  eintraege.forEach(e=>{const d=e.datum?e.datum.slice(0,10):'?';if(!tage[d])tage[d]=[];tage[d].push(e);});
+  let result=[];
+  Object.keys(tage).forEach(datum=>{
+    const datumStr=fmtMitTag(datum);
+    const tagTrifft=matchSuche(fmt(datum),suche)||matchSuche(datumStr,suche);
+    result=result.concat(tage[datum].filter(e=>tagTrifft||matchSuche(e.lebensmittel||'',suche)||matchSuche(e.kategorie||'',suche)));
+  });
+  return result;
+}
+
+async function alleTrefferNeuBewerten(){
+  const suche=document.getElementById('suche').value.trim();
+  const liste=gefilterteEintraegeFlat();
+  if(!liste.length)return;
+  const label=suche?(liste.length+' Treffer der Suche "'+suche+'"'):('ALLE '+liste.length+' Einträge');
+  if(!confirm(label+' automatisch neu bewerten und direkt speichern? Es gibt dabei keine einzelne Bestätigung pro Eintrag.'))return;
+
+  const btn=document.getElementById('bulk-neubew-btn');
+  const orig=btn?btn.textContent:'';
+  if(btn)btn.disabled=true;
+  let ok=0,fehler=0;
+  for(let idx=0;idx<liste.length;idx++){
+    const e=liste[idx];
+    if(btn)btn.textContent='⏳ '+(idx+1)+'/'+liste.length+' …';
+    try{
+      const items=itemsMitGrammAusEintrag(e);
+      if(!items.length)throw new Error('keine Zutaten');
+      const rows=[];
+      for(const it of items){
+        const row=await berechneZeile(it.food,null,it.grams);
+        delete row.gefunden;
+        rows.push(row);
+      }
+      const _hasSF=rows.some(r=>r.sf!=null);
+      const _hasLys=rows.some(r=>r.lys!=null);
+      const _hasArg=rows.some(r=>r.arg!=null);
+      const update={
+        zutaten: JSON.stringify(rows),
+        kalorien: Math.round(rows.reduce((a,r)=>a+(+r.kalorien||0),0)),
+        eiweiss: +rows.reduce((a,r)=>a+(+r.eiweiss||0),0).toFixed(1),
+        zucker: +rows.reduce((a,r)=>a+(+r.zucker||0),0).toFixed(1),
+        kohlenhydrate: +rows.reduce((a,r)=>a+(+r.kohlenhydrate||0),0).toFixed(1),
+        fett: +rows.reduce((a,r)=>a+(+r.fett||0),0).toFixed(1),
+        gesaettigt: _hasSF?+rows.reduce((a,r)=>a+(+r.sf||0),0).toFixed(1):null,
+        lysin: _hasLys?Math.round(rows.reduce((a,r)=>a+(+r.lys||0),0)):null,
+        arginin: _hasArg?Math.round(rows.reduce((a,r)=>a+(+r.arg||0),0)):null
+      };
+      const r=await fetch(URL_BASE+'?id=eq.'+e.id,{method:'PATCH',headers:H,body:JSON.stringify(update)});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const idxG=eintraege.findIndex(x=>String(x.id)===String(e.id));
+      if(idxG>=0)Object.assign(eintraege[idxG],update);
+      ok++;
+    }catch(ex){fehler++;}
+  }
+  if(btn){btn.disabled=false;btn.textContent=orig;}
+  aktualisiereBanner();renderEintraege();
+  alert('Neu bewertet: '+ok+' erfolgreich'+(fehler?(', '+fehler+' Fehler'):'')+'.');
 }
 
 // ─── Analyse ansehen: wie "Neu bewerten", aber rein lesend – es wird nichts gespeichert ──
