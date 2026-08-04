@@ -1451,7 +1451,10 @@ function renderEintraege(){
             +'<span style="font-weight:800;color:#f59e0b;font-size:1.05rem">📅 '+hl(datumStr,suche)+'</span>'
             +'<span style="font-size:0.72rem;color:#f59e0b">'+kcal+' kcal</span>'
           +'</div>'
-          +'<button class="btn-del-sm" onclick="deleteDay(\''+datum+'\')" title="Tag löschen">🗑️</button>'
+          +'<div style="display:flex;gap:0.35rem">'
+            +'<button class="btn-rep" style="padding:0.28rem 0.5rem" onclick="kopiereTagFuerKI(\''+datum+'\')" title="Tagesbericht + Bewertungsbitte in die Zwischenablage kopieren, zum Einfügen in ein Claude-Gespräch">📋 an Claude</button>'
+            +'<button class="btn-del-sm" onclick="deleteDay(\''+datum+'\')" title="Tag löschen">🗑️</button>'
+          +'</div>'
         +'</div>'
         // Zeile 1b: Notiz zum Tag (Befinden/Besonderheiten)
         +'<div style="display:flex;align-items:center;gap:0.4rem;margin-top:4px">'
@@ -2026,6 +2029,87 @@ function anteileZeilen(pEiw,pFat,pKH){
   return[line1,line2];
 }
 
+// Brief-Zeilen für genau einen Tag erzeugen (Notiz, Schritte/Zielabweichung, Getränke, Anteile,
+// Kategorien mit Einzelposten, Tagesgesamt). Wird von exportBrief() (mehrere Tage) UND
+// kopiereTagFuerKI() (ein einzelner Tag in die Zwischenablage) genutzt, damit beide exakt
+// dasselbe Format erzeugen.
+function briefZeilenTag(datum,eintraegeTag,hdr,hdrKurz){
+  const zeilen=[];
+  const notiz=getNotiz(datum);
+  zeilen.push(fmtMitTag(datum)+(notiz?'    Notiz: '+notiz:''));
+  const sum=k=>eintraegeTag.reduce((a,e)=>a+(+e[k]||0),0);
+  const gkcalN=sum('kalorien'),geiwN=sum('eiweiss'),gzckN=sum('zucker'),gkhN=sum('kohlenhydrate'),gfatN=sum('fett');
+  const bewegung=getBewegung(datum),ziel=getZiel(datum),netto=Math.round(gkcalN-bewegung),diff=netto-ziel;
+  zeilen.push('Schritte: '+(getSchritte(datum)||0)+' (≈ '+bewegung+' kcal)    Zielabweichung: '+(diff>0?'+':'')+diff+' kcal (Ziel '+ziel+' kcal)');
+  const fluessigTag=eintraegeTag.reduce((a,e)=>a+fluessigGramm(e),0);
+  if(fluessigTag>0)zeilen.push('Getränke: '+rundeAnzeige(fluessigTag>=1000?fluessigTag/1000:fluessigTag)+(fluessigTag>=1000?' l':' ml'));
+  const macroKcal=geiwN*4+gfatN*9+gkhN*4;
+  if(macroKcal>0){
+    const pEiw=Math.round(geiwN*4/macroKcal*100),pFat=Math.round(gfatN*9/macroKcal*100),pKH=Math.round(gkhN*4/macroKcal*100);
+    zeilen.push(...anteileZeilen(pEiw,pFat,pKH));
+  }
+  zeilen.push('');
+  // Spaltenüberschrift auch pro Tag wiederholen – bei langen Listen sonst schwer zuzuordnen
+  zeilen.push(hdr);
+  zeilen.push('-'.repeat(hdr.length));
+  zeilen.push('');
+
+  // Nach Kategorien gruppieren: Frühstück, Mittag, Abendessen zuerst (in dieser Reihenfolge),
+  // danach Snack/Gaststätte/eigene Kategorien/ohne Kategorie in beliebiger Reihenfolge
+  const briefSortiert=[...eintraegeTag].sort((a,b)=>katPrio(a)-katPrio(b));
+  // Gruppieren nach Kategorie – normalisiert (getrimmt, Groß-/Kleinschreibung egal), damit z.B.
+  // "Getränke" und "getränke" nicht versehentlich als zwei getrennte Gruppen erscheinen. Angezeigt
+  // wird jeweils die Schreibweise des ersten Eintrags des Tages mit dieser Kategorie.
+  const gruppen={},gruppenLabel={};
+  briefSortiert.forEach(e=>{
+    const roh=(e.kategorie||'Ohne Kategorie').trim()||'Ohne Kategorie';
+    const key=roh.toLowerCase();
+    if(!gruppenLabel[key])gruppenLabel[key]=roh;
+    (gruppen[key]=gruppen[key]||[]).push(e);
+  });
+  const katOrderLower=katOrder.map(k=>k.toLowerCase());
+  const katNamen=Object.keys(gruppen).sort((a,b)=>{
+    const ia=katOrderLower.indexOf(a),ib=katOrderLower.indexOf(b);
+    return (ia>=0?ia:katOrder.length)-(ib>=0?ib:katOrder.length);
+  });
+  katNamen.forEach(kat=>{
+    const label=gruppenLabel[kat];
+    if(gruppen[kat].length>1){
+      const ksum=k=>gruppen[kat].reduce((a,e)=>a+(+e[k]||0),0);
+      zeilen.push(briefZeile(label,Math.round(ksum('kalorien')),ksum('eiweiss').toFixed(1),ksum('fett').toFixed(1),ksum('gesaettigt').toFixed(1),ksum('kohlenhydrate').toFixed(1),ksum('zucker').toFixed(1)));
+    }else{
+      zeilen.push(label);
+    }
+    zeilen.push('-'.repeat(hdr.length));
+    gruppen[kat].forEach(e=>{
+      let zutaten=null;
+      if(e.zutaten){try{zutaten=JSON.parse(e.zutaten);}catch(ex){}}
+      const mehrere=zutaten&&zutaten.length>1;
+      const esf=e.gesaettigt!=null?(+e.gesaettigt).toFixed(1):'';
+      // Tatsächliche Menge (g/ml) zum Namen ergänzen, damit Angaben wie "1 EL" oder "1 halbes X" auch
+      // im Brief als konkrete Menge sichtbar sind – bei Mehrfach-Einträgen nur pro Zutat, nicht summiert.
+      const eMenge=mehrere?'':formatMenge(e.grams,e.lebensmittel);
+      const eName=(e.lebensmittel||'')+(eMenge?' ('+eMenge+')':'');
+      zeilen.push(briefZeileWrap('  ',eName,Math.round(+e.kalorien||0),(+e.eiweiss||0).toFixed(1),(+e.fett||0).toFixed(1),esf,(+e.kohlenhydrate||0).toFixed(1),(+e.zucker||0).toFixed(1)));
+      if(mehrere){
+        zutaten.forEach(z=>{
+          const zsf=z.sf!=null?(+z.sf).toFixed(1):'';
+          const zMenge=formatMenge(z.grams,z.lebensmittel);
+          const zName=(z.lebensmittel||'')+(zMenge?' ('+zMenge+')':'');
+          zeilen.push(briefZeileWrap('    ',zName,Math.round(+z.kalorien||0),(+z.eiweiss||0).toFixed(1),(+z.fett||0).toFixed(1),zsf,(+z.kohlenhydrate||0).toFixed(1),(+z.zucker||0).toFixed(1),true));
+        });
+      }
+    });
+    zeilen.push('');
+  });
+
+  zeilen.push('-'.repeat(hdr.length));
+  zeilen.push(briefZeile('GESAMT  '+fmtMitTag(datum),Math.round(gkcalN),geiwN.toFixed(1),gfatN.toFixed(1),sum('gesaettigt').toFixed(1),gkhN.toFixed(1),gzckN.toFixed(1)));
+  zeilen.push(hdrKurz);
+  zeilen.push('');
+  return zeilen;
+}
+
 function exportBrief(){
   const status=document.getElementById('export-status');
   const von=document.getElementById('export-von').value,bis=document.getElementById('export-bis').value;
@@ -2041,78 +2125,7 @@ function exportBrief(){
   zeilen.push('-'.repeat(hdr.length));
   zeilen.push('');
   Object.keys(tage).sort((a,b)=>a<b?-1:a>b?1:0).forEach(datum=>{
-    const notiz=getNotiz(datum);
-    zeilen.push(fmtMitTag(datum)+(notiz?'    Notiz: '+notiz:''));
-    const sum=k=>tage[datum].reduce((a,e)=>a+(+e[k]||0),0);
-    const gkcalN=sum('kalorien'),geiwN=sum('eiweiss'),gzckN=sum('zucker'),gkhN=sum('kohlenhydrate'),gfatN=sum('fett');
-    const bewegung=getBewegung(datum),ziel=getZiel(datum),netto=Math.round(gkcalN-bewegung),diff=netto-ziel;
-    zeilen.push('Schritte: '+(getSchritte(datum)||0)+' (≈ '+bewegung+' kcal)    Zielabweichung: '+(diff>0?'+':'')+diff+' kcal (Ziel '+ziel+' kcal)');
-    const fluessigTag=tage[datum].reduce((a,e)=>a+fluessigGramm(e),0);
-    if(fluessigTag>0)zeilen.push('Getränke: '+rundeAnzeige(fluessigTag>=1000?fluessigTag/1000:fluessigTag)+(fluessigTag>=1000?' l':' ml'));
-    const macroKcal=geiwN*4+gfatN*9+gkhN*4;
-    if(macroKcal>0){
-      const pEiw=Math.round(geiwN*4/macroKcal*100),pFat=Math.round(gfatN*9/macroKcal*100),pKH=Math.round(gkhN*4/macroKcal*100);
-      zeilen.push(...anteileZeilen(pEiw,pFat,pKH));
-    }
-    zeilen.push('');
-    // Spaltenüberschrift auch pro Tag wiederholen – bei langen Listen sonst schwer zuzuordnen
-    zeilen.push(hdr);
-    zeilen.push('-'.repeat(hdr.length));
-    zeilen.push('');
-
-    // Nach Kategorien gruppieren: Frühstück, Mittag, Abendessen zuerst (in dieser Reihenfolge),
-    // danach Snack/Gaststätte/eigene Kategorien/ohne Kategorie in beliebiger Reihenfolge
-    const briefSortiert=[...tage[datum]].sort((a,b)=>katPrio(a)-katPrio(b));
-    // Gruppieren nach Kategorie – normalisiert (getrimmt, Groß-/Kleinschreibung egal), damit z.B.
-    // "Getränke" und "getränke" nicht versehentlich als zwei getrennte Gruppen erscheinen. Angezeigt
-    // wird jeweils die Schreibweise des ersten Eintrags des Tages mit dieser Kategorie.
-    const gruppen={},gruppenLabel={};
-    briefSortiert.forEach(e=>{
-      const roh=(e.kategorie||'Ohne Kategorie').trim()||'Ohne Kategorie';
-      const key=roh.toLowerCase();
-      if(!gruppenLabel[key])gruppenLabel[key]=roh;
-      (gruppen[key]=gruppen[key]||[]).push(e);
-    });
-    const katOrderLower=katOrder.map(k=>k.toLowerCase());
-    const katNamen=Object.keys(gruppen).sort((a,b)=>{
-      const ia=katOrderLower.indexOf(a),ib=katOrderLower.indexOf(b);
-      return (ia>=0?ia:katOrder.length)-(ib>=0?ib:katOrder.length);
-    });
-    katNamen.forEach(kat=>{
-      const label=gruppenLabel[kat];
-      if(gruppen[kat].length>1){
-        const ksum=k=>gruppen[kat].reduce((a,e)=>a+(+e[k]||0),0);
-        zeilen.push(briefZeile(label,Math.round(ksum('kalorien')),ksum('eiweiss').toFixed(1),ksum('fett').toFixed(1),ksum('gesaettigt').toFixed(1),ksum('kohlenhydrate').toFixed(1),ksum('zucker').toFixed(1)));
-      }else{
-        zeilen.push(label);
-      }
-      zeilen.push('-'.repeat(hdr.length));
-      gruppen[kat].forEach(e=>{
-        let zutaten=null;
-        if(e.zutaten){try{zutaten=JSON.parse(e.zutaten);}catch(ex){}}
-        const mehrere=zutaten&&zutaten.length>1;
-        const esf=e.gesaettigt!=null?(+e.gesaettigt).toFixed(1):'';
-        // Tatsächliche Menge (g/ml) zum Namen ergänzen, damit Angaben wie "1 EL" oder "1 halbes X" auch
-        // im Brief als konkrete Menge sichtbar sind – bei Mehrfach-Einträgen nur pro Zutat, nicht summiert.
-        const eMenge=mehrere?'':formatMenge(e.grams,e.lebensmittel);
-        const eName=(e.lebensmittel||'')+(eMenge?' ('+eMenge+')':'');
-        zeilen.push(briefZeileWrap('  ',eName,Math.round(+e.kalorien||0),(+e.eiweiss||0).toFixed(1),(+e.fett||0).toFixed(1),esf,(+e.kohlenhydrate||0).toFixed(1),(+e.zucker||0).toFixed(1)));
-        if(mehrere){
-          zutaten.forEach(z=>{
-            const zsf=z.sf!=null?(+z.sf).toFixed(1):'';
-            const zMenge=formatMenge(z.grams,z.lebensmittel);
-            const zName=(z.lebensmittel||'')+(zMenge?' ('+zMenge+')':'');
-            zeilen.push(briefZeileWrap('    ',zName,Math.round(+z.kalorien||0),(+z.eiweiss||0).toFixed(1),(+z.fett||0).toFixed(1),zsf,(+z.kohlenhydrate||0).toFixed(1),(+z.zucker||0).toFixed(1),true));
-          });
-        }
-      });
-      zeilen.push('');
-    });
-
-    zeilen.push('-'.repeat(hdr.length));
-    zeilen.push(briefZeile('GESAMT  '+fmtMitTag(datum),Math.round(gkcalN),geiwN.toFixed(1),gfatN.toFixed(1),sum('gesaettigt').toFixed(1),gkhN.toFixed(1),gzckN.toFixed(1)));
-    zeilen.push(hdrKurz);
-    zeilen.push('');
+    zeilen.push(...briefZeilenTag(datum,tage[datum],hdr,hdrKurz));
   });
   const txt='﻿'+zeilen.join('\r\n');
   status.textContent='✅ Briefform exportiert.';status.style.color='#22c55e';
@@ -2120,6 +2133,27 @@ function exportBrief(){
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
   a.href=url;a.download='ernaehrung_brief'+(von?'_'+von:'')+(bis?'_bis_'+bis:'')+'.txt';
   a.click();URL.revokeObjectURL(url);
+}
+
+// Tagesbericht (Briefformat) für genau einen Tag zusammen mit einer Bewertungsbitte in die
+// Zwischenablage kopieren – zum direkten Einfügen in ein Claude.ai-Gespräch (dort sind bereits
+// persönliche/gesundheitliche Hintergründe hinterlegt, eine API-Anbindung wäre separat
+// kostenpflichtig und daher hier bewusst nicht eingebaut).
+async function kopiereTagFuerKI(datum){
+  const status=document.getElementById('export-status');
+  const eintraegeTag=eintraege.filter(e=>e.datum&&e.datum.slice(0,10)===datum);
+  if(!eintraegeTag.length)return;
+  const hdr=briefZeile('Lebensmittel','kcal','Eiw.g','Fett.g','ges.FS','KH.g','Zck.g');
+  const hdrKurz=padR('',BF.name)+pad('kcal',BF.kcal)+pad('Eiw.g',BF.eiw)+pad('Fett.g',BF.fat)+pad('ges.FS',BF.sf)+pad('KH.g',BF.kh)+pad('Zck.g',BF.zck);
+  const zeilen=briefZeilenTag(datum,eintraegeTag,hdr,hdrKurz);
+  const bericht=zeilen.join('\n');
+  const prompt='Unter Beachtung meiner persönlichen Daten wünsche ich mir eine Bewertung meines Ernährungsprotokolls von diesem Tag:\n\n'+bericht;
+  try{
+    await navigator.clipboard.writeText(prompt);
+    if(status){status.textContent='✅ Tagesbericht für '+fmtMitTag(datum)+' in die Zwischenablage kopiert – jetzt in ein Claude-Gespräch einfügen.';status.style.color='#22c55e';}
+  }catch(ex){
+    alert('Kopieren in die Zwischenablage fehlgeschlagen: '+ex.message);
+  }
 }
 
 // ─── Speech recognition (Lebensmittel) ───────────────────────────────────────
