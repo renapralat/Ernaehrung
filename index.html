@@ -1083,6 +1083,7 @@ async function berechneAlleZeilen(foodListe,statusBtn){
 
 async function analyzeAndShow(autoRecherche){
   if(autoRecherche===undefined)autoRecherche=true;
+  addFood(); // noch nicht per "+" übernommener Text im Eingabefeld wird automatisch mit übernommen
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
   const btn=document.getElementById('analyze-btn');
   const kibtn=document.getElementById('ki-btn');
@@ -1242,6 +1243,7 @@ function showNWResults(rows,kiGeschaetzt,nichtGefunden){
 
 async function analyzeKI(autoRecherche){
   if(autoRecherche===undefined)autoRecherche=true;
+  addFood(); // noch nicht per "+" übernommener Text im Eingabefeld wird automatisch mit übernommen
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
   // Solange KI_AKTIV false ist, direkt die reine DB/Open-Food-Facts-Analyse nutzen (kein KI-Token-
   // Handling nötig) – analyzeAndShow() übernimmt dabei ganz normal das Umschalten von #ki-btn.
@@ -1322,6 +1324,7 @@ async function kiBewertungMitWerten(rows,token){
 }
 
 async function nurBewertung(){
+  addFood(); // noch nicht per "+" übernommener Text im Eingabefeld wird automatisch mit übernommen
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
   const token=loadToken();
   if(!token){alert('Für die Bewertung wird ein GitHub-Token benötigt.');return;}
@@ -1340,6 +1343,7 @@ async function nurBewertung(){
 // ─── Save & close ────────────────────────────────────────────────────────────
 
 async function schnellSpeichern(){
+  addFood(); // noch nicht per "+" übernommener Text im Eingabefeld wird automatisch mit übernommen
   if(!foods.length){alert('Bitte Lebensmittel eingeben.');return;}
   if(pendingRows.length<foods.length) await analyzeKI();
   if(pendingRows.length) await speichernEintrag();
