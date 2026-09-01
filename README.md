@@ -42,6 +42,7 @@ Live-URL: [renapralat.github.io/Ernaehrung](https://renapralat.github.io/Ernaehr
 - **Lysin/Arginin nur bei Bedarf einblenden**: standardmäßig ausgeblendet (Button „🦠 Lys/Arg: Aus/An" oben in der ⚙️-Leiste), da nur bei Erkältungsanfälligkeit (z.B. im Winter) relevant – die Werte werden unabhängig davon immer mitgespeichert, nur die Anzeige in Tabellen/Tagesübersicht wird umgeschaltet
 - **Bezeichnung bei „🔄 Neu bewerten" korrigierbar**: pro Lebensmittel lässt sich dort nicht mehr nur die Menge (Gramm), sondern auch die Bezeichnung selbst anpassen (z.B. wenn sich die tatsächliche Menge geändert hat oder eine genauere Beschreibung nötig ist) – der Eintragstitel wird beim Speichern entsprechend aktualisiert
 - **🗑️ Verwerfen (nicht speichern)**: im Ergebnis nach „📊 Analysieren" – praktisch für den schnellen „kann ich das essen?"-Test vor dem eigentlichen Verzehr: verwirft die komplette aktuelle Eingabe (Lebensmittelliste, Kategorie), ohne etwas zu speichern, damit direkt das nächste Lebensmittel getestet werden kann. Anders als „↩️ Zurück" (behält die Liste bewusst, um z.B. den Auswertungsmodus zu wechseln) wird hier alles geleert
+- **Vergessenes „+" wird automatisch nachgeholt**: wird nach dem Eintippen/Einsprechen direkt „📊 Analysieren", „💾 Direkt speichern" oder „💬 Nur Bewertung" gedrückt, ohne vorher „+" zu betätigen, übernimmt die App den Text aus dem Eingabefeld automatisch mit in die Liste, statt eine Fehlermeldung zu zeigen
 
 ---
 
