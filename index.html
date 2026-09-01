@@ -161,6 +161,7 @@ button:disabled,select:disabled{opacity:0.5;filter:saturate(0.3);cursor:not-allo
       </select>
       <button class="btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.6rem;flex-shrink:0" onclick="toggleTokenForm()">⚙️ Token</button>
       <button class="btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.6rem;flex-shrink:0" onclick="zeigeEigeneLebensmittel()">📋 Eigene Lebensmittel</button>
+      <button id="lysarg-toggle-btn" class="btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.6rem;flex-shrink:0" onclick="toggleLysArgSichtbar()" title="Lysin/Arginin nur bei Bedarf einblenden, z.B. in der Erkältungszeit im Winter">🦠 Lys/Arg: Aus</button>
     </div>
     <div id="ki-token-form" style="display:none;margin-top:0.5rem">
       <div style="display:flex;gap:0.4rem;margin-bottom:0.4rem">
@@ -757,7 +758,10 @@ function zeigeEigenLMFormular(id,vorlage){
       +' style="width:100%;box-sizing:border-box;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:5px 7px;font-size:0.85rem"/>'
       +'<div id="eigen-lm-vorschlaege" style="display:none;position:absolute;top:100%;left:0;right:0;background:#1e293b;border:1px solid #334155;border-radius:8px;margin-top:2px;max-height:200px;overflow-y:auto;z-index:60"></div>'
     +'</label>'
-    +'<button type="button" id="eigen-lm-ki-btn" onclick="kiFormularAusfuellen()" title="Sucht zuerst in deiner Lebensmitteldatenbank, dann bei Open Food Facts" style="width:100%;padding:0.4rem;margin-bottom:0.65rem;border-radius:8px;border:1px solid #f59e0b;background:rgba(245,158,11,0.12);color:#f59e0b;font-size:0.8rem;font-weight:600;cursor:pointer">🔍 Werte übernehmen</button>'
+    +'<div style="display:flex;gap:0.4rem;margin-bottom:0.65rem">'
+      +'<button type="button" id="eigen-lm-ki-btn" onclick="kiFormularAusfuellen()" title="Sucht zuerst in deiner Lebensmitteldatenbank, dann bei Open Food Facts" style="flex:1;padding:0.5rem;border-radius:8px;border:1px solid #f59e0b;background:rgba(245,158,11,0.12);color:#f59e0b;font-size:0.8rem;font-weight:600;cursor:pointer">🔍 Werte übernehmen</button>'
+      +'<button type="button" onclick="starteBarcodeScan()" title="Barcode mit der Handykamera scannen – Nährwerte werden automatisch von Open Food Facts übernommen" style="flex:1;padding:0.5rem;border-radius:8px;border:1px solid #38bdf8;background:rgba(56,189,248,0.12);color:#38bdf8;font-size:0.8rem;font-weight:600;cursor:pointer">📷 Barcode scannen</button>'
+    +'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.6rem">'
       +eigenLMFeld('kcal/100g','eigen-lm-kcal',x?x.k:'',1)
       +eigenLMFeld('Portion (g)','eigen-lm-portion',x?x.s:'',1)
@@ -882,6 +886,88 @@ async function kiFormularAusfuellen(){
     }
   }catch(e){alert('Fehler bei der Suche: '+e.message);}
   finally{if(btn){btn.innerHTML=orig;btn.disabled=false;}}
+}
+
+// ─── Barcode-Scan (Handykamera) für "Neues Lebensmittel" ─────────────────────
+// Nutzt die Bibliothek html5-qrcode (per CDN, erst beim ersten Scan nachgeladen) und ruft danach
+// Open Food Facts direkt über die Barcode-Nummer ab (eindeutig, genauer als die Namens-Volltextsuche).
+let _html5QrcodeLibPromise=null;
+function ladeBarcodeLib(){
+  if(window.Html5Qrcode)return Promise.resolve();
+  if(_html5QrcodeLibPromise)return _html5QrcodeLibPromise;
+  _html5QrcodeLibPromise=new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/html5-qrcode/html5-qrcode.min.js';
+    s.onload=()=>resolve();
+    s.onerror=()=>reject(new Error('Barcode-Bibliothek konnte nicht geladen werden (Internetverbindung prüfen)'));
+    document.head.appendChild(s);
+  });
+  return _html5QrcodeLibPromise;
+}
+
+let _barcodeScanner=null,_barcodeVerarbeitet=false;
+async function starteBarcodeScan(){
+  document.getElementById('barcode-scan-overlay')?.remove();
+  _barcodeVerarbeitet=false;
+  const ov=document.createElement('div');
+  ov.id='barcode-scan-overlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:10001;display:flex;align-items:center;justify-content:center;padding:1rem';
+  ov.innerHTML='<div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:1rem;max-width:420px;width:100%">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem">'
+      +'<div style="font-weight:700;color:#f1f5f9;font-size:0.95rem">📷 Barcode scannen</div>'
+      +'<button type="button" onclick="stoppeBarcodeScan()" style="background:none;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer;line-height:1;padding:0.3rem 0.5rem">✕</button>'
+    +'</div>'
+    +'<div id="barcode-reader" style="width:100%;border-radius:10px;overflow:hidden"></div>'
+    +'<div id="barcode-status" style="font-size:0.8rem;color:#94a3b8;margin-top:0.6rem;text-align:center">Kamera wird gestartet…</div>'
+  +'</div>';
+  document.body.appendChild(ov);
+  try{
+    await ladeBarcodeLib();
+    _barcodeScanner=new Html5Qrcode('barcode-reader');
+    await _barcodeScanner.start(
+      {facingMode:'environment'},
+      {fps:10,qrbox:{width:260,height:160}},
+      decodedText=>verarbeiteBarcodeErgebnis(decodedText),
+      ()=>{/* kein Code im Bild - pro Frame normal, wird ignoriert */}
+    );
+    const st=document.getElementById('barcode-status');
+    if(st)st.textContent='Barcode ins Bild halten…';
+  }catch(e){
+    const st=document.getElementById('barcode-status');
+    if(st)st.textContent='⚠️ Kamera nicht verfügbar: '+e.message;
+  }
+}
+async function stoppeBarcodeScan(){
+  if(_barcodeScanner){
+    try{await _barcodeScanner.stop();_barcodeScanner.clear();}catch(e){}
+    _barcodeScanner=null;
+  }
+  document.getElementById('barcode-scan-overlay')?.remove();
+}
+async function verarbeiteBarcodeErgebnis(code){
+  if(_barcodeVerarbeitet)return;
+  _barcodeVerarbeitet=true;
+  const st=document.getElementById('barcode-status');
+  if(st)st.textContent='Gefunden: '+code+' – suche Produktdaten…';
+  await stoppeBarcodeScan();
+  try{
+    const r=await fetchMitTimeout('https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(code)+'.json',6000);
+    const d=await r.json();
+    if(d.status!==1||!d.product){alert('Kein Produkt zu diesem Barcode gefunden ('+code+'). Bitte von Hand eintragen.');return;}
+    const p=d.product,n=p.nutriments||{};
+    const nameEl=document.getElementById('eigen-lm-name');
+    if(nameEl&&!nameEl.value.trim())nameEl.value=(p.product_name||p.generic_name||'').trim();
+    const setzen=(id,val)=>{if(val!=null&&!isNaN(val)){const el=document.getElementById(id);if(el)el.value=val;}};
+    setzen('eigen-lm-kcal',Math.round(+n['energy-kcal_100g']||0));
+    setzen('eigen-lm-eiweiss',+(+n['proteins_100g']||0).toFixed(1));
+    setzen('eigen-lm-zucker',+(+n['sugars_100g']||0).toFixed(1));
+    setzen('eigen-lm-kh',+(+n['carbohydrates_100g']||0).toFixed(1));
+    setzen('eigen-lm-fett',+(+n['fat_100g']||0).toFixed(1));
+    if(n['saturated-fat_100g']!=null)setzen('eigen-lm-sf',+(+n['saturated-fat_100g']).toFixed(1));
+    // Portionsgröße nur übernehmen, wenn Open Food Facts sie als klare Gramm-Angabe liefert (z.B. "30 g")
+    const servM=(p.serving_size||'').match(/([\d.,]+)\s*g\b/i);
+    if(servM)setzen('eigen-lm-portion',Math.round(parseFloat(servM[1].replace(',','.'))));
+  }catch(e){alert('Fehler beim Abrufen der Produktdaten: '+e.message);}
 }
 
 async function speichereEigenesLebensmittel(id){
@@ -1044,6 +1130,20 @@ function fluessigGramm(e){
   return rowsAusEintrag(e).reduce((a,r)=>a+(r.grams!=null&&istFluessigText(r.lebensmittel)?+r.grams:0),0);
 }
 
+// Verhältnis ungesättigte : gesättigte Fettsäuren (ungesättigt = Fett gesamt minus gesättigt).
+// Wichtig bei erhöhtem Cholesterin: je mehr ungesättigte im Verhältnis zu gesättigten Fettsäuren,
+// desto besser (Avocado ≈ 1:8 - besonders günstig). Schwellen nach Nutzervorgabe.
+function fettVerhaeltnis(totFett,totSF){
+  const unges=Math.max(0,(+totFett||0)-(+totSF||0));
+  if(!totSF||totSF<=0)return{unges,ratio:null,label:'–',farbe:'#4ade80',hinweis:'keine gesättigten Fettsäuren'};
+  const ratio=unges/totSF;
+  let farbe='#f87171',hinweis='ungünstig (unter 1:3)';
+  if(ratio>=8){farbe='#4ade80';hinweis='sehr günstig';}
+  else if(ratio>=5){farbe='#86efac';hinweis='günstig';}
+  else if(ratio>=3){farbe='#fbbf24';hinweis='mäßig';}
+  return{unges,ratio,label:'1 : '+ratio.toFixed(1),farbe,hinweis};
+}
+
 function lokaleBewertung(rows){
   const totEiw=rows.reduce((a,r)=>a+(+r.eiweiss||0),0);
   const totZck=rows.reduce((a,r)=>a+(+r.zucker||0),0);
@@ -1059,7 +1159,11 @@ function lokaleBewertung(rows){
   else if(totEiw>=20)msgs.push('<span style="color:#4ade80">✅ Eiweiß '+totEiw.toFixed(1)+'g (≥20g)</span>');
   if(hasSF&&totSF>6)msgs.push('<span style="color:#fca5a5">⚠️ Ges.Fettsäuren '+totSF.toFixed(1)+'g (&gt;6g)</span>');
   if(fatPct>35)msgs.push('<span style="color:#f87171">⚠️ Fettanteil '+fatPct+'% (&gt;35%)</span>');
-  const haslysarg=rows.some(r=>r.lys!=null||r.arg!=null);
+  if(hasSF&&totSF>0){
+    const fv=fettVerhaeltnis(totFett,totSF);
+    msgs.push('<span style="color:'+fv.farbe+'">🫒 Ges. '+totSF.toFixed(1)+'g / Unges. '+fv.unges.toFixed(1)+'g (Verhältnis '+fv.label+' – '+fv.hinweis+')</span>');
+  }
+  const haslysarg=lysArgSichtbar()&&rows.some(r=>r.lys!=null||r.arg!=null);
   if(haslysarg){
     const totLys=rows.reduce((a,r)=>a+(+r.lys||0),0);
     const totArg=rows.reduce((a,r)=>a+(+r.arg||0),0);
@@ -1104,8 +1208,8 @@ function showNWResults(rows,kiGeschaetzt,nichtGefunden){
   const totKH=rows.reduce((a,r)=>a+r.kohlenhydrate,0);
   const totFett=rows.reduce((a,r)=>a+r.fett,0);
   const hasSF=rows.some(r=>r.sf!=null);
-  const hasLys=rows.some(r=>r.lys!=null);
-  const hasArg=rows.some(r=>r.arg!=null);
+  const hasLys=lysArgSichtbar()&&rows.some(r=>r.lys!=null);
+  const hasArg=lysArgSichtbar()&&rows.some(r=>r.arg!=null);
   const totSF=rows.reduce((a,r)=>a+(+r.sf||0),0);
   const totLys=rows.reduce((a,r)=>a+(+r.lys||0),0);
   const totArg=rows.reduce((a,r)=>a+(+r.arg||0),0);
@@ -1353,8 +1457,8 @@ function eintragKarte(e, datum, suche){
   const multiRow=zutaten&&zutaten.length>1;
   const rows=rowsAusEintrag(e);
   const hasSF=rows.some(z=>z.sf!=null&&+z.sf!==0);
-  const hasLys=rows.some(z=>(+z.lys||0)>0);
-  const hasArg=rows.some(z=>(+z.arg||0)>0);
+  const hasLys=lysArgSichtbar()&&rows.some(z=>(+z.lys||0)>0);
+  const hasArg=lysArgSichtbar()&&rows.some(z=>(+z.arg||0)>0);
   const zutatenHTML='<div style="margin:0.35rem 0;overflow-x:auto">'
     +'<table class="entries-table"><thead><tr>'
       +'<th>Lebensmittel</th>'
@@ -1433,8 +1537,8 @@ function renderEintraege(){
     const kcal=Math.round(sum('kalorien')),eiw=sum('eiweiss').toFixed(1),zuk=sum('zucker').toFixed(1),kh=sum('kohlenhydrate').toFixed(1),fat=sum('fett').toFixed(1);
     const sfTag=sum('gesaettigt'),lysTag=Math.round(sum('lysin')),argTag=Math.round(sum('arginin'));
     const hasSFTag=tage[datum].some(e=>e.gesaettigt!=null);
-    const hasLysTag=tage[datum].some(e=>e.lysin!=null);
-    const hasArgTag=tage[datum].some(e=>e.arginin!=null);
+    const hasLysTag=lysArgSichtbar()&&tage[datum].some(e=>e.lysin!=null);
+    const hasArgTag=lysArgSichtbar()&&tage[datum].some(e=>e.arginin!=null);
     const eiwN=sum('eiweiss'),fatN=sum('fett'),khN=sum('kohlenhydrate');
     const fluessigTag=tage[datum].reduce((a,e)=>a+fluessigGramm(e),0);
     const macroKcal=eiwN*4+fatN*9+khN*4;
@@ -1476,6 +1580,8 @@ function renderEintraege(){
         +'</div>'
         // Zeile 2b: Getränke (Summe aller Positionen mit Volumeneinheit ml/l)
         +(fluessigTag>0?'<div style="margin-top:4px;font-size:0.75rem;color:#64748b">🥤 Getränke: '+rundeAnzeige(fluessigTag>=1000?fluessigTag/1000:fluessigTag)+(fluessigTag>=1000?' l':' ml')+'</div>':'')
+        // Zeile 2c: Verhältnis gesättigte/ungesättigte Fettsäuren (wichtig für Cholesterin)
+        +(hasSFTag&&sfTag>0?(()=>{const fv=fettVerhaeltnis(fatN,sfTag);return '<div style="margin-top:4px;font-size:0.75rem;color:'+fv.farbe+'">🫒 Fettsäuren: '+sfTag.toFixed(1)+'g gesättigt · '+fv.unges.toFixed(1)+'g ungesättigt · Verhältnis '+fv.label+' ('+fv.hinweis+')</div>';})():'')
         // Tagessumme als Tabelle
         +'<div style="margin-top:5px;padding-top:4px;border-top:1px solid rgba(59,130,246,0.15);overflow-x:auto">'
           +'<table class="entries-table"><thead><tr>'
@@ -1719,8 +1825,8 @@ function zeigeAnalyseOverlay(rows,bewertungText){
     return;
   }
   const hasSF=rows.some(r=>r.sf!=null);
-  const hasLys=rows.some(r=>r.lys!=null);
-  const hasArg=rows.some(r=>r.arg!=null);
+  const hasLys=lysArgSichtbar()&&rows.some(r=>r.lys!=null);
+  const hasArg=lysArgSichtbar()&&rows.some(r=>r.arg!=null);
   const totKcal=rows.reduce((a,r)=>a+r.kalorien,0);
   const totEiw=rows.reduce((a,r)=>a+r.eiweiss,0);
   const totZck=rows.reduce((a,r)=>a+r.zucker,0);
@@ -1767,6 +1873,15 @@ function neubewFeld(label,key,i,val){
 // Zeilen des aktuell offenen "Neu bewerten"-Overlays (für die Gramm-Neuberechnung ohne erneute Suche)
 let neubewAktuelleRows=[];
 
+// Bezeichnung wurde korrigiert (z.B. weil die Menge inzwischen abweicht oder eine genauere
+// Beschreibung nötig ist) – direkt im Array aktualisieren, damit "als eigenes LM" sofort den
+// neuen Namen nutzt, auch bevor gespeichert wurde.
+function neubewNameGeaendert(i,val){
+  const r=neubewAktuelleRows[i];
+  if(!r)return;
+  r.lebensmittel=val.trim()||r.lebensmittel;
+}
+
 // Menge (Gramm) wurde korrigiert – Nährwerte anhand der Basiswerte (pro 100g) neu berechnen,
 // ohne die Nährwertsuche erneut auszuführen. Für nicht gefundene Zeilen (kein "basis") passiert nichts automatisch.
 function neubewGrammGeaendert(i,val){
@@ -1800,9 +1915,13 @@ function zeigeNeubewertungOverlay(id,rows){
   neubewAktuelleRows=rows;
   const rowHtml=rows.map((r,i)=>
     '<div style="border:1px solid #334155;border-radius:8px;padding:0.5rem 0.6rem;margin-bottom:0.5rem">'
-    +'<div style="display:flex;align-items:center;justify-content:space-between;gap:0.4rem;margin-bottom:0.35rem">'
-      +'<div style="font-size:0.85rem;color:#f1f5f9">'+r.lebensmittel+quelleBadge(r.quelle)+'</div>'
-      +'<button type="button" onclick="neubewAlsEigenesLM('+i+')" style="font-size:0.65rem;padding:0.15rem 0.4rem;border-radius:6px;border:1px solid #334155;background:transparent;color:#94a3b8;cursor:pointer;flex-shrink:0" title="Mit dieser Menge als Portionsgröße in „Eigene Lebensmittel" speichern">📋 als eigenes LM</button>'
+    +'<div style="display:flex;align-items:flex-end;gap:0.4rem;margin-bottom:0.4rem">'
+      +'<label style="display:flex;flex-direction:column;font-size:0.65rem;color:#94a3b8;gap:2px;flex:1;min-width:0">Bezeichnung'
+        +'<input type="text" value="'+(r.lebensmittel||'').replace(/"/g,'&quot;')+'" data-i="'+i+'" data-k="lebensmittel" onchange="neubewNameGeaendert('+i+',this.value)"'
+        +' style="width:100%;box-sizing:border-box;background:#0f172a;border:1px solid #334155;border-radius:5px;color:#f1f5f9;padding:5px 7px;font-size:0.85rem;font-weight:600"/>'
+      +'</label>'
+      +quelleBadge(r.quelle)
+      +'<button type="button" onclick="neubewAlsEigenesLM('+i+')" style="font-size:0.65rem;padding:0.4rem 0.4rem;border-radius:6px;border:1px solid #334155;background:transparent;color:#94a3b8;cursor:pointer;flex-shrink:0" title="Mit dieser Menge als Portionsgröße in „Eigene Lebensmittel" speichern">📋 als eigenes LM</button>'
     +'</div>'
     +'<label style="display:flex;flex-direction:column;font-size:0.65rem;color:#60a5fa;gap:2px;max-width:150px;margin-bottom:0.4rem">Menge (Gramm)'
       +'<input type="number" step="1" value="'+(r.grams??100)+'" data-i="'+i+'" data-k="grams" onchange="neubewGrammGeaendert('+i+',this.value)"'
@@ -1867,6 +1986,7 @@ async function speichereNeubewertung(id){
   ov.querySelectorAll('input[data-i]').forEach(inp=>{
     const i=+inp.dataset.i,k=inp.dataset.k;
     if(k==='grams'){rows[i].grams=Math.round(+inp.value||0);return;}
+    if(k==='lebensmittel'){rows[i].lebensmittel=inp.value.trim()||rows[i].lebensmittel;return;}
     rows[i][k]=k==='kalorien'?Math.round(+inp.value||0):+(+inp.value||0).toFixed(1);
   });
   const idx=eintraege.findIndex(x=>String(x.id)===String(id));
@@ -1875,6 +1995,9 @@ async function speichereNeubewertung(id){
   const _hasLys=rows.some(r=>r.lys!=null);
   const _hasArg=rows.some(r=>r.arg!=null);
   const update={
+    // Bezeichnung(en) mit übernehmen, falls beim Neu bewerten angepasst (z.B. korrigierte
+    // Mengenangabe oder genauere Beschreibung) - sonst würde der Eintragstitel veraltet bleiben.
+    lebensmittel: rows.map(r=>r.lebensmittel).join(', '),
     // Immer speichern (auch bei nur einer Zutat) – sonst geht eine hier korrigierte Grammzahl
     // beim nächsten "Neu bewerten" wieder verloren (siehe itemsMitGrammAusEintrag).
     zutaten: JSON.stringify(rows),
@@ -2288,6 +2411,25 @@ function clearSuche(){document.getElementById('suche').value='';renderEintraege(
 // ausgegraut (disabled-Attribut), nicht entfernt.
 const KI_AKTIV=false;
 function loadToken(){return KI_AKTIV?(localStorage.getItem('github_ki_token')||''):'';}
+
+// ─── Lysin/Arginin nur bei Bedarf einblenden ─────────────────────────────────
+// Standardmäßig ausgeblendet (nur bei Erkältungsanfälligkeit im Winter relevant) - die Werte werden
+// weiterhin immer mitgespeichert, nur die Anzeige in Tabellen/Tagesübersicht wird umgeschaltet.
+function lysArgSichtbar(){return localStorage.getItem('lysArgSichtbar')==='1';}
+function toggleLysArgSichtbar(){
+  localStorage.setItem('lysArgSichtbar',lysArgSichtbar()?'0':'1');
+  aktualisiereLysArgBtn();
+  renderEintraege();
+  if(pendingRows&&pendingRows.length)showNWResults(pendingRows,[],lastNichtGefunden||[]);
+}
+function aktualisiereLysArgBtn(){
+  const btn=document.getElementById('lysarg-toggle-btn');
+  if(!btn)return;
+  const an=lysArgSichtbar();
+  btn.textContent=an?'🦠 Lys/Arg: An':'🦠 Lys/Arg: Aus';
+  btn.style.color=an?'#93c5fd':'#94a3b8';
+  btn.style.borderColor=an?'#3b82f6':'#334155';
+}
 function getKiModel(){return localStorage.getItem('ki-model')||'gpt-4o-mini';}
 function setKiModel(v){localStorage.setItem('ki-model',v);}
 function initKiModelSelect(){const s=document.getElementById('ki-model-select');if(s)s.value=getKiModel();}
@@ -2380,6 +2522,7 @@ async function init(){
   if(localStorage.getItem('kalorien-ziel-'+heuteStr()))sperrZielInput();
   updateKiStatus();
   initKiModelSelect();
+  aktualisiereLysArgBtn();
   await ladeCustomDB();
   await laden();
 }
