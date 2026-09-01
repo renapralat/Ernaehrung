@@ -1135,15 +1135,19 @@ function fluessigGramm(e){
 // Verhältnis ungesättigte : gesättigte Fettsäuren (ungesättigt = Fett gesamt minus gesättigt).
 // Wichtig bei erhöhtem Cholesterin: je mehr ungesättigte im Verhältnis zu gesättigten Fettsäuren,
 // desto besser (Avocado ≈ 1:8 - besonders günstig). Schwellen nach Nutzervorgabe.
-function fettVerhaeltnis(totFett,totSF){
+// macroKcal (Eiweiß*4 + Fett*9 + KH*4) optional - liefert dann zusätzlich den Anteil der gesättigten
+// Fettsäuren an den Kalorien (pct), bewertet nach der WHO/DGE-Empfehlung von max. 10% der Kalorien.
+function fettVerhaeltnis(totFett,totSF,macroKcal){
   const unges=Math.max(0,(+totFett||0)-(+totSF||0));
-  if(!totSF||totSF<=0)return{unges,ratio:null,label:'–',farbe:'#4ade80',hinweis:'keine gesättigten Fettsäuren'};
+  const pct=macroKcal>0?Math.round((+totSF||0)*9/macroKcal*100):null;
+  if(!totSF||totSF<=0)return{unges,ratio:null,label:'–',farbe:'#4ade80',hinweis:'keine gesättigten Fettsäuren',pct,pctFarbe:'#4ade80'};
   const ratio=unges/totSF;
   let farbe='#f87171',hinweis='ungünstig (unter 1:3)';
   if(ratio>=8){farbe='#4ade80';hinweis='sehr günstig';}
   else if(ratio>=5){farbe='#86efac';hinweis='günstig';}
   else if(ratio>=3){farbe='#fbbf24';hinweis='mäßig';}
-  return{unges,ratio,label:'1 : '+ratio.toFixed(1),farbe,hinweis};
+  const pctFarbe=pct==null?'#94a3b8':(pct<=10?'#4ade80':'#f87171');
+  return{unges,ratio,label:'1 : '+ratio.toFixed(1),farbe,hinweis,pct,pctFarbe};
 }
 
 function lokaleBewertung(rows){
@@ -1162,8 +1166,9 @@ function lokaleBewertung(rows){
   if(hasSF&&totSF>6)msgs.push('<span style="color:#fca5a5">⚠️ Ges.Fettsäuren '+totSF.toFixed(1)+'g (&gt;6g)</span>');
   if(fatPct>35)msgs.push('<span style="color:#f87171">⚠️ Fettanteil '+fatPct+'% (&gt;35%)</span>');
   if(hasSF&&totSF>0){
-    const fv=fettVerhaeltnis(totFett,totSF);
-    msgs.push('<span style="color:'+fv.farbe+'">🫒 Ges. '+totSF.toFixed(1)+'g / Unges. '+fv.unges.toFixed(1)+'g (Verhältnis '+fv.label+' – '+fv.hinweis+')</span>');
+    const fv=fettVerhaeltnis(totFett,totSF,macroKcal);
+    const pctTxt=fv.pct!=null?' <span style="color:'+fv.pctFarbe+'">('+fv.pct+'% der Kalorien, Ziel ≤10%)</span>':'';
+    msgs.push('<span style="color:'+fv.farbe+'">🫒 Ges. '+totSF.toFixed(1)+'g'+pctTxt+' / Unges. '+fv.unges.toFixed(1)+'g (Verhältnis '+fv.label+' – '+fv.hinweis+')</span>');
   }
   const haslysarg=lysArgSichtbar()&&rows.some(r=>r.lys!=null||r.arg!=null);
   if(haslysarg){
@@ -1600,7 +1605,7 @@ function renderEintraege(){
         // Zeile 2b: Getränke (Summe aller Positionen mit Volumeneinheit ml/l)
         +(fluessigTag>0?'<div style="margin-top:4px;font-size:0.75rem;color:#64748b">🥤 Getränke: '+rundeAnzeige(fluessigTag>=1000?fluessigTag/1000:fluessigTag)+(fluessigTag>=1000?' l':' ml')+'</div>':'')
         // Zeile 2c: Verhältnis gesättigte/ungesättigte Fettsäuren (wichtig für Cholesterin)
-        +(hasSFTag&&sfTag>0?(()=>{const fv=fettVerhaeltnis(fatN,sfTag);return '<div style="margin-top:4px;font-size:0.75rem;color:'+fv.farbe+'">🫒 Fettsäuren: '+sfTag.toFixed(1)+'g gesättigt · '+fv.unges.toFixed(1)+'g ungesättigt · Verhältnis '+fv.label+' ('+fv.hinweis+')</div>';})():'')
+        +(hasSFTag&&sfTag>0?(()=>{const fv=fettVerhaeltnis(fatN,sfTag,macroKcal);const pctTxt=fv.pct!=null?' <span style="color:'+fv.pctFarbe+'">('+fv.pct+'% der Kalorien, Ziel ≤10%)</span>':'';return '<div style="margin-top:4px;font-size:0.75rem;color:'+fv.farbe+'">🫒 Fettsäuren: '+sfTag.toFixed(1)+'g gesättigt'+pctTxt+' · '+fv.unges.toFixed(1)+'g ungesättigt · Verhältnis '+fv.label+' ('+fv.hinweis+')</div>';})():'')
         // Tagessumme als Tabelle
         +'<div style="margin-top:5px;padding-top:4px;border-top:1px solid rgba(59,130,246,0.15);overflow-x:auto">'
           +'<table class="entries-table"><thead><tr>'
@@ -2189,6 +2194,12 @@ function briefZeilenTag(datum,eintraegeTag,hdr,hdrKurz){
   if(macroKcal>0){
     const pEiw=Math.round(geiwN*4/macroKcal*100),pFat=Math.round(gfatN*9/macroKcal*100),pKH=Math.round(gkhN*4/macroKcal*100);
     zeilen.push(...anteileZeilen(pEiw,pFat,pKH));
+  }
+  const gsfN=sum('gesaettigt');
+  if(gsfN>0){
+    const fv=fettVerhaeltnis(gfatN,gsfN,macroKcal);
+    const pctTxt=fv.pct!=null?' ('+fv.pct+'% der Kalorien, Ziel ≤10%)':'';
+    zeilen.push('Fettsäuren: '+gsfN.toFixed(1)+'g gesättigt'+pctTxt+' · '+fv.unges.toFixed(1)+'g ungesättigt · Verhältnis '+fv.label+' ('+fv.hinweis+')');
   }
   zeilen.push('');
   // Spaltenüberschrift auch pro Tag wiederholen – bei langen Listen sonst schwer zuzuordnen
