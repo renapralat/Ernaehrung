@@ -41,6 +41,7 @@ Live-URL: [renapralat.github.io/Ernaehrung](https://renapralat.github.io/Ernaehr
 - **Verhältnis gesättigte : ungesättigte Fettsäuren**: wird bei „📊 Analysieren", „🔄 Neu bewerten" und „🤖 Analyse ansehen" sowie in der Tagesübersicht automatisch berechnet (ungesättigt = Fett gesamt − gesättigt) und farbcodiert angezeigt – wichtig zur Kontrolle bei erhöhtem Cholesterin. Bewertung: ab 1:8 sehr günstig (z.B. Avocado), 1:5–1:8 günstig, 1:3–1:5 mäßig, unter 1:3 ungünstig
 - **Lysin/Arginin nur bei Bedarf einblenden**: standardmäßig ausgeblendet (Button „🦠 Lys/Arg: Aus/An" oben in der ⚙️-Leiste), da nur bei Erkältungsanfälligkeit (z.B. im Winter) relevant – die Werte werden unabhängig davon immer mitgespeichert, nur die Anzeige in Tabellen/Tagesübersicht wird umgeschaltet
 - **Bezeichnung bei „🔄 Neu bewerten" korrigierbar**: pro Lebensmittel lässt sich dort nicht mehr nur die Menge (Gramm), sondern auch die Bezeichnung selbst anpassen (z.B. wenn sich die tatsächliche Menge geändert hat oder eine genauere Beschreibung nötig ist) – der Eintragstitel wird beim Speichern entsprechend aktualisiert
+- **🗑️ Verwerfen (nicht speichern)**: im Ergebnis nach „📊 Analysieren" – praktisch für den schnellen „kann ich das essen?"-Test vor dem eigentlichen Verzehr: verwirft die komplette aktuelle Eingabe (Lebensmittelliste, Kategorie), ohne etwas zu speichern, damit direkt das nächste Lebensmittel getestet werden kann. Anders als „↩️ Zurück" (behält die Liste bewusst, um z.B. den Auswertungsmodus zu wechseln) wird hier alles geleert
 
 ---
 

@@ -259,6 +259,7 @@ button:disabled,select:disabled{opacity:0.5;filter:saturate(0.3);cursor:not-allo
         <button class="btn-success" style="flex:1" onclick="speichernEintrag()">💾 Speichern</button>
         <button class="btn-ghost" style="flex:1" onclick="closeResults()">↩️ Zurück</button>
       </div>
+      <button type="button" onclick="verwerfeEingabe()" title="Nur zum Prüfen (z.B. „kann ich das essen?“) - verwirft die Eingabe komplett, ohne zu speichern" style="width:100%;margin-top:0.5rem;padding:0.55rem;border-radius:8px;border:1px solid #ef4444;background:transparent;color:#ef4444;font-size:0.85rem;font-weight:600;cursor:pointer">🗑️ Verwerfen (nicht speichern)</button>
     </div>
   </div>
 
@@ -1398,6 +1399,20 @@ function updateChips(){
 function closeResults(){
   document.getElementById('result-box').classList.remove('show');
   pendingRows=[];
+}
+
+// Aktuelle, noch nicht gespeicherte Eingabe komplett verwerfen - z.B. nach einem reinen
+// "kann ich das essen?"-Test per Analysieren, wenn das Ergebnis NICHT gespeichert werden soll.
+// Anders als closeResults() wird dabei auch die food-Liste geleert, damit beim nächsten Test
+// nicht erst mühsam jedes Lebensmittel einzeln entfernt werden muss.
+function verwerfeEingabe(){
+  foods=[];
+  pendingRows=[];
+  renderFoodList();
+  document.getElementById('result-box').classList.remove('show');
+  document.getElementById('kategorie-input').value='';
+  updateChips();
+  clearLebensmittelInput();
 }
 
 // ─── Banner (heute) ───────────────────────────────────────────────────────────
